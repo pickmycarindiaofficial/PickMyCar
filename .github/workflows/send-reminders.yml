@@ -1,0 +1,13 @@
+name: Send Dealer Reminders
+on:
+  schedule:
+    - cron: '0 * * * *' # Every hour
+  workflow_dispatch: # Allow manual trigger
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Edge Function
+        run: |
+          curl -X POST https://tfmaotjdfpqtnsghdwnl.supabase.co/functions/v1/send-reminders \
+            -H "Content-Type: application/json"

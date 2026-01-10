@@ -1,0 +1,205 @@
+import { Heart, Phone, MessageCircle, Gauge, Fuel, Cog, TrendingDown, Info, Share2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Car } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useEventTracking } from '@/hooks/useEventTracking';
+
+interface CarCardProps {
+  car: Car;
+  onCallDealer: (car: Car) => void;
+  onChat: (car: Car) => void;
+  onToggleShortlist: (carId: string) => void;
+  isShortlisted: boolean;
+  onCardClick?: (car: Car) => void;
+  onShare?: (car: Car) => void;
+}
+
+export const CarCard = ({ car, onCallDealer, onChat, onToggleShortlist, isShortlisted, onCardClick, onShare }: CarCardProps) => {
+  const { trackFunnel } = useEventTracking();
+
+  useEffect(() => {
+    // Track funnel 'view' stage when card is visible
+    trackFunnel.mutate({
+      stage: 'view',
+      car_id: car.id,
+      meta: { card_position: 'listing_grid' }
+    });
+  }, [car.id]);
+
+  const formatPrice = (value: number) => {
+    if (value >= 10000000) return `₹${(value / 10000000).toFixed(2)} Cr`;
+    return `₹${(value / 100000).toFixed(2)} Lakh`;
+  };
+
+  const formatKms = (kms: number) => {
+    if (kms >= 100000) return `${(kms / 100000).toFixed(1)} Lakh km`;
+    return `${(kms / 1000).toFixed(1)}k km`;
+  };
+
+  return (
+    <div
+      className="group relative overflow-hidden rounded-2xl border border-border bg-card shadow-md transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1 hover:border-primary/50 cursor-pointer"
+      onClick={() => onCardClick?.(car)}
+    >
+      {/* Image Section */}
+      <div className="relative aspect-[4/3] overflow-hidden rounded-t-2xl">
+        <img
+          src={car.imageUrl}
+          alt={car.title}
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+        />
+
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+
+        {/* Badges - Top Left */}
+        <div className="absolute top-3 left-3 flex flex-col gap-2">
+          <div className="flex flex-wrap gap-2">
+            {car.isFeatured && (
+              <Badge className="bg-yellow-400 text-black border-0 px-2.5 py-1 text-xs font-semibold shadow-sm hover:bg-yellow-500">
+                ⭐ Featured
+              </Badge>
+            )}
+            {(car.category === 'Brand Warranty' || car.category === 'New Car Warranty') && (
+              <Badge className="bg-[#236ceb] text-white border-0 px-2.5 py-1 text-xs font-semibold shadow-sm">
+                Warranty
+              </Badge>
+            )}
+            {car.owner === '1st Owner' && (
+              <Badge className="bg-[hsl(var(--badge-owner-bg))] text-[hsl(var(--badge-owner-text))] border-0 px-2.5 py-1 text-xs font-semibold shadow-sm">
+                1st Owner
+              </Badge>
+            )}
+            {car.category === 'Certified' && (
+              <Badge className="bg-[hsl(var(--badge-certified-bg))] text-[hsl(var(--badge-certified-text))] border-0 px-2.5 py-1 text-xs font-semibold shadow-sm">
+                Certified
+              </Badge>
+            )}
+          </div>
+
+          {/* Price Drop */}
+          {car.priceDrop && (
+            <div className="flex">
+              <Badge className="bg-[hsl(var(--badge-price-drop-bg))] text-[hsl(var(--badge-price-drop-text))] border-0 px-2.5 py-1 text-xs font-semibold shadow-md animate-pulse">
+                <TrendingDown className="mr-1 h-3 w-3" />
+                ₹{(car.priceDrop.amount / 1000).toFixed(0)}K Drop {car.priceDrop.label && `• ${car.priceDrop.label}`}
+              </Badge>
+            </div>
+          )}
+        </div>
+
+        {/* Heart + Share Icons - Top Right (Stacked) */}
+        <div className="absolute top-3 right-3 flex flex-col gap-2">
+          {/* Heart Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleShortlist(car.id);
+            }}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/95 shadow-lg backdrop-blur-sm transition-all hover:scale-110 hover:bg-white"
+          >
+            <Heart
+              className={`h-5 w-5 ${isShortlisted ? 'fill-red-500 text-red-500' : 'text-gray-700'}`}
+            />
+          </button>
+
+          {/* Share Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onShare?.(car);
+            }}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/95 shadow-lg backdrop-blur-sm transition-all hover:scale-110 hover:bg-white"
+          >
+            <Share2 className="h-4 w-4 text-gray-700" />
+          </button>
+        </div>
+
+      </div>
+
+      {/* Content Section */}
+      <div className="p-4 space-y-3">
+        {/* Title + Price Row */}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-bold text-foreground truncate">
+              {car.year} {car.brand} {car.model}
+            </h3>
+            <p className="text-sm text-muted-foreground truncate">
+              {car.variant}
+            </p>
+          </div>
+          <div className="sm:text-right flex-shrink-0">
+            <div className="text-lg font-bold text-foreground whitespace-nowrap">
+              {formatPrice(car.price)}
+            </div>
+            {car.emiPerMonth && (
+              <div className="text-xs text-muted-foreground whitespace-nowrap">
+                EMI ₹{car.emiPerMonth.toLocaleString('en-IN')}/m*
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Specs Row - Dot Separated */}
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground flex-wrap">
+          <span>{formatKms(car.kmsDriven)}</span>
+          <span>•</span>
+          <span>{car.fuelType}</span>
+          <span>•</span>
+          <span>{car.transmission}</span>
+          {car.registrationNumber && (
+            <>
+              <span>•</span>
+              <span className="uppercase">{car.registrationNumber}</span>
+            </>
+          )}
+        </div>
+
+        {/* Location */}
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <svg className="h-4 w-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+          </svg>
+          <span className="truncate">{car.location}</span>
+        </div>
+
+        {/* Highlights - Below Location */}
+        {car.reasonsToBuy && car.reasonsToBuy.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {car.reasonsToBuy.slice(0, 2).map((highlight, idx) => (
+              <div
+                key={idx}
+                className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 rounded-md text-xs font-medium"
+              >
+                <svg className="h-3 w-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                <span>{highlight}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Action Footer */}
+      <div className="border-t border-border bg-secondary/30 px-4 py-3 rounded-b-2xl">
+        <Button
+          variant="default"
+          size="default"
+          onClick={(e) => {
+            e.stopPropagation();
+            onCallDealer(car);
+          }}
+          className="w-full font-semibold"
+        >
+          <Phone className="mr-2 h-4 w-4" />
+          Contact Dealer
+        </Button>
+      </div>
+    </div>
+  );
+};
