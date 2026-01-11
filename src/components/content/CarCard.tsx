@@ -129,8 +129,8 @@ export const CarCard = ({ car, onCallDealer, onChat, onToggleShortlist, isShortl
 
       {/* Content Section */}
       <div className="p-4 space-y-3">
-        {/* Title + Price Row */}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+        {/* Title + Price Row - Always side by side */}
+        <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <h3 className="text-base font-bold text-foreground truncate">
               {car.year} {car.brand} {car.model}
@@ -139,7 +139,7 @@ export const CarCard = ({ car, onCallDealer, onChat, onToggleShortlist, isShortl
               {car.variant}
             </p>
           </div>
-          <div className="sm:text-right flex-shrink-0">
+          <div className="text-right flex-shrink-0">
             <div className="text-lg font-bold text-foreground whitespace-nowrap">
               {formatPrice(car.price)}
             </div>
