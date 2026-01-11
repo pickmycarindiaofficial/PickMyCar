@@ -151,19 +151,20 @@ export const CarCard = ({ car, onCallDealer, onChat, onToggleShortlist, isShortl
           </div>
         </div>
 
-        {/* Specs Row - Dot Separated */}
-        <div className="flex items-center gap-1.5 text-sm text-muted-foreground flex-wrap">
-          <span>{formatKms(car.kmsDriven)}</span>
-          <span>•</span>
-          <span>{car.fuelType}</span>
-          <span>•</span>
-          <span>{car.transmission}</span>
-          {car.registrationNumber && (
-            <>
-              <span>•</span>
-              <span className="uppercase">{car.registrationNumber}</span>
-            </>
-          )}
+        {/* Specs Row - Icon Based Design */}
+        <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-xl">
+          <div className="flex items-center gap-1.5">
+            <Gauge className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-foreground font-medium">{formatKms(car.kmsDriven)}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Fuel className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-foreground font-medium">{car.fuelType}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Cog className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-foreground font-medium">{car.transmission}</span>
+          </div>
         </div>
 
         {/* Location */}
