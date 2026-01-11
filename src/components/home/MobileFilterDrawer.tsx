@@ -136,7 +136,7 @@ export const MobileFilterDrawer = memo(({
     const activeOwnerTypes = ownerTypes.filter((o: any) => o.is_active !== false);
 
     return (
-        <div className="fixed inset-0 z-50 bg-background lg:hidden flex flex-col">
+        <div className="fixed inset-0 z-[100] bg-background lg:hidden flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <h2 className="text-lg font-semibold">Filters</h2>
