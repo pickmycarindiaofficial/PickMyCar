@@ -52,6 +52,10 @@ export const CarCard = ({ car, onCallDealer, onChat, onToggleShortlist, isShortl
         <img
           src={car.imageUrl}
           alt={car.title}
+          loading="lazy"
+          decoding="async"
+          width={400}
+          height={300}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
 
