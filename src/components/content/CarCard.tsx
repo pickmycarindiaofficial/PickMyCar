@@ -139,14 +139,15 @@ export const CarCard = ({ car, onCallDealer, onChat, onToggleShortlist, isShortl
               {car.variant}
             </p>
           </div>
-          {/* Stylish Price Label */}
-          <div className="flex-shrink-0 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/50 dark:to-blue-900/30 px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-800">
-            <div className="text-lg font-bold text-[#236ceb] whitespace-nowrap">
+          {/* Modern Price Design */}
+          <div className="flex-shrink-0 text-right">
+            <div className="text-xl font-extrabold bg-gradient-to-r from-[#236ceb] to-[#4b8cf5] bg-clip-text text-transparent whitespace-nowrap">
               {formatPrice(car.price)}
             </div>
             {car.emiPerMonth && (
-              <div className="text-xs text-blue-600/80 dark:text-blue-400/80 whitespace-nowrap text-right">
-                EMI ₹{car.emiPerMonth.toLocaleString('en-IN')}/m*
+              <div className="inline-flex items-center gap-1 mt-0.5 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 rounded-full text-[10px] font-semibold">
+                <span className="inline-block w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                ₹{car.emiPerMonth.toLocaleString('en-IN')}/mo
               </div>
             )}
           </div>
