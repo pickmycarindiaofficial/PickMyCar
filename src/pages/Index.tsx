@@ -649,38 +649,45 @@ const Index = () => {
         source="card"
       />
 
-      {/* Mobile Home Header - Matching Reference Design */}
+      {/* Mobile Home Header - Professional Sticky Design */}
       <MobileHomeHeader
         carCount={filteredCars.length}
-        cityName={filters.city === 'All Cities' ? 'All Cities' : filters.city}
+        cityName={filters.city}
         onSearch={(term) => handleFilterChange({ searchTerm: term })}
         onOpenFilters={() => setMobileFilterOpen(true)}
         onOpenSort={() => {/* TODO: Add sort modal */ }}
-        onQuickFilter={(filterId) => {
-          // Handle quick filter selections
-          if (filterId === 'all') {
-            handleClearAll();
-          } else if (filterId === 'under5l') {
-            handleFilterChange({ kmsDriven: 'any' });
-            // Price filter would need to be added to Filters type
-          } else if (filterId === 'under10l') {
-            // Price filter
-          } else if (filterId === 'suv') {
-            handleFilterChange({ bodyTypes: ['SUV'] });
-          } else if (filterId === 'automatic') {
-            handleFilterChange({ transmissions: ['Automatic'] });
-          } else if (filterId === 'petrol') {
-            handleFilterChange({ fuelTypes: ['Petrol'] });
-          } else if (filterId === 'diesel') {
-            handleFilterChange({ fuelTypes: ['Diesel'] });
+        onCityChange={(city) => handleFilterChange({ city })}
+        onQuickFilterChange={(filterKey, filterValue) => {
+          // Handle quick filter changes
+          if (filterKey === 'priceMax') {
+            // For price filters, we'll use it in filtering logic
+            // Store in a separate state or use existing filter
+          } else if (filterKey === 'bodyTypes') {
+            if (filters.bodyTypes.includes(filterValue)) {
+              handleFilterChange({ bodyTypes: filters.bodyTypes.filter(b => b !== filterValue) });
+            } else {
+              handleFilterChange({ bodyTypes: [...filters.bodyTypes, filterValue] });
+            }
+          } else if (filterKey === 'seats') {
+            if (filters.seats.includes(filterValue)) {
+              handleFilterChange({ seats: filters.seats.filter(s => s !== filterValue) });
+            } else {
+              handleFilterChange({ seats: [...filters.seats, filterValue] });
+            }
+          } else if (filterKey === 'transmissions') {
+            if (filters.transmissions.includes(filterValue)) {
+              handleFilterChange({ transmissions: filters.transmissions.filter(t => t !== filterValue) });
+            } else {
+              handleFilterChange({ transmissions: [...filters.transmissions, filterValue] });
+            }
           }
         }}
-        activeQuickFilters={[
-          ...(filters.bodyTypes.includes('SUV') ? ['suv'] : []),
-          ...(filters.transmissions.includes('Automatic') ? ['automatic'] : []),
-          ...(filters.fuelTypes.includes('Petrol') ? ['petrol'] : []),
-          ...(filters.fuelTypes.includes('Diesel') ? ['diesel'] : []),
-        ]}
+        onClearFilters={handleClearAll}
+        activeFilters={{
+          bodyTypes: filters.bodyTypes,
+          seats: filters.seats,
+          transmissions: filters.transmissions,
+        }}
       />
 
       {/* Mobile Filter Drawer - Full Screen */}
