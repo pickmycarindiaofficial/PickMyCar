@@ -713,26 +713,9 @@ const Index = () => {
           {/* Universal Marketplace Benefits */}
           <BannerCarousel />
 
-          {/* Sticky Header: Car Count + Sort/Toggle */}
-          <div className="sticky top-16 z-30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 md:p-4 shadow-sm">
+          {/* Sticky Header: Car Count + Sort/Toggle - Hidden on mobile (MobileHomeHeader handles it) */}
+          <div className="sticky top-16 z-30 hidden md:flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 md:p-4 shadow-sm">
             <div className="flex items-center gap-2 md:gap-4 flex-wrap">
-              {/* Mobile Filter Button - Only in Classic View */}
-              {!useRecommended && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setMobileFilterOpen(true)}
-                  className="lg:hidden touch-manipulation"
-                >
-                  <SlidersHorizontal className="mr-2 h-4 w-4" />
-                  Filters
-                  {activeFiltersCount > 0 && (
-                    <span className="ml-1 bg-primary text-primary-foreground text-xs rounded-full px-1.5">
-                      {activeFiltersCount}
-                    </span>
-                  )}
-                </Button>
-              )}
               <h2 className="text-lg md:text-xl font-semibold">
                 {filteredCars.length} Used Cars
               </h2>
