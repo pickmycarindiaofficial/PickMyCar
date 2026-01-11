@@ -151,7 +151,7 @@ export const MobileFilterDrawer = memo(({
             </div>
 
             {/* Filter Sections - Scrollable */}
-            <div className="flex-1 overflow-y-auto pb-24">
+            <div className="flex-1 overflow-y-auto pb-4">
                 {/* City */}
                 <FilterSection title="City" defaultOpen={false} isLoading={citiesLoading}>
                     <div className="flex flex-wrap gap-2">
@@ -301,8 +301,8 @@ export const MobileFilterDrawer = memo(({
                 </FilterSection>
             </div>
 
-            {/* Fixed Bottom Buttons - Reset All + Apply */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border lg:hidden safe-area-bottom">
+            {/* Bottom Buttons - Reset All + Apply */}
+            <div className="flex-shrink-0 p-4 bg-background border-t border-border">
                 <div className="flex gap-3">
                     <Button
                         variant="outline"
