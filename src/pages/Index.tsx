@@ -42,6 +42,8 @@ import { useBrands } from '@/hooks/useBrands';
 import { MobileNavbar } from '@/components/layout/MobileNavbar';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { MobileFilterSheet } from '@/components/filters/MobileFilterSheet';
+import { MobileHomeHeader } from '@/components/home/MobileHomeHeader';
+import { MobileFilterDrawer } from '@/components/home/MobileFilterDrawer';
 
 
 const initialFilters: Filters = {
@@ -647,19 +649,48 @@ const Index = () => {
         source="card"
       />
 
-      {/* Mobile Navigation */}
-      <div className="md:hidden">
-        <MobileNavbar onSearch={handleSearch} />
-      </div>
+      {/* Mobile Home Header - Matching Reference Design */}
+      <MobileHomeHeader
+        carCount={filteredCars.length}
+        cityName={filters.city === 'All Cities' ? 'All Cities' : filters.city}
+        onSearch={(term) => handleFilterChange({ searchTerm: term })}
+        onOpenFilters={() => setMobileFilterOpen(true)}
+        onOpenSort={() => {/* TODO: Add sort modal */ }}
+        onQuickFilter={(filterId) => {
+          // Handle quick filter selections
+          if (filterId === 'all') {
+            handleClearAll();
+          } else if (filterId === 'under5l') {
+            handleFilterChange({ kmsDriven: 'any' });
+            // Price filter would need to be added to Filters type
+          } else if (filterId === 'under10l') {
+            // Price filter
+          } else if (filterId === 'suv') {
+            handleFilterChange({ bodyTypes: ['SUV'] });
+          } else if (filterId === 'automatic') {
+            handleFilterChange({ transmissions: ['Automatic'] });
+          } else if (filterId === 'petrol') {
+            handleFilterChange({ fuelTypes: ['Petrol'] });
+          } else if (filterId === 'diesel') {
+            handleFilterChange({ fuelTypes: ['Diesel'] });
+          }
+        }}
+        activeQuickFilters={[
+          ...(filters.bodyTypes.includes('SUV') ? ['suv'] : []),
+          ...(filters.transmissions.includes('Automatic') ? ['automatic'] : []),
+          ...(filters.fuelTypes.includes('Petrol') ? ['petrol'] : []),
+          ...(filters.fuelTypes.includes('Diesel') ? ['diesel'] : []),
+        ]}
+      />
 
-      {/* Mobile Filter Sheet */}
-      <MobileFilterSheet
+      {/* Mobile Filter Drawer - Full Screen */}
+      <MobileFilterDrawer
         isOpen={mobileFilterOpen}
         onClose={() => setMobileFilterOpen(false)}
         filters={filters}
-        onFilterChange={handleFilterChange}
+        onFilterChange={(key, value) => handleFilterChange({ [key]: value })}
         onClearAll={handleClearAll}
-        activeFiltersCount={activeFiltersCount}
+        carCount={filteredCars.length}
       />
 
       {/* Mobile Bottom Navigation */}
