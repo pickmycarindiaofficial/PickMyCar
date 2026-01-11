@@ -728,8 +728,8 @@ const Index = () => {
           {/* Universal Marketplace Benefits */}
           <BannerCarousel />
 
-          {/* Sticky Header: Car Count + Sort/Toggle - Hidden on mobile (MobileHomeHeader handles it) */}
-          <div className="sticky top-16 z-30 hidden md:flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 md:p-4 shadow-sm">
+          {/* Sticky Header: Car Count + Sort/Toggle - Hidden on mobile/tablet (MobileHomeHeader handles it) */}
+          <div className="sticky top-16 z-30 hidden lg:flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 md:p-4 shadow-sm">
             <div className="flex items-center gap-2 md:gap-4 flex-wrap">
               <h2 className="text-lg md:text-xl font-semibold">
                 {filteredCars.length} Used Cars
