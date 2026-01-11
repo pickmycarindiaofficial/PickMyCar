@@ -155,8 +155,8 @@ export const MobileHomeHeader = memo(({
                 </div>
             </div>
 
-            {/* Sticky Filter Bar - Only this part sticks */}
-            <div className="sticky top-0 z-40 bg-background lg:hidden shadow-sm border-b border-border/50">
+            {/* Sticky Filter Bar - Sticks below main navbar */}
+            <div className="sticky top-16 z-40 bg-background lg:hidden shadow-sm border-b border-border/50">
                 {/* Car Count + Sort/Filter Bar */}
                 <div className="flex items-center justify-between px-4 py-2">
                     <p className="text-sm">
