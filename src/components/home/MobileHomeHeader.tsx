@@ -3,14 +3,7 @@ import { Search, SlidersHorizontal, ArrowUpDown, Bell, MapPin, X, ChevronDown } 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCities } from '@/hooks/useCities';
-import { useBodyTypes } from '@/hooks/useBodyTypes';
 import logoImage from '@/assets/logo.png';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
     Sheet,
     SheetContent,
@@ -81,7 +74,7 @@ export const MobileHomeHeader = memo(({
     const handleQuickFilter = useCallback((filter: typeof quickFilters[0]) => {
         if (filter.id === 'all') {
             onClearFilters();
-        } else if (filter.filterKey && filter.filterValue) {
+        } else if (filter.filterKey && filter.filterValue !== null) {
             onQuickFilterChange(filter.filterKey, filter.filterValue);
         }
     }, [onQuickFilterChange, onClearFilters]);
@@ -112,8 +105,8 @@ export const MobileHomeHeader = memo(({
 
     return (
         <>
-            {/* Sticky Header Container */}
-            <div className="sticky top-0 z-40 bg-background md:hidden shadow-sm">
+            {/* Non-Sticky Header - Logo, Location, Search */}
+            <div className="bg-background md:hidden">
                 {/* Top Bar - Logo, Location, Notifications */}
                 <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/50">
                     <img src={logoImage} alt="PickMyCar" className="h-7" />
@@ -138,7 +131,7 @@ export const MobileHomeHeader = memo(({
                     </div>
                 </div>
 
-                {/* Search Bar */}
+                {/* Search Bar - Not Sticky */}
                 <div className="px-4 py-2">
                     <form onSubmit={handleSearchSubmit} className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -160,9 +153,12 @@ export const MobileHomeHeader = memo(({
                         )}
                     </form>
                 </div>
+            </div>
 
+            {/* Sticky Filter Bar - Only this part sticks */}
+            <div className="sticky top-0 z-40 bg-background md:hidden shadow-sm border-b border-border/50">
                 {/* Car Count + Sort/Filter Bar */}
-                <div className="flex items-center justify-between px-4 py-2 border-t border-border/50">
+                <div className="flex items-center justify-between px-4 py-2">
                     <p className="text-sm">
                         <span className="font-bold text-foreground">{carCount} Cars</span>
                         <span className="text-muted-foreground ml-1">in {cityName}</span>

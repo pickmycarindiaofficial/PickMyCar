@@ -248,6 +248,9 @@ const Index = () => {
         return false;
       if (filters.availability.length > 0 && !filters.availability.includes(car.availability))
         return false;
+      // Price range filters
+      if (filters.priceMax && car.price > filters.priceMax) return false;
+      if (filters.priceMin && car.price < filters.priceMin) return false;
       if (filters.searchTerm) {
         const searchLower = filters.searchTerm.toLowerCase();
         const searchableText = `${car.title} ${car.brand} ${car.model} ${car.variant}`.toLowerCase();
@@ -660,8 +663,12 @@ const Index = () => {
         onQuickFilterChange={(filterKey, filterValue) => {
           // Handle quick filter changes
           if (filterKey === 'priceMax') {
-            // For price filters, we'll use it in filtering logic
-            // Store in a separate state or use existing filter
+            // Toggle price filter - if same value, clear it
+            if (filters.priceMax === filterValue) {
+              handleFilterChange({ priceMax: undefined });
+            } else {
+              handleFilterChange({ priceMax: filterValue });
+            }
           } else if (filterKey === 'bodyTypes') {
             if (filters.bodyTypes.includes(filterValue)) {
               handleFilterChange({ bodyTypes: filters.bodyTypes.filter(b => b !== filterValue) });
@@ -684,6 +691,7 @@ const Index = () => {
         }}
         onClearFilters={handleClearAll}
         activeFilters={{
+          priceMax: filters.priceMax,
           bodyTypes: filters.bodyTypes,
           seats: filters.seats,
           transmissions: filters.transmissions,

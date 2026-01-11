@@ -76,6 +76,8 @@ export interface Filters {
   colors: string[];
   availability: string[];
   searchTerm: string;
+  priceMin?: number;
+  priceMax?: number;
 }
 
 export type SortOption = 'relevance' | 'price-low' | 'price-high' | 'year-new' | 'year-old' | 'kms-low';
