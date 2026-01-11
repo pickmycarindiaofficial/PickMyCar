@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase-client';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Flame, Calendar, Eye, Wallet, CreditCard, Building2, HelpCircle, Car } from 'lucide-react';
@@ -116,33 +116,56 @@ export const OnboardingQuiz = ({ open, onOpenChange, onComplete }: OnboardingQui
 
   const handleSubmit = async () => {
     try {
-      // Save to user_profile
-      // @ts-ignore - user_profile table not in generated types yet
-      const { error } = await (supabase as any)
+      // Validate user is logged in
+      if (!user?.id) {
+        // Save preferences locally for non-logged-in users
+        const localPrefs = {
+          intent,
+          budget_band: budgetBand,
+          buying_mode: buyingMode,
+          preferred_brands: selectedBrands.length > 0 ? selectedBrands : null,
+          saved_at: new Date().toISOString(),
+        };
+        localStorage.setItem('user_preferences', JSON.stringify(localPrefs));
+        localStorage.setItem('onboarding_complete', 'true');
+
+        toast.success('Preferences saved! Sign in to sync across devices.');
+        onComplete();
+        onOpenChange(false);
+        return;
+      }
+
+      // Save to user_profile table
+      const { error: profileError } = await supabase
         .from('user_profile')
         .upsert({
-          user_id: user?.id,
+          user_id: user.id,
           intent,
           budget_band: budgetBand,
           buying_mode: buyingMode,
           preferred_brands: selectedBrands.length > 0 ? selectedBrands : null,
           last_seen: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         }, {
           onConflict: 'user_id'
         });
 
-      if (error) throw error;
+      if (profileError) {
+        console.error('Failed to save user profile:', profileError);
+        throw profileError;
+      }
 
-      // Track quiz completion event
+      // Track quiz completion event (non-blocking)
       const sessionId = localStorage.getItem('session_id') || crypto.randomUUID();
       if (!localStorage.getItem('session_id')) {
         localStorage.setItem('session_id', sessionId);
       }
 
-      await (supabase as any)
+      // Fire and forget - don't block on event tracking
+      supabase
         .from('user_events')
         .insert({
-          user_id: user?.id,
+          user_id: user.id,
           session_id: sessionId,
           event: 'onboarding_complete',
           meta: {
@@ -151,25 +174,38 @@ export const OnboardingQuiz = ({ open, onOpenChange, onComplete }: OnboardingQui
             buying_mode: buyingMode,
             brands_selected: selectedBrands.length,
           }
+        })
+        .then(({ error }) => {
+          if (error) console.warn('Event tracking failed:', error);
         });
 
       // Mark onboarding as complete
       localStorage.setItem('onboarding_complete', 'true');
 
       // Request location permission after quiz (non-blocking)
-      try {
-        await requestLocation();
-      } catch (error) {
-        // Silent fail
-      }
+      requestLocation().catch(() => {
+        // Silent fail - location is optional
+      });
 
       toast.success('Profile saved! Personalizing your experience...');
       onComplete();
       onOpenChange(false);
-    } catch (error) {
-      toast.error('Failed to save preferences');
-    }
+    } catch (error: any) {
+      console.error('Preference save error:', error);
 
+      // Provide more specific error messages
+      if (error?.code === '42501') {
+        toast.error('Permission denied. Please try signing in again.');
+      } else if (error?.code === '23505') {
+        toast.error('Profile already exists. Refreshing...');
+        onComplete();
+        onOpenChange(false);
+      } else if (error?.message?.includes('network')) {
+        toast.error('Network error. Please check your connection.');
+      } else {
+        toast.error('Failed to save preferences. Please try again.');
+      }
+    }
   };
 
   const toggleBrand = (brand: string) => {
@@ -232,8 +268,8 @@ export const OnboardingQuiz = ({ open, onOpenChange, onComplete }: OnboardingQui
                 <div
                   key={option.value}
                   className={`flex items-center space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${intent === option.value
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:border-primary/50'
                     }`}
                   onClick={() => setIntent(option.value)}
                 >
@@ -296,8 +332,8 @@ export const OnboardingQuiz = ({ open, onOpenChange, onComplete }: OnboardingQui
                 <button
                   key={option.value}
                   className={`w-full flex items-center gap-4 p-4 rounded-lg border-2 transition-all text-left ${buyingMode === option.value
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:border-primary/50'
                     }`}
                   onClick={() => setBuyingMode(option.value)}
                 >

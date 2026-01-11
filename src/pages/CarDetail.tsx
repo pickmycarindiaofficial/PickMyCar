@@ -1,6 +1,7 @@
 import { useMemo, useEffect } from 'react';
 import { Car, Dealer } from '@/types';
 import { Navbar } from '@/components/layout/Navbar';
+import { MobileNavbar } from '@/components/layout/MobileNavbar';
 import { Breadcrumbs } from '@/components/navigation/Breadcrumbs';
 import { ImageFeatureOverlay } from '@/components/detail/ImageFeatureOverlay';
 import { DetailsTabs } from '@/components/detail/DetailsTabs';
@@ -8,7 +9,7 @@ import { EMICalculator } from '@/components/detail/EMICalculator';
 import { CarDetailFAQ } from '@/components/detail/CarDetailFAQ';
 import { CarInfoCard } from '@/components/detail/CarInfoCard';
 import { SimilarCars } from '@/components/detail/SimilarCars';
-import { TopFeatures } from '@/components/detail/TopFeatures';
+import { StickyActionBar } from '@/components/detail/StickyActionBar';
 import { useToast } from '@/hooks/use-toast';
 import { useEventTracking } from '@/hooks/useEventTracking';
 
@@ -60,11 +61,11 @@ export const CarDetailPage = ({
 
   useEffect(() => {
     // Track funnel 'interest' stage when detail page loads
-    trackFunnel.mutate({ 
-      stage: 'interest', 
+    trackFunnel.mutate({
+      stage: 'interest',
       car_id: car.id,
       dealer_id: dealer.id,
-      meta: { 
+      meta: {
         arrived_from: document.referrer,
         car_price: car.price,
       }
@@ -102,16 +103,27 @@ export const CarDetailPage = ({
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar
-        onNavigate={onNavigate}
+    <div className="min-h-screen bg-background pb-16 md:pb-0">
+      {/* Desktop Navbar */}
+      <div className="hidden md:block">
+        <Navbar
+          onNavigate={onNavigate}
+          onSearch={onSearchSubmit}
+          onAuthAction={(action) => {
+            toast({
+              title: 'Authentication',
+              description: `${action} clicked`,
+            });
+          }}
+        />
+      </div>
+
+      {/* Mobile Navbar */}
+      <MobileNavbar
         onSearch={onSearchSubmit}
-        onAuthAction={(action) => {
-          toast({
-            title: 'Authentication',
-            description: `${action} clicked`,
-          });
-        }}
+        onBack={onBack}
+        showBackButton
+        title={`${car.brand} ${car.model}`}
       />
 
       <div className="container mx-auto px-4 py-6">
@@ -120,8 +132,8 @@ export const CarDetailPage = ({
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            <ImageFeatureOverlay 
-              images={allImages} 
+            <ImageFeatureOverlay
+              images={allImages}
               carTitle={car.title}
               features={(car as any).featuresMetadata || []}
             />
@@ -132,40 +144,40 @@ export const CarDetailPage = ({
                 <h3 className="text-lg font-semibold mb-4">Key Highlights</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {car.reasonsToBuy.slice(0, 6).map((highlight, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-start gap-3 p-3 bg-[#edf1ff] dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg"
-                  >
-                    <div className="flex-shrink-0 mt-0.5">
-                      <svg className="h-5 w-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
+                    <div
+                      key={idx}
+                      className="flex items-start gap-3 p-3 bg-[#edf1ff] dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg"
+                    >
+                      <div className="flex-shrink-0 mt-0.5">
+                        <svg className="h-5 w-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                      <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                        {highlight}
+                      </span>
                     </div>
-                    <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                      {highlight}
-                    </span>
-                  </div>
                   ))}
                 </div>
               </div>
             )}
-            
+
             {/* Show Action Card on Mobile below images */}
             <div className="lg:hidden">
-            <CarInfoCard
-              car={car}
-              dealer={dealer}
-              dealerLoading={isDealerLoading}
-              onWhatsAppClick={handleWhatsAppEnquiry}
-              onCallClick={handleCallDealer}
-              onApplyForLoan={handleApplyForLoan}
-              onBookTestDrive={handleBookTestDriveClick}
-              onSocialShare={onSocialShare}
-            />
+              <CarInfoCard
+                car={car}
+                dealer={dealer}
+                dealerLoading={isDealerLoading}
+                onWhatsAppClick={handleWhatsAppEnquiry}
+                onCallClick={handleCallDealer}
+                onApplyForLoan={handleApplyForLoan}
+                onBookTestDrive={handleBookTestDriveClick}
+                onSocialShare={onSocialShare}
+              />
             </div>
 
             <DetailsTabs car={car} />
@@ -201,6 +213,14 @@ export const CarDetailPage = ({
           />
         </div>
       </div>
+
+      {/* Sticky Action Bar for Mobile */}
+      <StickyActionBar
+        price={car.price}
+        onCall={handleCallDealer}
+        onWhatsApp={handleWhatsAppEnquiry}
+        onBookTestDrive={handleBookTestDriveClick}
+      />
     </div>
   );
 };

@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ['Caveat', 'cursive'],
-        sans: ['DM Sans', 'sans-serif'],
+        heading: ['Plus Jakarta Sans', 'sans-serif'],
+        sans: ['Inter', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",

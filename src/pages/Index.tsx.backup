@@ -38,12 +38,6 @@ import { EMICalculator } from '@/components/detail/EMICalculator';
 
 import { useBrands } from '@/hooks/useBrands';
 
-// Mobile Components
-import { MobileNavbar } from '@/components/layout/MobileNavbar';
-import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
-import { MobileFilterSheet } from '@/components/filters/MobileFilterSheet';
-
-
 const initialFilters: Filters = {
   segment: 'all',
   city: 'All Cities',
@@ -86,21 +80,6 @@ const Index = () => {
   const [loanDialogOpen, setLoanDialogOpen] = useState(false);
   const [selectedCarForLoan, setSelectedCarForLoan] = useState<Car | null>(null);
   const [emiCalculatorOpen, setEmiCalculatorOpen] = useState(false);
-  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
-
-  // Calculate active filters count for mobile badge
-  const activeFiltersCount = useMemo(() => {
-    let count = 0;
-    if (filters.brands.length > 0) count += filters.brands.length;
-    if (filters.models.length > 0) count += filters.models.length;
-    if (filters.fuelTypes.length > 0) count += filters.fuelTypes.length;
-    if (filters.transmissions.length > 0) count += filters.transmissions.length;
-    if (filters.years.length > 0) count += filters.years.length;
-    if (filters.bodyTypes.length > 0) count += filters.bodyTypes.length;
-    if (filters.kmsDriven !== 'any') count += 1;
-    if (filters.city !== 'All Cities') count += 1;
-    return count;
-  }, [filters]);
 
   const createEnquiry = useCreateEnquiry();
   const { requireAuth } = useAuthGuard();
@@ -647,25 +626,7 @@ const Index = () => {
         source="card"
       />
 
-      {/* Mobile Navigation */}
-      <div className="md:hidden">
-        <MobileNavbar onSearch={handleSearch} />
-      </div>
-
-      {/* Mobile Filter Sheet */}
-      <MobileFilterSheet
-        isOpen={mobileFilterOpen}
-        onClose={() => setMobileFilterOpen(false)}
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        onClearAll={handleClearAll}
-        activeFiltersCount={activeFiltersCount}
-      />
-
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav onSearchClick={() => setMobileFilterOpen(true)} />
-
-      <div className="flex gap-6 lg:gap-8 w-full mx-auto px-4 md:px-6 lg:px-8 max-w-screen-2xl pb-mobile-nav md:pb-0">
+      <div className="flex w-full mx-auto px-4 md:px-6 lg:px-8 max-w-screen-2xl">
         <Sidebar
           filters={filters}
           onFilterChange={handleFilterChange}
@@ -690,16 +651,11 @@ const Index = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setMobileFilterOpen(true)}
-                  className="lg:hidden touch-manipulation"
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="lg:hidden"
                 >
                   <SlidersHorizontal className="mr-2 h-4 w-4" />
                   Filters
-                  {activeFiltersCount > 0 && (
-                    <span className="ml-1 bg-primary text-primary-foreground text-xs rounded-full px-1.5">
-                      {activeFiltersCount}
-                    </span>
-                  )}
                 </Button>
               )}
               <h2 className="text-lg md:text-xl font-semibold">
