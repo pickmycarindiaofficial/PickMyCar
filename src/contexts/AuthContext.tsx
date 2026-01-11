@@ -341,6 +341,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       sessionStorage.removeItem(SESSION_TOKEN_KEY);
     }
 
+    // Clear customer session tokens
+    sessionStorage.removeItem(CUSTOMER_TOKEN_KEY);
+    sessionStorage.removeItem(CUSTOMER_PHONE_KEY);
+
     // Clear Supabase session
     await supabase.auth.signOut();
 
@@ -351,6 +355,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setRoles([]);
     setStaffSession(null);
     setIsStaffSession(false);
+    setIsCustomerSession(false);
+    setCustomerPhone(null);
+    setIsProfileComplete(true);
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
