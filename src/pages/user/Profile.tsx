@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,13 +6,61 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { User, Phone, Calendar, ArrowLeft } from 'lucide-react';
+import { User, Phone, Calendar, ArrowLeft, Loader2 } from 'lucide-react';
 import { ROLE_LABELS } from '@/types/auth';
 import { Navbar } from '@/components/layout/Navbar';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Profile() {
   const navigate = useNavigate();
   const { profile, roles } = useAuth();
+  const { toast } = useToast();
+
+  const [fullName, setFullName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Initialize form values when profile loads
+  useEffect(() => {
+    if (profile) {
+      setFullName(profile.full_name || '');
+      setPhoneNumber(profile.phone_number || '');
+    }
+  }, [profile]);
+
+  const handleSave = async () => {
+    if (!profile?.id) return;
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: fullName,
+          phone_number: phoneNumber,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', profile.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Profile updated',
+        description: 'Your changes have been saved successfully.',
+      });
+
+      // Profile will be refreshed on next page load
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update profile',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const getInitials = (name: string) => {
     return name
@@ -99,7 +148,8 @@ export default function Profile() {
                   <Label htmlFor="fullName">Full Name</Label>
                   <Input
                     id="fullName"
-                    value={profile?.full_name || ''}
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
                     placeholder="Enter your full name"
                   />
                 </div>
@@ -110,7 +160,8 @@ export default function Profile() {
                     <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="phone"
-                      value={profile?.phone_number || ''}
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
                       placeholder="Enter your phone number"
                       className="pl-10"
                     />
@@ -121,8 +172,8 @@ export default function Profile() {
                   <Label>Account Status</Label>
                   <div className="flex items-center gap-2 h-10">
                     <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${profile?.is_active
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-red-100 text-red-700'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-red-100 text-red-700'
                       }`}>
                       {profile?.is_active ? 'Active' : 'Inactive'}
                     </span>
@@ -143,8 +194,11 @@ export default function Profile() {
               </div>
 
               <div className="flex gap-4 pt-4">
-                <Button>Save Changes</Button>
-                <Button variant="outline">Cancel</Button>
+                <Button onClick={handleSave} disabled={isSaving}>
+                  {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </Button>
+                <Button variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
               </div>
             </CardContent>
           </Card>
