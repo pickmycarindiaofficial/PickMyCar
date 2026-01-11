@@ -3,6 +3,10 @@ import { X, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Filters } from '@/types';
+import { useBrands } from '@/hooks/useBrands';
+import { useBodyTypes } from '@/hooks/useBodyTypes';
+import { useFuelTypes } from '@/hooks/useFuelTypes';
+import { useYears, useTransmissions } from '@/hooks/useTypes';
 
 interface MobileFilterDrawerProps {
     isOpen: boolean;
@@ -17,9 +21,10 @@ interface FilterSectionProps {
     title: string;
     children: React.ReactNode;
     defaultOpen?: boolean;
+    isLoading?: boolean;
 }
 
-const FilterSection = memo(({ title, children, defaultOpen = true }: FilterSectionProps) => {
+const FilterSection = memo(({ title, children, defaultOpen = true, isLoading = false }: FilterSectionProps) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
 
     return (
@@ -37,7 +42,15 @@ const FilterSection = memo(({ title, children, defaultOpen = true }: FilterSecti
             </button>
             {isOpen && (
                 <div className="px-4 pb-4">
-                    {children}
+                    {isLoading ? (
+                        <div className="flex gap-2 flex-wrap">
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={i} className="h-10 w-20 bg-muted animate-pulse rounded-full" />
+                            ))}
+                        </div>
+                    ) : (
+                        children
+                    )}
                 </div>
             )}
         </div>
@@ -68,12 +81,6 @@ const FilterChip = memo(({
 
 FilterChip.displayName = 'FilterChip';
 
-const brands = ['Maruti Suzuki', 'Hyundai', 'Tata', 'Honda', 'Toyota', 'Mahindra', 'Kia'];
-const years = ['2023 & above', '2021 & above', '2019 & above', '2017 & above', '2015 & above'];
-const fuelTypes = ['Petrol', 'Diesel', 'CNG', 'Electric', 'Hybrid'];
-const bodyTypes = ['Hatchback', 'Sedan', 'SUV', 'MUV', 'Coupe'];
-const transmissions = ['Automatic', 'Manual'];
-
 export const MobileFilterDrawer = memo(({
     isOpen,
     onClose,
@@ -82,6 +89,13 @@ export const MobileFilterDrawer = memo(({
     onClearAll,
     carCount,
 }: MobileFilterDrawerProps) => {
+    // Fetch real data from database
+    const { data: brands = [], isLoading: brandsLoading } = useBrands();
+    const { data: bodyTypes = [], isLoading: bodyTypesLoading } = useBodyTypes();
+    const { data: fuelTypes = [], isLoading: fuelTypesLoading } = useFuelTypes();
+    const { data: years = [], isLoading: yearsLoading } = useYears();
+    const { data: transmissions = [], isLoading: transmissionsLoading } = useTransmissions();
+
     // Get active filter tags
     const getActiveTags = useCallback(() => {
         const tags: { label: string; key: keyof Filters; value: any }[] = [];
@@ -106,6 +120,11 @@ export const MobileFilterDrawer = memo(({
                 tags.push({ label: f, key: 'fuelTypes', value: f });
             });
         }
+        if (filters.bodyTypes.length > 0) {
+            filters.bodyTypes.forEach(b => {
+                tags.push({ label: b, key: 'bodyTypes', value: b });
+            });
+        }
 
         return tags;
     }, [filters]);
@@ -127,6 +146,13 @@ export const MobileFilterDrawer = memo(({
     if (!isOpen) return null;
 
     const activeTags = getActiveTags();
+
+    // Filter only active items from database
+    const activeBrands = brands.filter((b: any) => b.is_active !== false);
+    const activeBodyTypes = bodyTypes.filter((b: any) => b.is_active !== false);
+    const activeFuelTypes = fuelTypes.filter((f: any) => f.is_active !== false);
+    const activeYears = years.filter((y: any) => y.is_active !== false);
+    const activeTransmissions = transmissions.filter((t: any) => t.is_active !== false);
 
     return (
         <div className="fixed inset-0 z-50 bg-background md:hidden flex flex-col">
@@ -168,85 +194,82 @@ export const MobileFilterDrawer = memo(({
             {/* Filter Sections - Scrollable */}
             <div className="flex-1 overflow-y-auto pb-20">
                 {/* Brand */}
-                <FilterSection title="Brand" defaultOpen={true}>
+                <FilterSection title="Brand" defaultOpen={true} isLoading={brandsLoading}>
                     <div className="grid grid-cols-2 gap-3">
-                        {brands.map(brand => (
+                        {activeBrands.map((brand: any) => (
                             <label
-                                key={brand}
+                                key={brand.id}
                                 className="flex items-center gap-3 cursor-pointer touch-manipulation"
                             >
-                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${filters.brands.includes(brand) ? 'border-primary bg-primary' : 'border-muted-foreground'
+                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${filters.brands.includes(brand.name) ? 'border-primary bg-primary' : 'border-muted-foreground'
                                     }`}>
-                                    {filters.brands.includes(brand) && (
+                                    {filters.brands.includes(brand.name) && (
                                         <div className="w-2 h-2 rounded-full bg-white" />
                                     )}
                                 </div>
-                                <span className="text-sm">{brand}</span>
+                                <span className="text-sm">{brand.name}</span>
                             </label>
                         ))}
                     </div>
                 </FilterSection>
 
                 {/* Year */}
-                <FilterSection title="Year" defaultOpen={false}>
+                <FilterSection title="Year" defaultOpen={false} isLoading={yearsLoading}>
                     <div className="space-y-3">
-                        {years.map(year => {
-                            const yearValue = year.split(' ')[0];
-                            return (
-                                <label
-                                    key={year}
-                                    className="flex items-center gap-3 cursor-pointer touch-manipulation"
-                                >
-                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${filters.years.includes(yearValue) ? 'border-primary bg-primary' : 'border-muted-foreground'
-                                        }`}>
-                                        {filters.years.includes(yearValue) && (
-                                            <div className="w-2 h-2 rounded-full bg-white" />
-                                        )}
-                                    </div>
-                                    <span className="text-sm">{year}</span>
-                                </label>
-                            );
-                        })}
+                        {activeYears.slice(0, 6).map((year: any) => (
+                            <label
+                                key={year.id}
+                                className="flex items-center gap-3 cursor-pointer touch-manipulation"
+                            >
+                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${filters.years.includes(String(year.year)) ? 'border-primary bg-primary' : 'border-muted-foreground'
+                                    }`}>
+                                    {filters.years.includes(String(year.year)) && (
+                                        <div className="w-2 h-2 rounded-full bg-white" />
+                                    )}
+                                </div>
+                                <span className="text-sm">{year.year} & above</span>
+                            </label>
+                        ))}
                     </div>
                 </FilterSection>
 
                 {/* Fuel Type */}
-                <FilterSection title="Fuel Type" defaultOpen={false}>
+                <FilterSection title="Fuel Type" defaultOpen={false} isLoading={fuelTypesLoading}>
                     <div className="flex flex-wrap gap-2">
-                        {fuelTypes.map(fuel => (
+                        {activeFuelTypes.map((fuel: any) => (
                             <FilterChip
-                                key={fuel}
-                                label={fuel}
-                                isActive={filters.fuelTypes.includes(fuel)}
-                                onClick={() => toggleArrayFilter('fuelTypes', fuel)}
+                                key={fuel.id}
+                                label={fuel.name}
+                                isActive={filters.fuelTypes.includes(fuel.name)}
+                                onClick={() => toggleArrayFilter('fuelTypes', fuel.name)}
                             />
                         ))}
                     </div>
                 </FilterSection>
 
                 {/* Body Type */}
-                <FilterSection title="Body Type" defaultOpen={false}>
+                <FilterSection title="Body Type" defaultOpen={false} isLoading={bodyTypesLoading}>
                     <div className="flex flex-wrap gap-2">
-                        {bodyTypes.map(type => (
+                        {activeBodyTypes.map((type: any) => (
                             <FilterChip
-                                key={type}
-                                label={type}
-                                isActive={filters.bodyTypes.includes(type)}
-                                onClick={() => toggleArrayFilter('bodyTypes', type)}
+                                key={type.id}
+                                label={type.name}
+                                isActive={filters.bodyTypes.includes(type.name)}
+                                onClick={() => toggleArrayFilter('bodyTypes', type.name)}
                             />
                         ))}
                     </div>
                 </FilterSection>
 
                 {/* Transmission */}
-                <FilterSection title="Transmission" defaultOpen={false}>
+                <FilterSection title="Transmission" defaultOpen={false} isLoading={transmissionsLoading}>
                     <div className="flex flex-wrap gap-2">
-                        {transmissions.map(trans => (
+                        {activeTransmissions.map((trans: any) => (
                             <FilterChip
-                                key={trans}
-                                label={trans}
-                                isActive={filters.transmissions.includes(trans)}
-                                onClick={() => toggleArrayFilter('transmissions', trans)}
+                                key={trans.id}
+                                label={trans.name}
+                                isActive={filters.transmissions.includes(trans.name)}
+                                onClick={() => toggleArrayFilter('transmissions', trans.name)}
                             />
                         ))}
                     </div>
