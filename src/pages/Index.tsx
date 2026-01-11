@@ -44,6 +44,7 @@ import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { MobileFilterSheet } from '@/components/filters/MobileFilterSheet';
 import { MobileHomeHeader } from '@/components/home/MobileHomeHeader';
 import { MobileFilterDrawer } from '@/components/home/MobileFilterDrawer';
+import { MobileSortSheet } from '@/components/home/MobileSortSheet';
 
 
 const initialFilters: Filters = {
@@ -89,6 +90,7 @@ const Index = () => {
   const [selectedCarForLoan, setSelectedCarForLoan] = useState<Car | null>(null);
   const [emiCalculatorOpen, setEmiCalculatorOpen] = useState(false);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [mobileSortOpen, setMobileSortOpen] = useState(false);
 
   // Calculate active filters count for mobile badge
   const activeFiltersCount = useMemo(() => {
@@ -658,7 +660,7 @@ const Index = () => {
         cityName={filters.city}
         onSearch={(term) => handleFilterChange({ searchTerm: term })}
         onOpenFilters={() => setMobileFilterOpen(true)}
-        onOpenSort={() => {/* TODO: Add sort modal */ }}
+        onOpenSort={() => setMobileSortOpen(true)}
         onCityChange={(city) => handleFilterChange({ city })}
         onQuickFilterChange={(filterKey, filterValue) => {
           // Handle quick filter changes
@@ -706,6 +708,14 @@ const Index = () => {
         onFilterChange={(key, value) => handleFilterChange({ [key]: value })}
         onClearAll={handleClearAll}
         carCount={filteredCars.length}
+      />
+
+      {/* Mobile Sort Sheet */}
+      <MobileSortSheet
+        isOpen={mobileSortOpen}
+        onClose={() => setMobileSortOpen(false)}
+        value={sortOption}
+        onChange={setSortOption}
       />
 
       {/* Mobile Bottom Navigation */}

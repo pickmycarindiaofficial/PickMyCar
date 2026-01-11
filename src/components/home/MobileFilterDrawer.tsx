@@ -7,6 +7,10 @@ import { useBrands } from '@/hooks/useBrands';
 import { useBodyTypes } from '@/hooks/useBodyTypes';
 import { useFuelTypes } from '@/hooks/useFuelTypes';
 import { useYears, useTransmissions } from '@/hooks/useTypes';
+import { useCities } from '@/hooks/useCities';
+import { useCategories } from '@/hooks/useCategories';
+import { useSeatOptions } from '@/hooks/useSeatOptions';
+import { useOwnerTypes } from '@/hooks/useOwnerTypes';
 
 interface MobileFilterDrawerProps {
     isOpen: boolean;
@@ -81,6 +85,15 @@ const FilterChip = memo(({
 
 FilterChip.displayName = 'FilterChip';
 
+// KMs Driven options
+const kmsOptions = [
+    { value: 'any', label: 'Any' },
+    { value: '0-20000', label: 'Under 20,000 km' },
+    { value: '20000-50000', label: '20,000 - 50,000 km' },
+    { value: '50000-80000', label: '50,000 - 80,000 km' },
+    { value: '80000-+', label: 'Above 80,000 km' },
+];
+
 export const MobileFilterDrawer = memo(({
     isOpen,
     onClose,
@@ -89,50 +102,16 @@ export const MobileFilterDrawer = memo(({
     onClearAll,
     carCount,
 }: MobileFilterDrawerProps) => {
-    // Fetch real data from database
+    // Fetch all filter data from database
     const { data: brands = [], isLoading: brandsLoading } = useBrands();
     const { data: bodyTypes = [], isLoading: bodyTypesLoading } = useBodyTypes();
     const { data: fuelTypes = [], isLoading: fuelTypesLoading } = useFuelTypes();
     const { data: years = [], isLoading: yearsLoading } = useYears();
     const { data: transmissions = [], isLoading: transmissionsLoading } = useTransmissions();
-
-    // Get active filter tags
-    const getActiveTags = useCallback(() => {
-        const tags: { label: string; key: keyof Filters; value: any }[] = [];
-
-        if (filters.years.length > 0) {
-            filters.years.forEach(year => {
-                tags.push({ label: `${year} & above`, key: 'years', value: year });
-            });
-        }
-        if (filters.transmissions.length > 0) {
-            filters.transmissions.forEach(t => {
-                tags.push({ label: t, key: 'transmissions', value: t });
-            });
-        }
-        if (filters.brands.length > 0) {
-            filters.brands.forEach(b => {
-                tags.push({ label: b, key: 'brands', value: b });
-            });
-        }
-        if (filters.fuelTypes.length > 0) {
-            filters.fuelTypes.forEach(f => {
-                tags.push({ label: f, key: 'fuelTypes', value: f });
-            });
-        }
-        if (filters.bodyTypes.length > 0) {
-            filters.bodyTypes.forEach(b => {
-                tags.push({ label: b, key: 'bodyTypes', value: b });
-            });
-        }
-
-        return tags;
-    }, [filters]);
-
-    const removeTag = useCallback((key: keyof Filters, value: any) => {
-        const currentValue = filters[key] as any[];
-        onFilterChange(key, currentValue.filter(v => v !== value));
-    }, [filters, onFilterChange]);
+    const { data: cities = [], isLoading: citiesLoading } = useCities();
+    const { data: categories = [], isLoading: categoriesLoading } = useCategories();
+    const { data: seatOptions = [], isLoading: seatsLoading } = useSeatOptions();
+    const { data: ownerTypes = [], isLoading: ownersLoading } = useOwnerTypes();
 
     const toggleArrayFilter = useCallback((key: keyof Filters, value: any) => {
         const currentValue = filters[key] as any[];
@@ -145,25 +124,24 @@ export const MobileFilterDrawer = memo(({
 
     if (!isOpen) return null;
 
-    const activeTags = getActiveTags();
-
-    // Filter only active items from database
+    // Filter only active items
     const activeBrands = brands.filter((b: any) => b.is_active !== false);
     const activeBodyTypes = bodyTypes.filter((b: any) => b.is_active !== false);
     const activeFuelTypes = fuelTypes.filter((f: any) => f.is_active !== false);
     const activeYears = years.filter((y: any) => y.is_active !== false);
     const activeTransmissions = transmissions.filter((t: any) => t.is_active !== false);
+    const activeCities = cities.filter((c: any) => c.is_active !== false);
+    const activeCategories = categories.filter((c: any) => c.is_active !== false);
+    const activeSeatOptions = seatOptions.filter((s: any) => s.is_active !== false);
+    const activeOwnerTypes = ownerTypes.filter((o: any) => o.is_active !== false);
 
     return (
-        <div className="fixed inset-0 z-50 bg-background md:hidden flex flex-col">
+        <div className="fixed inset-0 z-50 bg-background lg:hidden flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <h2 className="text-lg font-semibold">Filters</h2>
                 <div className="flex items-center gap-4">
-                    <button
-                        onClick={onClearAll}
-                        className="text-primary font-medium text-sm"
-                    >
+                    <button onClick={onClearAll} className="text-primary font-medium text-sm">
                         Reset All
                     </button>
                     <button onClick={onClose} className="p-1">
@@ -172,63 +150,68 @@ export const MobileFilterDrawer = memo(({
                 </div>
             </div>
 
-            {/* Active Filter Tags */}
-            {activeTags.length > 0 && (
-                <div className="px-4 py-3 border-b border-border">
+            {/* Filter Sections - Scrollable */}
+            <div className="flex-1 overflow-y-auto pb-24">
+                {/* City */}
+                <FilterSection title="City" defaultOpen={false} isLoading={citiesLoading}>
                     <div className="flex flex-wrap gap-2">
-                        {activeTags.map((tag, idx) => (
-                            <Badge
-                                key={`${tag.key}-${idx}`}
-                                variant="secondary"
-                                className="px-3 py-1.5 text-sm cursor-pointer"
-                                onClick={() => removeTag(tag.key, tag.value)}
-                            >
-                                {tag.label}
-                                <X className="h-3 w-3 ml-1" />
-                            </Badge>
+                        <FilterChip
+                            label="All Cities"
+                            isActive={filters.city === 'All Cities'}
+                            onClick={() => onFilterChange('city', 'All Cities')}
+                        />
+                        {activeCities.map((city: any) => (
+                            <FilterChip
+                                key={city.id}
+                                label={city.name}
+                                isActive={filters.city === city.name}
+                                onClick={() => onFilterChange('city', city.name)}
+                            />
                         ))}
                     </div>
-                </div>
-            )}
+                </FilterSection>
 
-            {/* Filter Sections - Scrollable */}
-            <div className="flex-1 overflow-y-auto pb-20">
                 {/* Brand */}
                 <FilterSection title="Brand" defaultOpen={true} isLoading={brandsLoading}>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto">
                         {activeBrands.map((brand: any) => (
-                            <label
-                                key={brand.id}
-                                className="flex items-center gap-3 cursor-pointer touch-manipulation"
-                            >
-                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${filters.brands.includes(brand.name) ? 'border-primary bg-primary' : 'border-muted-foreground'
-                                    }`}>
-                                    {filters.brands.includes(brand.name) && (
-                                        <div className="w-2 h-2 rounded-full bg-white" />
-                                    )}
-                                </div>
+                            <label key={brand.id} className="flex items-center gap-3 cursor-pointer touch-manipulation">
+                                <input
+                                    type="checkbox"
+                                    checked={filters.brands.includes(brand.name)}
+                                    onChange={() => toggleArrayFilter('brands', brand.name)}
+                                    className="w-4 h-4 accent-primary"
+                                />
                                 <span className="text-sm">{brand.name}</span>
                             </label>
                         ))}
                     </div>
                 </FilterSection>
 
+                {/* Category */}
+                <FilterSection title="Category" defaultOpen={false} isLoading={categoriesLoading}>
+                    <div className="flex flex-wrap gap-2">
+                        {activeCategories.map((cat: any) => (
+                            <FilterChip
+                                key={cat.id}
+                                label={cat.name}
+                                isActive={filters.categories.includes(cat.name)}
+                                onClick={() => toggleArrayFilter('categories', cat.name)}
+                            />
+                        ))}
+                    </div>
+                </FilterSection>
+
                 {/* Year */}
                 <FilterSection title="Year" defaultOpen={false} isLoading={yearsLoading}>
-                    <div className="space-y-3">
-                        {activeYears.slice(0, 6).map((year: any) => (
-                            <label
+                    <div className="flex flex-wrap gap-2">
+                        {activeYears.slice(0, 8).map((year: any) => (
+                            <FilterChip
                                 key={year.id}
-                                className="flex items-center gap-3 cursor-pointer touch-manipulation"
-                            >
-                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${filters.years.includes(String(year.year)) ? 'border-primary bg-primary' : 'border-muted-foreground'
-                                    }`}>
-                                    {filters.years.includes(String(year.year)) && (
-                                        <div className="w-2 h-2 rounded-full bg-white" />
-                                    )}
-                                </div>
-                                <span className="text-sm">{year.year} & above</span>
-                            </label>
+                                label={String(year.year)}
+                                isActive={filters.years.includes(String(year.year))}
+                                onClick={() => toggleArrayFilter('years', String(year.year))}
+                            />
                         ))}
                     </div>
                 </FilterSection>
@@ -274,16 +257,67 @@ export const MobileFilterDrawer = memo(({
                         ))}
                     </div>
                 </FilterSection>
+
+                {/* KMs Driven */}
+                <FilterSection title="Kms Driven" defaultOpen={false}>
+                    <div className="flex flex-wrap gap-2">
+                        {kmsOptions.map((option) => (
+                            <FilterChip
+                                key={option.value}
+                                label={option.label}
+                                isActive={filters.kmsDriven === option.value}
+                                onClick={() => onFilterChange('kmsDriven', option.value)}
+                            />
+                        ))}
+                    </div>
+                </FilterSection>
+
+                {/* Seats */}
+                <FilterSection title="Seats" defaultOpen={false} isLoading={seatsLoading}>
+                    <div className="flex flex-wrap gap-2">
+                        {activeSeatOptions.map((seat: any) => (
+                            <FilterChip
+                                key={seat.id}
+                                label={`${seat.seats} Seater`}
+                                isActive={filters.seats.includes(String(seat.seats))}
+                                onClick={() => toggleArrayFilter('seats', String(seat.seats))}
+                            />
+                        ))}
+                    </div>
+                </FilterSection>
+
+                {/* Owner Type */}
+                <FilterSection title="Owner" defaultOpen={false} isLoading={ownersLoading}>
+                    <div className="flex flex-wrap gap-2">
+                        {activeOwnerTypes.map((owner: any) => (
+                            <FilterChip
+                                key={owner.id}
+                                label={owner.name}
+                                isActive={filters.owners.includes(owner.name)}
+                                onClick={() => toggleArrayFilter('owners', owner.name)}
+                            />
+                        ))}
+                    </div>
+                </FilterSection>
             </div>
 
-            {/* Fixed Bottom Button */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border md:hidden safe-area-bottom">
-                <Button
-                    onClick={onClose}
-                    className="w-full h-12 text-base font-semibold rounded-full bg-primary"
-                >
-                    Show {carCount} Cars
-                </Button>
+            {/* Fixed Bottom Buttons - Reset All + Apply */}
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border lg:hidden safe-area-bottom">
+                <div className="flex gap-3">
+                    <Button
+                        variant="outline"
+                        onClick={onClearAll}
+                        className="flex-1 h-12 text-base font-semibold rounded-full"
+                    >
+                        Reset All
+                    </Button>
+                    <Button
+                        onClick={onClose}
+                        className="flex-1 h-12 text-base font-semibold rounded-full bg-primary"
+                    >
+                        Apply ({carCount})
+                    </Button>
+                </div>
             </div>
         </div>
     );
