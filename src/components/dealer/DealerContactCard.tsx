@@ -106,6 +106,7 @@ export function DealerContactCard({ dealer, onCallClick, onWhatsAppClick }: Deal
           <div className="pt-3 border-t">
             <div className="text-xs font-medium mb-2">Operating Hours</div>
             <div className="space-y-1 text-xs">
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {Object.entries(dealer.operating_hours).map(([day, hours]: [string, any]) => (
                 <div key={day} className="flex justify-between">
                   <span className="capitalize text-muted-foreground">{day}</span>

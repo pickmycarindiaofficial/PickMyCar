@@ -4,29 +4,30 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { 
-  User, Phone, Mail, MapPin, Calendar, 
-  TrendingUp, Car, Heart, GitCompare, 
+import {
+  User, Phone, Mail, MapPin, Calendar,
+  TrendingUp, Car, Heart, GitCompare,
   Phone as PhoneCall, TestTube, Wallet, Search, AlertCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface UserDetailsDrawerProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   user: any | null;
   onClose: () => void;
 }
 
 export const UserDetailsDrawer = ({ user, onClose }: UserDetailsDrawerProps) => {
   if (!user) return null;
-  
+
   const intentConfig = {
     hot: { icon: '🔥', color: 'bg-red-100 text-red-700 border-red-300', label: 'Hot' },
     warm: { icon: '🌤', color: 'bg-yellow-100 text-yellow-700 border-yellow-300', label: 'Warm' },
     cold: { icon: '❄️', color: 'bg-blue-100 text-blue-700 border-blue-300', label: 'Cold' },
   };
-  
+
   const intent = intentConfig[user.intent as keyof typeof intentConfig] || intentConfig.cold;
-  
+
   return (
     <Sheet open={!!user} onOpenChange={onClose}>
       <SheetContent side="right" className="w-full sm:max-w-[600px]">
@@ -35,47 +36,47 @@ export const UserDetailsDrawer = ({ user, onClose }: UserDetailsDrawerProps) => 
             <SheetTitle className="text-2xl">User Intelligence</SheetTitle>
             <p className="text-muted-foreground">{user.full_name}</p>
           </SheetHeader>
-          
+
           {/* Incomplete Profile Alert */}
           {!user.quiz_completed && (
             <Alert className="bg-amber-50 border-amber-200">
               <AlertCircle className="h-4 w-4 text-amber-600" />
               <AlertTitle className="text-amber-900">Incomplete Profile</AlertTitle>
               <AlertDescription className="text-amber-800">
-                User registered before onboarding quiz was implemented. 
+                User registered before onboarding quiz was implemented.
                 Key preferences like intent, budget, and buying mode are missing.
               </AlertDescription>
             </Alert>
           )}
-          
+
           {/* Profile Information */}
           <div className="space-y-6">
             <Section title="Profile Information">
               <InfoRow icon={<User className="h-4 w-4" />} label="Full Name" value={user.full_name} />
               <InfoRow icon={<Phone className="h-4 w-4" />} label="Phone" value={user.phone_number} />
               <InfoRow icon={<Mail className="h-4 w-4" />} label="Username" value={user.username} />
-              <InfoRow 
-                icon={<Calendar className="h-4 w-4" />} 
-                label="Registered" 
-                value={format(new Date(user.registered_at), 'dd MMM yyyy')} 
+              <InfoRow
+                icon={<Calendar className="h-4 w-4" />}
+                label="Registered"
+                value={format(new Date(user.registered_at), 'dd MMM yyyy')}
               />
-              <InfoRow 
-                icon={<Calendar className="h-4 w-4" />} 
-                label="Last Seen" 
-                value={user.last_seen ? format(new Date(user.last_seen), 'dd MMM yyyy, HH:mm') : 'Never'} 
+              <InfoRow
+                icon={<Calendar className="h-4 w-4" />}
+                label="Last Seen"
+                value={user.last_seen ? format(new Date(user.last_seen), 'dd MMM yyyy, HH:mm') : 'Never'}
               />
-              
+
               {user.city_name && user.city_name !== 'Unknown' && (
-                <InfoRow 
-                  icon={<MapPin className="h-4 w-4" />} 
-                  label="Location" 
+                <InfoRow
+                  icon={<MapPin className="h-4 w-4" />}
+                  label="Location"
                   value={`${user.city_name}${user.state_name && user.state_name !== 'Unknown' ? `, ${user.state_name}` : ''}`}
                 />
               )}
             </Section>
-            
+
             <Separator />
-            
+
             {/* Buying Intent */}
             <Section title="Buying Intent">
               <div className="flex items-center gap-2 mb-4">
@@ -89,39 +90,38 @@ export const UserDetailsDrawer = ({ user, onClose }: UserDetailsDrawerProps) => 
                   </Badge>
                 )}
               </div>
-              
+
               <div className="space-y-3">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Engagement Score</p>
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full transition-all ${
-                          user.engagement_score >= 70 ? 'bg-green-500' : 
-                          user.engagement_score >= 40 ? 'bg-yellow-500' : 'bg-red-500'
-                        }`}
+                      <div
+                        className={`h-full transition-all ${user.engagement_score >= 70 ? 'bg-green-500' :
+                            user.engagement_score >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+                          }`}
                         style={{ width: `${Math.min(user.engagement_score, 100)}%` }}
                       />
                     </div>
                     <span className="text-sm font-medium">{user.engagement_score || 0}</span>
                   </div>
                 </div>
-                
+
                 <InfoRow label="Budget" value={user.budget_band || 'Not set'} />
-                <InfoRow 
-                  label="Buying Mode" 
+                <InfoRow
+                  label="Buying Mode"
                   value={
                     user.buying_mode === 'cash' ? '💳 Cash Purchase' :
-                    user.buying_mode === 'loan' ? '🏦 Loan Required' :
-                    user.buying_mode === 'undecided' ? '? Undecided' :
-                    'Not set'
-                  } 
+                      user.buying_mode === 'loan' ? '🏦 Loan Required' :
+                        user.buying_mode === 'undecided' ? '? Undecided' :
+                          'Not set'
+                  }
                 />
               </div>
             </Section>
-            
+
             <Separator />
-            
+
             {/* Preferences */}
             {user.preferred_brands && user.preferred_brands.length > 0 && (
               <>
@@ -135,7 +135,7 @@ export const UserDetailsDrawer = ({ user, onClose }: UserDetailsDrawerProps) => 
                         ))}
                       </div>
                     </div>
-                    
+
                     {user.body_type_affinity && Object.keys(user.body_type_affinity).length > 0 && (
                       <div>
                         <p className="text-sm text-muted-foreground mb-2">Body Types</p>
@@ -148,11 +148,11 @@ export const UserDetailsDrawer = ({ user, onClose }: UserDetailsDrawerProps) => 
                     )}
                   </div>
                 </Section>
-                
+
                 <Separator />
               </>
             )}
-            
+
             {/* Behavioral Data */}
             <Section title="Behavioral Analytics">
               <div className="grid grid-cols-2 gap-4">
@@ -166,9 +166,9 @@ export const UserDetailsDrawer = ({ user, onClose }: UserDetailsDrawerProps) => 
                 <MetricCard icon={<TrendingUp />} label="Sessions" value={user.total_sessions} />
               </div>
             </Section>
-            
+
             <Separator />
-            
+
             {/* Unmet Demand */}
             {user.unmet_demand_note && (
               <>
@@ -177,14 +177,14 @@ export const UserDetailsDrawer = ({ user, onClose }: UserDetailsDrawerProps) => 
                     <div className="flex items-start gap-2 mb-2">
                       <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300">
                         {user.unmet_demand_urgency === 'hot' ? '🔥 Hot' :
-                         user.unmet_demand_urgency === 'warm' ? '🌤 Warm' : '❄️ Cold'}
+                          user.unmet_demand_urgency === 'warm' ? '🌤 Warm' : '❄️ Cold'}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
                         Submitted {format(new Date(user.unmet_demand_submitted_at), 'dd MMM yyyy')}
                       </span>
                     </div>
                     <p className="text-sm mb-3">{user.unmet_demand_note}</p>
-                    
+
                     {user.unmet_demand_specs && (
                       <div className="space-y-2">
                         {user.unmet_demand_specs.body_types?.length > 0 && (
@@ -207,11 +207,11 @@ export const UserDetailsDrawer = ({ user, onClose }: UserDetailsDrawerProps) => 
                     )}
                   </div>
                 </Section>
-                
+
                 <Separator />
               </>
             )}
-            
+
             {/* Actions */}
             <div className="flex flex-col gap-2 pb-6">
               <Button className="w-full">

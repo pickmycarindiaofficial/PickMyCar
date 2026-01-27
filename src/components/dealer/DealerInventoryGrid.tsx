@@ -36,14 +36,17 @@ export function DealerInventoryGrid({ dealerId }: DealerInventoryGridProps) {
 
   const { data: listings, isLoading } = useDealerListingsWithFilters(dealerId, filters);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleFilterChange = (key: string, value: any) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   // Get saved car IDs
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const savedCarIds = (savedCars || []).map((item: any) => item.car_listing_id);
 
   // Transform listing data to Car interface
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const transformedCars: Car[] = (listings || []).map((listing: any) => ({
     id: listing.id,
     title: `${listing.brand_name || ''} ${listing.model_name || ''} ${listing.variant || ''}`.trim(),
@@ -74,6 +77,7 @@ export function DealerInventoryGrid({ dealerId }: DealerInventoryGridProps) {
 
   // Extract unique brands for filter
   const uniqueBrands = Array.from(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     new Set(listings?.map((listing: any) => listing.brand_name).filter(Boolean))
   ) as string[];
 
@@ -122,6 +126,7 @@ export function DealerInventoryGrid({ dealerId }: DealerInventoryGridProps) {
     onClearFilters,
   }: {
     filters: FilterOptions;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onFilterChange: (key: string, value: any) => void;
     uniqueBrands: string[];
     onClearFilters: () => void;
@@ -129,8 +134,8 @@ export function DealerInventoryGrid({ dealerId }: DealerInventoryGridProps) {
     <div className="space-y-4">
       <div>
         <Label className="text-sm font-medium mb-2 block">Brand</Label>
-        <Select 
-          value={filters.brands?.[0] || 'all'} 
+        <Select
+          value={filters.brands?.[0] || 'all'}
           onValueChange={(value) => onFilterChange('brands', value === 'all' ? [] : [value])}
         >
           <SelectTrigger className="bg-[#2664eb] text-white border-[#2664eb]">
@@ -184,19 +189,19 @@ export function DealerInventoryGrid({ dealerId }: DealerInventoryGridProps) {
 
   return (
     <div className="space-y-4">
-      <ShareDialog 
-        car={carToShare} 
-        open={shareDialogOpen} 
+      <ShareDialog
+        car={carToShare}
+        open={shareDialogOpen}
         onOpenChange={setShareDialogOpen}
         source="dealer"
       />
-      
+
       {/* Header with Sort and Filter */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h2 className="text-xl font-semibold">
           Available Cars ({listings?.length || 0})
         </h2>
-        
+
         <div className="flex gap-2">
           {/* Sort Dropdown */}
           <Select
@@ -223,8 +228,8 @@ export function DealerInventoryGrid({ dealerId }: DealerInventoryGridProps) {
                 <Filter className="w-4 h-4 mr-2" />
                 Filter
                 {activeFilterCount > 0 && (
-                  <Badge 
-                    variant="destructive" 
+                  <Badge
+                    variant="destructive"
                     className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
                   >
                     {activeFilterCount}
@@ -232,8 +237,8 @@ export function DealerInventoryGrid({ dealerId }: DealerInventoryGridProps) {
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent 
-              className="w-80 p-4" 
+            <PopoverContent
+              className="w-80 p-4"
               align="end"
               sideOffset={8}
             >
@@ -270,8 +275,8 @@ export function DealerInventoryGrid({ dealerId }: DealerInventoryGridProps) {
       ) : (
         <div className="text-center py-12 text-muted-foreground">
           <p>No cars available matching your filters.</p>
-          <Button 
-            variant="link" 
+          <Button
+            variant="link"
             onClick={() => {
               setFilters({ sortBy: 'recent', brands: [] });
               setFilterOpen(false);

@@ -51,6 +51,7 @@ export function DocumentUploadField({
         title: 'Document uploaded',
         description: 'Your document has been uploaded successfully',
       });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast({
         title: 'Upload failed',

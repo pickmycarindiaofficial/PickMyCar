@@ -106,6 +106,7 @@ export function OnboardingModal({ isOpen, phoneNumber, onComplete }: OnboardingM
 
         try {
             // Update or create customer profile
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { error } = await (supabase as any)
                 .from('customer_profiles')
                 .upsert({
@@ -120,6 +121,7 @@ export function OnboardingModal({ isOpen, phoneNumber, onComplete }: OnboardingM
 
             toast.success('Welcome to PickMyCar!');
             onComplete();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error('Profile update error:', error);
             toast.error(error.message || 'Failed to save profile');
