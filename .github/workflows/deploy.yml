@@ -26,9 +26,9 @@ jobs:
       - name: Build Project
         run: |
           npm run build
-          # Rename the non-dot file to the correct .htaccess
-          mv dist/htaccess dist/.htaccess || cp public/htaccess dist/.htaccess
-          # Verify it exists
+          # Explicitly copy the production htaccess to .htaccess for deployment
+          cp public/htaccess_production dist/.htaccess
+          # Verify file exists
           ls -la dist/
         env:
           # If you have environment variables in .env, you might need to add them here 
