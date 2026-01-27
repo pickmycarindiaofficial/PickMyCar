@@ -26,8 +26,8 @@ jobs:
       - name: Build Project
         run: |
           npm run build
-          # Explicitly copy the production htaccess to .htaccess for deployment
-          cp public/htaccess_production dist/.htaccess
+          # explicit copy disabled for zero-config test
+          # cp public/htaccess_production dist/.htaccess
           # Verify file exists
           ls -la dist/
         env:
