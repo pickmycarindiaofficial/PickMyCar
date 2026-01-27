@@ -13,18 +13,19 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === "development" && componentTagger(),
-    // Gzip compression for production
+    // Temporarily disabled for production debugging
+    /*
     mode === "production" && compression({
       algorithm: 'gzip',
       ext: '.gz',
-      threshold: 1024, // Only compress files > 1KB
+      threshold: 1024,
     }),
-    // Brotli compression for modern browsers
     mode === "production" && compression({
       algorithm: 'brotliCompress',
       ext: '.br',
       threshold: 1024,
     }),
+    */
   ].filter(Boolean),
   resolve: {
     alias: {
