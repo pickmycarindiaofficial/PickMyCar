@@ -47,12 +47,12 @@ jobs:
           local-dir: ./dist/
           dangerous-clean-slate: false
 
-      - name: Deploy to httpdocs (Windows/Plesk)
+      - name: Deploy to FTP Root (./)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ./httpdocs/
+          server-dir: ./
           local-dir: ./dist/
           dangerous-clean-slate: false
