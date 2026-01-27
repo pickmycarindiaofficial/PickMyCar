@@ -43,6 +43,6 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ./public_html/ # IMPORTANT: Change this if your site is in a subfolder or different root
+          server-dir: ./
           local-dir: ./dist/
           dangerous-clean-slate: false # Set to true to delete files on server that aren't in dist (use with caution)
