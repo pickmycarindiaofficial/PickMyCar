@@ -24,7 +24,9 @@ jobs:
         run: npm ci
 
       - name: Build Project
-        run: npm run build
+        run: |
+          npm run build
+          cp public/.htaccess dist/.htaccess
         env:
           # If you have environment variables in .env, you might need to add them here 
           # mapping them to GitHub Secrets, e.g.:
