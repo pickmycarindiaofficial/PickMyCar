@@ -12,6 +12,7 @@ interface Recommendation {
   match_score: number;
   reasoning: string;
   why_good_fit?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   car: any;
 }
 

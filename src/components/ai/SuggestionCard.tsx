@@ -38,6 +38,7 @@ export function SuggestionCard({ suggestion, onAct, onDismiss }: SuggestionCardP
         <div className="flex items-start justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               <Badge variant={priorityColors[suggestion.priority] as any}>
                 {suggestion.priority} priority
               </Badge>
