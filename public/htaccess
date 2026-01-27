@@ -19,4 +19,5 @@ DirectoryIndex index.html
 </IfModule>
 
 # Disable directory listing (Security)
-Options -Indexes
+# Disable directory listing (Security)
+# Options -Indexes
