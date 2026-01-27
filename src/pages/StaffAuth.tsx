@@ -19,7 +19,7 @@ import {
   getStaffByUsername,
 } from '@/hooks/useStaffAccounts';
 
-const STAFF_ROLES: AppRole[] = ['dealer', 'sales', 'finance', 'inspection', 'website_manager'];
+const STAFF_ROLES: AppRole[] = ['sales', 'finance', 'inspection', 'website_manager'];
 
 const StaffAuth = () => {
   const [searchParams] = useSearchParams();
@@ -32,7 +32,7 @@ const StaffAuth = () => {
   // Login State
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<AppRole>('dealer');
+  const [selectedRole, setSelectedRole] = useState<AppRole>('sales');
   const [showPassword, setShowPassword] = useState(false);
 
   // Signup State
@@ -40,7 +40,7 @@ const StaffAuth = () => {
   const [signupPassword, setSignupPassword] = useState('');
   const [signupPhone, setSignupPhone] = useState('');
   const [signupFullName, setSignupFullName] = useState('');
-  const [signupRole, setSignupRole] = useState<AppRole>('dealer');
+  const [signupRole, setSignupRole] = useState<AppRole>('sales');
   const [showSignupPassword, setShowSignupPassword] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -278,6 +278,14 @@ const StaffAuth = () => {
                     className="w-full text-sm text-muted-foreground"
                   >
                     ← Back to Customer Login
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="link"
+                    onClick={() => navigate('/dealer/login')}
+                    className="w-full text-sm text-emerald-600"
+                  >
+                    Dealer Login (OTP) →
                   </Button>
                   <Button
                     type="button"

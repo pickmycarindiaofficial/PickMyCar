@@ -23,7 +23,6 @@ export function CreateDealerDialog({ open, onOpenChange }: CreateDealerDialogPro
     email: '',
     phone_number: '',
     username: '',
-    password: '',
     business_type: '',
     gst_number: '',
     pan_number: '',
@@ -39,7 +38,7 @@ export function CreateDealerDialog({ open, onOpenChange }: CreateDealerDialogPro
   const { mutate: createDealer, isPending } = useCreateDealer();
 
   const handleSubmit = () => {
-    if (!formData.dealership_name || !formData.owner_name || !formData.email || !formData.phone_number || !formData.username || !formData.password || !formData.plan_id) {
+    if (!formData.dealership_name || !formData.owner_name || !formData.phone_number || !formData.username || !formData.plan_id || !formData.city_id) {
       toast({
         title: 'Missing Information',
         description: 'Please fill in all required fields',
@@ -49,10 +48,10 @@ export function CreateDealerDialog({ open, onOpenChange }: CreateDealerDialogPro
     }
 
     createDealer(formData, {
-      onSuccess: () => {
+      onSuccess: (result) => {
         toast({
-          title: 'Dealer Created',
-          description: 'Dealer account has been created successfully. Credentials will be sent via email.',
+          title: 'Dealer Created Successfully!',
+          description: `Username: ${formData.username}. Dealer can login at /dealer/login with WhatsApp OTP.`,
         });
         onOpenChange(false);
         setStep(1);
@@ -62,7 +61,6 @@ export function CreateDealerDialog({ open, onOpenChange }: CreateDealerDialogPro
           email: '',
           phone_number: '',
           username: '',
-          password: '',
           business_type: '',
           gst_number: '',
           pan_number: '',
@@ -82,6 +80,7 @@ export function CreateDealerDialog({ open, onOpenChange }: CreateDealerDialogPro
       },
     });
   };
+
 
   const renderStep = () => {
     switch (step) {
@@ -133,16 +132,9 @@ export function CreateDealerDialog({ open, onOpenChange }: CreateDealerDialogPro
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 placeholder="dealer123"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password *</Label>
-              <Input
-                id="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Secure password"
-              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Dealer will login with this username + WhatsApp OTP (no password needed)
+              </p>
             </div>
           </div>
         );
@@ -188,7 +180,7 @@ export function CreateDealerDialog({ open, onOpenChange }: CreateDealerDialogPro
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="city_id">City</Label>
+                <Label htmlFor="city_id">City *</Label>
                 <Select value={formData.city_id} onValueChange={(value) => setFormData({ ...formData, city_id: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select city" />

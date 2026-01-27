@@ -71,9 +71,9 @@ function SortableImage({ image, index, onRemove }: SortableImageProps) {
 
   const compressionSavings = image.originalSize
     ? {
-        saved: image.originalSize - image.size,
-        percent: Math.round(((image.originalSize - image.size) / image.originalSize) * 100),
-      }
+      saved: image.originalSize - image.size,
+      percent: Math.round(((image.originalSize - image.size) / image.originalSize) * 100),
+    }
     : null;
 
   return (
@@ -190,8 +190,27 @@ export function ImageUploader({
       setUploadProgress(0);
 
       try {
+        // Check for Supabase auth user first
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+
+        // Also check for dealer token (dealers use custom auth)
+        const dealerToken = localStorage.getItem('dealer_token');
+        const dealerInfoStr = localStorage.getItem('dealer_info');
+
+        // Determine user ID for upload
+        let uploadUserId: string;
+
+        if (user) {
+          uploadUserId = user.id;
+        } else if (dealerToken && dealerInfoStr) {
+          try {
+            const dealerInfo = JSON.parse(dealerInfoStr);
+            uploadUserId = dealerInfo.id;
+          } catch {
+            toast.error('Please log in to upload images');
+            return;
+          }
+        } else {
           toast.error('Please log in to upload images');
           return;
         }
@@ -200,7 +219,7 @@ export function ImageUploader({
           setUploadProgress((prev) => Math.min(prev + 10, 90));
         }, 200);
 
-        const uploadedImages = await uploadCarImages(validFiles, user.id);
+        const uploadedImages = await uploadCarImages(validFiles, uploadUserId);
 
         clearInterval(progressInterval);
         setUploadProgress(100);
@@ -288,18 +307,18 @@ export function ImageUploader({
             uploading && 'pointer-events-none opacity-50'
           )}
         >
-      <input
-        type="file"
-        id="image-upload"
-        ref={fileInputRef}
-        className="hidden"
-        multiple
-        accept="image/*"
-        onChange={(e) => handleFiles(e.target.files)}
-        disabled={uploading}
-      />
+          <input
+            type="file"
+            id="image-upload"
+            ref={fileInputRef}
+            className="hidden"
+            multiple
+            accept="image/*"
+            onChange={(e) => handleFiles(e.target.files)}
+            disabled={uploading}
+          />
 
-          <div 
+          <div
             className="cursor-pointer flex flex-col items-center gap-3"
             onClick={() => !uploading && document.getElementById('image-upload')?.click()}
           >
@@ -320,9 +339,9 @@ export function ImageUploader({
             </div>
 
             {!uploading && (
-              <Button 
-                type="button" 
-                size="sm" 
+              <Button
+                type="button"
+                size="sm"
                 variant="outline"
                 onClick={(e) => {
                   e.preventDefault();

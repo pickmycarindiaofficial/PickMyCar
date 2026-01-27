@@ -1,0 +1,43 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  web-deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get latest code
+        uses: actions/checkout@v4
+      
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Project
+        run: npm run build
+        env:
+          # If you have environment variables in .env, you might need to add them here 
+          # mapping them to GitHub Secrets, e.g.:
+          # VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          # VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          CI: false
+
+      - name: Sync files to hosting
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ./public_html/ # IMPORTANT: Change this if your site is in a subfolder or different root
+          local-dir: ./dist/
+          dangerous-clean-slate: false # Set to true to delete files on server that aren't in dist (use with caution)

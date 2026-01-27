@@ -68,7 +68,7 @@ const initialFilters: Filters = {
 
 const Index = () => {
   const navigate = useNavigate();
-  const { user, hasRole } = useAuth();
+  const { user, hasRole, roles } = useAuth();
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [shortlistedIds, setShortlistedIds] = useState<string[]>([]);
@@ -448,7 +448,7 @@ const Index = () => {
         platformUrl = `https://wa.me/?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`;
         break;
       case 'facebook':
-        platformUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+        platformUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareText)}`;
         break;
       case 'instagram':
         navigator.clipboard.writeText(shareUrl);
@@ -564,15 +564,18 @@ const Index = () => {
     }
   }, [savedCars]);
 
-  // Onboarding for first-time users
+  // Onboarding for first-time users - CUSTOMERS ONLY
   useEffect(() => {
-    if (user && !localStorage.getItem('onboarding_complete')) {
+    const dashboardRoles = ['powerdesk', 'website_manager', 'dealer', 'sales', 'finance', 'inspection'];
+    const hasDashboardAccess = roles.some(role => dashboardRoles.includes(role));
+
+    if (user && !hasDashboardAccess && !localStorage.getItem('onboarding_complete')) {
       const timer = setTimeout(() => {
         setShowOnboarding(true);
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [user]);
+  }, [user, roles]);
 
   const selectedCar = selectedCarId ? allCars.find(car => car.id === selectedCarId) : null;
   const { data: dealerProfile, isLoading: isDealerLoading } = useDealerProfile(selectedCar?.dealerId);

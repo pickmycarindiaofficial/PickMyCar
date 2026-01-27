@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase-client';
 import { toast } from 'sonner';
-import { CarListing, CarListingInput, CarListingWithRelations } from '@/types/car-listing';
+import { CarListing, CarListingInput, CarListingWithRelations, ListingStatus, SellerType } from '@/types/car-listing';
 
 export interface ListingFilters {
   status?: string;
@@ -28,8 +28,11 @@ export function useCarListings(filters?: ListingFilters, options?: { enabled?: b
   return useQuery({
     queryKey: ['car-listings', filters],
     queryFn: async () => {
-      // Verify session exists
+      // Verify session exists - for OTP dealers, we don't need a Supabase session
       const { data: { session } } = await supabase.auth.getSession();
+
+      // Get current dealer ID if not powerdesk
+      let currentDealerId = filters?.seller_id;
 
       // Pagination settings
       const pageSize = filters?.pageSize || 20;
@@ -37,25 +40,10 @@ export function useCarListings(filters?: ListingFilters, options?: { enabled?: b
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
+      // Optimize SELECT: Use the high-performance VIEW
       let query = supabase
-        .from('car_listings')
-        .select(`
-
-          *,
-          brand:brands(id,name,logo_url),
-          model:models(id,name),
-          fuel_type:fuel_types(id,name),
-          transmission:transmissions(id,name),
-          body_type:body_types(id,name),
-          owner_type:owner_types(id,name),
-          city:cities(id,name,state),
-          category:car_categories(id,name,badge_color),
-          seller:profiles!car_listings_seller_id_fkey(id,username,full_name,phone_number),
-          car_listing_features(
-            id,
-            features(id, name, category, icon)
-          )
-        `, { count: 'exact' })
+        .from('car_listings_detailed' as any)
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(from, to);
 
@@ -78,9 +66,27 @@ export function useCarListings(filters?: ListingFilters, options?: { enabled?: b
 
       if (error) throw error;
 
+      // Map back to the structure expected by the frontend (Robust safety checks)
+      const mappedData = (data as any[] || []).map(item => ({
+        ...item,
+        brand: item.brand_id ? { id: item.brand_id, name: item.brand_name, logo_url: item.brand_logo_url } : null,
+        model: item.model_id ? { id: item.model_id, name: item.model_name } : null,
+        fuel_type: item.fuel_type_id ? { id: item.fuel_type_id, name: item.fuel_type_name } : null,
+        transmission: item.transmission_id ? { id: item.transmission_id, name: item.transmission_name } : null,
+        body_type: item.body_type_id ? { id: item.body_type_id, name: item.body_type_name } : null,
+        owner_type: item.owner_type_id ? { id: item.owner_type_id, name: item.owner_type_name } : null,
+        city: item.city_id ? { id: item.city_id, name: item.city_name, state: item.city_state } : null,
+        category: item.category_id ? { id: item.category_id, name: item.category_name, badge_color: item.category_badge_color } : null,
+        seller: {
+          id: item.seller_id,
+          username: '',
+          full_name: item.unified_seller_name || 'N/A',
+          phone_number: item.unified_seller_phone || ''
+        },
+      }));
 
       return {
-        data: data as unknown as CarListingWithRelations[],
+        data: mappedData as unknown as CarListingWithRelations[],
         count: count || 0,
         page,
         pageSize,
@@ -99,24 +105,31 @@ export function useCarListing(id: string) {
     queryKey: ['car-listing', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('car_listings')
-        .select(`
-          *,
-          brand:brands(id,name,logo_url),
-          model:models(id,name),
-          fuel_type:fuel_types(id,name),
-          transmission:transmissions(id,name),
-          body_type:body_types(id,name),
-          owner_type:owner_types(id,name),
-          city:cities(id,name,state),
-          category:car_categories(id,name,badge_color),
-          seller:profiles!car_listings_seller_id_fkey(id,username,full_name,phone_number)
-        `)
+        .from('car_listings_detailed' as any)
+        .select('*')
         .eq('id', id)
         .single();
 
       if (error) throw error;
-      return data as unknown as CarListingWithRelations;
+
+      const item: any = data;
+      return {
+        ...item,
+        brand: { id: item.brand_id, name: item.brand_name, logo_url: item.brand_logo_url },
+        model: { id: item.model_id, name: item.model_name },
+        fuel_type: { id: item.fuel_type_id, name: item.fuel_type_name },
+        transmission: { id: item.transmission_id, name: item.transmission_name },
+        body_type: { id: item.body_type_id, name: item.body_type_name },
+        owner_type: { id: item.owner_type_id, name: item.owner_type_name },
+        city: { id: item.city_id, name: item.city_name, state: item.city_state },
+        category: { id: item.category_id, name: item.category_name, badge_color: item.category_badge_color },
+        seller: {
+          id: item.seller_id,
+          username: '',
+          full_name: item.unified_seller_name,
+          phone_number: item.unified_seller_phone
+        },
+      } as unknown as CarListingWithRelations;
     },
     enabled: !!id,
   });
@@ -128,34 +141,67 @@ export function useCreateCarListing() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (listing: CarListingInput) => {
+      // Check Supabase Auth first
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
 
-      const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', user.id);
-      const isDealer = roles?.some((r: any) => r.role === 'dealer');
+      // For OTP dealers, check localStorage
+      let sellerId = user?.id;
+      let isOtpDealer = false;
+
+      if (!sellerId) {
+        try {
+          const dealerInfoStr = localStorage.getItem('dealer_info');
+          if (dealerInfoStr) {
+            const dealerInfo = JSON.parse(dealerInfoStr);
+            sellerId = dealerInfo.id;
+            isOtpDealer = true;
+          }
+        } catch (e) {
+          console.error('Error parsing dealer info:', e);
+        }
+      }
+
+      if (!sellerId) {
+        throw new Error('User not authenticated');
+      }
+
+      // Check if dealer (either Supabase auth or OTP)
+      let isDealer = isOtpDealer;
+
+      if (!isOtpDealer && user) {
+        const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', user.id);
+        isDealer = roles?.some((r: any) => r.role === 'dealer') || false;
+      }
 
       let status: ListingStatus = 'pending_verification';
       let published_at = null;
 
       if (isDealer && listing.seller_type === 'dealer') {
-        const { data: canCreate } = await supabase.rpc('can_dealer_create_listing', {
-          dealer_uuid: user.id
-        });
-        if (!canCreate) {
-          throw new Error('Listing limit reached. Please upgrade your plan.');
+        // For OTP dealers, use dealer_accounts RPC or check differently
+        if (isOtpDealer) {
+          // OTP dealers can create listings directly
+          status = 'live';
+          published_at = new Date().toISOString();
+        } else {
+          const { data: canCreate } = await supabase.rpc('can_dealer_create_listing', {
+            dealer_uuid: sellerId
+          });
+          if (!canCreate) {
+            throw new Error('Listing limit reached. Please upgrade your plan.');
+          }
+          status = 'live';
+          published_at = new Date().toISOString();
         }
-        status = 'live';
-        published_at = new Date().toISOString();
       }
 
       const { data, error } = await supabase
         .from('car_listings')
         .insert([{
           ...listing,
-          seller_id: user.id,
+          seller_id: sellerId,
           status,
           published_at
-        }])
+        } as any])
         .select()
         .single();
 
@@ -179,7 +225,7 @@ export function useUpdateCarListing() {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<CarListing> & { id: string }) => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('car_listings')
         .update(updates)
         .eq('id', id)
@@ -239,12 +285,63 @@ export function useDeleteCarListing() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
+      // 1. Fetch listing to get image URLs
+      const { data: listing, error: fetchError } = await supabase
+        .from('car_listings')
+        .select('photos')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching listing before delete:', fetchError);
+        // We proceed to delete anyway if we can't fetch, to avoid getting stuck
+      }
+
+      // 2. Delete images from storage if they exist
+      if (listing?.photos && Array.isArray(listing.photos)) {
+        const pathsToRemove: string[] = [];
+
+        listing.photos.forEach((photo: any) => {
+          // Helper to extract path from public URL
+          const extractPath = (url: string) => {
+            if (!url) return null;
+            // Matches anything after /car-listings/
+            const match = url.match(/\/car-listings\/(.+)/);
+            return match ? match[1] : null;
+          };
+
+          const largePath = extractPath(photo.url);
+          const mediumPath = extractPath(photo.medium_url);
+          const thumbPath = extractPath(photo.thumbnail_url);
+
+          if (largePath) pathsToRemove.push(largePath);
+          if (mediumPath) pathsToRemove.push(mediumPath);
+          if (thumbPath) pathsToRemove.push(thumbPath);
+        });
+
+        if (pathsToRemove.length > 0) {
+          const { error: storageError } = await supabase.storage
+            .from('car-listings')
+            .remove(pathsToRemove);
+
+          if (storageError) {
+            console.error('Error deleting images from storage:', storageError);
+            // Non-blocking error
+          }
+        }
+      }
+
+      // 3. Delete the listing record
       const { error } = await supabase.from('car_listings').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
+      // Invalidate everything to ensure immediate reflection
       queryClient.invalidateQueries({ queryKey: ['car-listings'] });
-      toast.success('Deleted!');
+      queryClient.invalidateQueries({ queryKey: ['car-listing-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['my-car-listings'] });
+      queryClient.invalidateQueries({ queryKey: ['dealer-listings'] });
+      toast.success('Listing and images deleted successfully');
     },
     onError: (error: Error) => {
       toast.error(`Failed: ${error.message}`);
@@ -324,8 +421,8 @@ export function useCarListingStats(filters?: Omit<ListingFilters, 'page' | 'page
     queryKey: ['car-listing-stats', filters],
     queryFn: async () => {
       let query = supabase
-        .from('car_listings')
-        .select('status', { count: 'exact' });
+        .from('car_listings_detailed' as any)
+        .select('status');
 
       // Apply same filters as main query (except pagination)
       if (filters?.status) query = query.eq('status', filters.status as any);

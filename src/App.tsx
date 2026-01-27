@@ -25,6 +25,7 @@ const Auth = lazy(() => import("@/pages/Auth"));
 const CustomerAuth = lazy(() => import("@/pages/CustomerAuth"));
 const StaffAuth = lazy(() => import("@/pages/StaffAuth"));
 const AdminAuth = lazy(() => import("@/pages/AdminAuth"));
+const DealerLogin = lazy(() => import("@/pages/dealer/DealerLogin"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const DealerProfile = lazy(() => import("@/pages/DealerProfile"));
 const DealerRegistration = lazy(() => import("@/pages/DealerRegistration"));
@@ -122,6 +123,9 @@ const App = () => (
                     <Route path="/car/:carId" element={<CarDetailRoute />} />
                     <Route path="/dealer/:dealerId" element={<DealerProfile />} />
                     <Route path="/loan-upload/:token" element={<LoanDocumentUpload />} />
+
+                    {/* Dealer Login - Separate from staff login */}
+                    <Route path="/dealer/login" element={<DealerLogin />} />
 
                     {/* Customer/User Routes - NOT in dashboard */}
                     <Route

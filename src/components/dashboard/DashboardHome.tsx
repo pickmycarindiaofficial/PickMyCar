@@ -3,16 +3,37 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StatsCard } from '@/components/common/StatsCard';
-import { 
+import {
   Users, Car, MessageSquare, TrendingUp, DollarSign, Activity,
-  Settings, Database, FileText, BarChart3, ArrowRight
+  Settings, Database, FileText, BarChart3, ArrowRight, Loader2
 } from 'lucide-react';
 import { ROLE_LABELS } from '@/types/auth';
+import { useDealerDashboardStats } from '@/hooks/useDealerDashboardStats';
+import { useMemo } from 'react';
 
 export function DashboardHome() {
-  const { profile, roles } = useAuth();
+  const { profile, roles, user } = useAuth();
   const navigate = useNavigate();
   const primaryRole = roles[0] || 'user';
+  const isDealer = primaryRole === 'dealer';
+
+  // Get dealer ID from localStorage for dealer sessions
+  const dealerId = useMemo(() => {
+    if (!isDealer) return null;
+    try {
+      const dealerInfoStr = localStorage.getItem('dealer_info');
+      if (dealerInfoStr) {
+        const dealerInfo = JSON.parse(dealerInfoStr);
+        return dealerInfo.id;
+      }
+    } catch (e) {
+      console.error('Error parsing dealer info:', e);
+    }
+    return user?.id || null;
+  }, [isDealer, user?.id]);
+
+  // Fetch real dealer dashboard stats
+  const { data: dealerStats, isLoading: isLoadingStats } = useDealerDashboardStats(dealerId);
 
   // Role-specific quick actions
   const quickActions = {
@@ -77,10 +98,10 @@ export function DashboardHome() {
       { title: 'Conversion Rate', value: '3.2%', icon: DollarSign, trend: { value: '+0.4%', isPositive: true } },
     ],
     dealer: [
-      { title: 'My Cars', value: '45', icon: Car, trend: { value: '+5', isPositive: true } },
-      { title: 'Active Leads', value: '23', icon: Users, trend: { value: '+8', isPositive: true } },
-      { title: 'This Month Sales', value: '12', icon: DollarSign, trend: { value: '+4', isPositive: true } },
-      { title: 'Pending Inspections', value: '7', icon: Activity, trend: { value: '+2', isPositive: true } },
+      { title: 'My Cars', value: isLoadingStats ? '...' : String(dealerStats?.myCars ?? 0), icon: Car, trend: { value: '+5', isPositive: true } },
+      { title: 'Active Leads', value: isLoadingStats ? '...' : String(dealerStats?.activeLeads ?? 0), icon: Users, trend: { value: '+8', isPositive: true } },
+      { title: 'This Month Sales', value: isLoadingStats ? '...' : String(dealerStats?.thisMonthSales ?? 0), icon: DollarSign, trend: { value: '+4', isPositive: true } },
+      { title: 'Pending Inspections', value: isLoadingStats ? '...' : String(dealerStats?.pendingInspections ?? 0), icon: Activity, trend: { value: '+2', isPositive: true } },
     ],
     sales: [
       { title: 'Active Leads', value: '67', icon: Users, trend: { value: '+12', isPositive: true } },
@@ -109,7 +130,6 @@ export function DashboardHome() {
   };
 
   const roleMetrics = metrics[primaryRole] || metrics.user;
-  const isDealer = primaryRole === 'dealer';
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -173,29 +193,29 @@ export function DashboardHome() {
                   textAlign: 'left'
                 }}
               >
-                <div 
+                <div
                   className="h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ 
-                    backgroundColor: index === 0 
-                      ? 'hsl(var(--dealer-accent-primary) / 0.15)' 
-                      : index === 1 
-                      ? 'hsl(var(--dealer-accent-green) / 0.15)' 
-                      : index === 2
-                      ? 'hsl(var(--dealer-accent-purple) / 0.15)'
-                      : 'hsl(var(--dealer-accent-orange) / 0.15)'
+                  style={{
+                    backgroundColor: index === 0
+                      ? 'hsl(var(--dealer-accent-primary) / 0.15)'
+                      : index === 1
+                        ? 'hsl(var(--dealer-accent-green) / 0.15)'
+                        : index === 2
+                          ? 'hsl(var(--dealer-accent-purple) / 0.15)'
+                          : 'hsl(var(--dealer-accent-orange) / 0.15)'
                   }}
                 >
-                  <action.icon 
-                    className="h-5 w-5" 
-                    style={{ 
-                      color: index === 0 
-                        ? 'hsl(var(--dealer-accent-primary))' 
-                        : index === 1 
-                        ? 'hsl(var(--dealer-accent-green))' 
-                        : index === 2
-                        ? 'hsl(var(--dealer-accent-purple))'
-                        : 'hsl(var(--dealer-accent-orange))' 
-                    }} 
+                  <action.icon
+                    className="h-5 w-5"
+                    style={{
+                      color: index === 0
+                        ? 'hsl(var(--dealer-accent-primary))'
+                        : index === 1
+                          ? 'hsl(var(--dealer-accent-green))'
+                          : index === 2
+                            ? 'hsl(var(--dealer-accent-purple))'
+                            : 'hsl(var(--dealer-accent-orange))'
+                    }}
                   />
                 </div>
                 <span className="text-sm font-medium" style={{ color: 'hsl(var(--dealer-text-primary))' }}>
@@ -236,8 +256,8 @@ export function DashboardHome() {
       )}
 
       {/* Recent Activity */}
-      <Card 
-        className="shadow-sm" 
+      <Card
+        className="shadow-sm"
         style={isDealer ? {
           borderRadius: '12px',
           border: '1px solid hsl(var(--dealer-border-light))'
@@ -250,22 +270,47 @@ export function DashboardHome() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {[1, 2, 3].map((_, index) => (
-              <div key={index} className="flex items-center gap-3 pb-3 border-b last:border-b-0" style={isDealer ? { borderColor: 'hsl(var(--dealer-border-light))' } : undefined}>
-                <div 
-                  className="h-2 w-2 rounded-full" 
-                  style={{ backgroundColor: isDealer ? 'hsl(var(--dealer-accent-green))' : 'hsl(var(--primary))' }}
-                />
-                <div className="flex-1">
-                  <p className="text-sm font-medium" style={isDealer ? { color: 'hsl(var(--dealer-text-primary))' } : undefined}>
-                    Activity item {index + 1}
-                  </p>
-                  <p className="text-xs" style={isDealer ? { color: 'hsl(var(--dealer-text-secondary))' } : undefined}>
-                    2 hours ago
-                  </p>
-                </div>
+            {isDealer && isLoadingStats ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
-            ))}
+            ) : isDealer && dealerStats?.recentActivity && dealerStats.recentActivity.length > 0 ? (
+              dealerStats.recentActivity.map((activity, index) => (
+                <div key={activity.id} className="flex items-center gap-3 pb-3 border-b last:border-b-0" style={isDealer ? { borderColor: 'hsl(var(--dealer-border-light))' } : undefined}>
+                  <div
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: activity.type === 'enquiry' ? 'hsl(var(--dealer-accent-green))' : 'hsl(var(--dealer-accent-primary))' }}
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium" style={isDealer ? { color: 'hsl(var(--dealer-text-primary))' } : undefined}>
+                      {activity.title}
+                    </p>
+                    <p className="text-xs" style={isDealer ? { color: 'hsl(var(--dealer-text-secondary))' } : undefined}>
+                      {activity.timeAgo}
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : isDealer ? (
+              <p className="text-sm text-muted-foreground py-2">No recent activity</p>
+            ) : (
+              [1, 2, 3].map((_, index) => (
+                <div key={index} className="flex items-center gap-3 pb-3 border-b last:border-b-0">
+                  <div
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: 'hsl(var(--primary))' }}
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">
+                      Activity item {index + 1}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      2 hours ago
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

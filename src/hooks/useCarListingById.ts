@@ -25,10 +25,10 @@ export function useCarListingById(carId: string | undefined) {
           )
         `)
         .eq('id', carId)
-        .eq('status', 'live')
         .single();
 
       if (error) throw error;
+      return data;
       return data;
     },
     enabled: !!carId,

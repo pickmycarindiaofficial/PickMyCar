@@ -9,9 +9,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MoreHorizontal, Eye, Edit, Trash, CheckCircle, Power, PowerOff, DollarSign, Phone } from 'lucide-react';
-import { 
-  useUpdateListingStatus, 
-  useVerifyCarListing, 
+import {
+  useUpdateListingStatus,
+  useVerifyCarListing,
   useDeleteCarListing,
   useActivateCarListing,
   useDeactivateCarListing,
@@ -123,7 +123,7 @@ export function CarListingsTable({ data, onEdit, onViewDetails }: CarListingsTab
   };
 
   const handleViewDetails = (id: string) => {
-    navigate(`/car-detail/${id}`);
+    navigate(`/car/${id}`);
   };
 
   const columns: ColumnDef<CarListingWithRelations>[] = [
@@ -266,10 +266,10 @@ export function CarListingsTable({ data, onEdit, onViewDetails }: CarListingsTab
         const listing = row.original;
         return (
           <div className="flex items-center gap-1">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
-              onClick={() => handleViewDetails(listing.id)}
+              onClick={() => onViewDetails ? onViewDetails(listing) : handleViewDetails(listing.id)}
               className="h-8"
             >
               <Eye className="h-4 w-4 mr-1" />
@@ -288,7 +288,7 @@ export function CarListingsTable({ data, onEdit, onViewDetails }: CarListingsTab
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
-                
+
                 {/* Status Management Actions */}
                 {listing.status !== 'live' && listing.status !== 'sold' && (
                   <DropdownMenuItem onClick={() => handleActivate(listing.id)}>
@@ -333,7 +333,7 @@ export function CarListingsTable({ data, onEdit, onViewDetails }: CarListingsTab
                     )}
                   </>
                 )}
-                
+
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => {
@@ -356,7 +356,7 @@ export function CarListingsTable({ data, onEdit, onViewDetails }: CarListingsTab
   return (
     <>
       <DataTable columns={columns} data={data} />
-      
+
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>

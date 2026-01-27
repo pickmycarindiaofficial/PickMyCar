@@ -7,6 +7,8 @@ import { AppRole, UserProfile } from '@/types/auth';
 const SESSION_TOKEN_KEY = 'pmc_staff_token';
 const CUSTOMER_TOKEN_KEY = 'pmc_customer_token';
 const CUSTOMER_PHONE_KEY = 'pmc_customer_phone';
+const DEALER_TOKEN_KEY = 'dealer_token';
+const DEALER_INFO_KEY = 'dealer_info';
 
 interface StaffSessionData {
   staffId: string;
@@ -188,6 +190,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
+    // Check for dealer session (stored in localStorage by DealerLogin)
+    const checkDealerSession = async () => {
+      const dealerToken = localStorage.getItem(DEALER_TOKEN_KEY);
+      const dealerInfoStr = localStorage.getItem(DEALER_INFO_KEY);
+
+      if (dealerToken && dealerInfoStr) {
+        try {
+          const dealerInfo = JSON.parse(dealerInfoStr);
+          console.log('[AuthContext] Found dealer session:', dealerInfo.dealership_name);
+
+          // Create mock user for dealer
+          const mockUser = {
+            id: dealerInfo.id,
+            email: `${dealerInfo.username}@dealer.pickmycar.in`,
+            user_metadata: {
+              is_dealer: true,
+              dealership_name: dealerInfo.dealership_name,
+              owner_name: dealerInfo.owner_name,
+            },
+          } as unknown as User;
+
+          setUser(mockUser);
+          setRoles(['dealer' as AppRole]);
+          setProfile({
+            id: dealerInfo.id,
+            username: dealerInfo.username,
+            full_name: dealerInfo.owner_name,
+          } as unknown as UserProfile);
+          setLoading(false);
+          return true;
+        } catch (e) {
+          console.error('[AuthContext] Error parsing dealer info:', e);
+          localStorage.removeItem(DEALER_TOKEN_KEY);
+          localStorage.removeItem(DEALER_INFO_KEY);
+        }
+      }
+      return false;
+    };
+
     // Check for customer session token first
     const checkCustomerSession = async () => {
       const customerToken = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
@@ -257,10 +298,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session.user);
         fetchUserData(session.user.id);
       } else {
-        // No Supabase session - check customer session first, then staff
-        const hasCustomerSession = await checkCustomerSession();
-        if (!hasCustomerSession) {
-          validateStaffSession().finally(() => setLoading(false));
+        // No Supabase session - check dealer, then customer, then staff
+        const hasDealerSession = await checkDealerSession();
+        if (!hasDealerSession) {
+          const hasCustomerSession = await checkCustomerSession();
+          if (!hasCustomerSession) {
+            validateStaffSession().finally(() => setLoading(false));
+          }
         }
       }
     });
@@ -344,6 +388,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Clear customer session tokens
     sessionStorage.removeItem(CUSTOMER_TOKEN_KEY);
     sessionStorage.removeItem(CUSTOMER_PHONE_KEY);
+
+    // Clear dealer session tokens
+    localStorage.removeItem(DEALER_TOKEN_KEY);
+    localStorage.removeItem(DEALER_INFO_KEY);
 
     // Clear Supabase session
     await supabase.auth.signOut();

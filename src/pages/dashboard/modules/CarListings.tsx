@@ -55,9 +55,22 @@ export default function CarListings() {
     // CRITICAL: For dealers, ALWAYS filter by their own user ID
     if (!isPowerDesk) {
       filters.seller_type = 'dealer';
-      // ALWAYS filter by logged-in dealer's own ID
-      if (user?.id) {
-        filters.seller_id = user.id;
+      // Get current dealer ID (handles both Supabase Auth and OTP)
+      let currentDealerId = user?.id;
+      if (!currentDealerId) {
+        try {
+          const dealerInfoStr = localStorage.getItem('dealer_info');
+          if (dealerInfoStr) {
+            const dealerInfo = JSON.parse(dealerInfoStr);
+            currentDealerId = dealerInfo.id;
+          }
+        } catch (e) {
+          console.error('Error parsing dealer info:', e);
+        }
+      }
+
+      if (currentDealerId) {
+        filters.seller_id = currentDealerId;
       }
     } else {
       // PowerDesk can filter by seller type
@@ -91,8 +104,21 @@ export default function CarListings() {
     // CRITICAL: For dealers, ALWAYS filter by their own user ID
     if (!isPowerDesk) {
       filters.seller_type = 'dealer';
-      if (user?.id) {
-        filters.seller_id = user.id;
+      let currentDealerId = user?.id;
+      if (!currentDealerId) {
+        try {
+          const dealerInfoStr = localStorage.getItem('dealer_info');
+          if (dealerInfoStr) {
+            const dealerInfo = JSON.parse(dealerInfoStr);
+            currentDealerId = dealerInfo.id;
+          }
+        } catch (e) {
+          console.error('Error parsing dealer info:', e);
+        }
+      }
+
+      if (currentDealerId) {
+        filters.seller_id = currentDealerId;
       }
     } else {
       if (sellerTypeFilter !== 'all') {
@@ -282,7 +308,7 @@ export default function CarListings() {
                 <CarListingsTable
                   data={listings}
                   onEdit={handleEditListing}
-                  onViewDetails={(listing) => navigate(`/car-detail/${listing.id}`)}
+                  onViewDetails={(listing) => navigate(`/car/${listing.id}`)}
                 />
                 {totalPages > 1 && (
                   <div className="mt-4">
@@ -325,7 +351,7 @@ export default function CarListings() {
                   <CarListingsTable
                     data={listings}
                     onEdit={handleEditListing}
-                    onViewDetails={(listing) => navigate(`/car-detail/${listing.id}`)}
+                    onViewDetails={(listing) => navigate(`/car/${listing.id}`)}
                   />
                   {totalPages > 1 && (
                     <div className="mt-4">

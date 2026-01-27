@@ -35,7 +35,22 @@ export default function DealerProfileInfo() {
   const { user, roles } = useAuth();
 
   // Determine which dealer ID to use
-  const dealerId = roles?.includes('powerdesk') ? paramDealerId : user?.id;
+  // For PowerDesk: use URL param
+  // For dealers: check localStorage first (OTP login), then user.id (Supabase auth)
+  let dealerId = roles?.includes('powerdesk') ? paramDealerId : user?.id;
+
+  // For dealer OTP sessions, get ID from localStorage
+  if (!dealerId && roles?.includes('dealer')) {
+    try {
+      const dealerInfoStr = localStorage.getItem('dealer_info');
+      if (dealerInfoStr) {
+        const dealerInfo = JSON.parse(dealerInfoStr);
+        dealerId = dealerInfo.id;
+      }
+    } catch (e) {
+      console.error('Error parsing dealer info:', e);
+    }
+  }
 
   const { data: profile, isLoading } = useDealerProfileManagement(dealerId);
   const updateProfile = useUpdateDealerProfile(dealerId);

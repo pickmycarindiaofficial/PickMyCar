@@ -61,16 +61,18 @@ export const CarDetailPage = ({
 
   useEffect(() => {
     // Track funnel 'interest' stage when detail page loads
-    trackFunnel.mutate({
-      stage: 'interest',
-      car_id: car.id,
-      dealer_id: dealer.id,
-      meta: {
-        arrived_from: document.referrer,
-        car_price: car.price,
-      }
-    });
-  }, [car.id]);
+    if (car?.id && dealer?.id) {
+      trackFunnel.mutate({
+        stage: 'interest',
+        car_id: car.id,
+        dealer_id: dealer.id,
+        meta: {
+          arrived_from: document.referrer,
+          car_price: car.price,
+        }
+      });
+    }
+  }, [car?.id, dealer?.id]);
 
   const allImages = useMemo(() => {
     const images = [car.imageUrl];
@@ -123,7 +125,7 @@ export const CarDetailPage = ({
         onSearch={onSearchSubmit}
         onBack={onBack}
         showBackButton
-        title={`${car.brand} ${car.model}`}
+        title={car ? `${car.brand} ${car.model}` : 'Car Details'}
       />
 
       <div className="container mx-auto px-4 py-6">

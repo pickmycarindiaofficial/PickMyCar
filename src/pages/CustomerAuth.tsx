@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, ArrowLeft, Smartphone, Shield, Car, CheckCircle2 } from 'lucide-react';
 import logoImage from '@/assets/logo.png';
@@ -12,16 +13,35 @@ const CustomerAuth = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const { user, loading, roles } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState('');
   const [verificationId, setVerificationId] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
 
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (!loading && user) {
+      // Check if user has staff/dealer roles - redirect to dashboard
+      const hasStaffRole = roles.some(role =>
+        ['powerdesk', 'website_manager', 'dealer', 'sales', 'finance', 'inspection'].includes(role)
+      );
+
+      if (hasStaffRole) {
+        navigate('/dashboard/home', { replace: true });
+      } else {
+        // Regular customer - redirect to home or returnTo
+        const returnTo = searchParams.get('returnTo') || '/';
+        navigate(returnTo, { replace: true });
+      }
+    }
+  }, [user, loading, roles, navigate, searchParams]);
+
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setIsLoading(true);
 
     try {
       if (!/^[6-9]\d{9}$/.test(phoneNumber)) {
@@ -30,7 +50,7 @@ const CustomerAuth = () => {
           description: 'Please enter a valid 10-digit Indian mobile number',
           variant: 'destructive',
         });
-        setLoading(false);
+        setIsLoading(false);
         return;
       }
 
@@ -57,13 +77,13 @@ const CustomerAuth = () => {
         variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setIsLoading(true);
 
     try {
       const { data, error } = await supabase.functions.invoke('verify-whatsapp-otp', {
@@ -104,7 +124,7 @@ const CustomerAuth = () => {
         variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -212,7 +232,7 @@ const CustomerAuth = () => {
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
                       maxLength={10}
-                      disabled={loading}
+                      disabled={isLoading}
                       className="h-12 rounded-xl text-lg"
                       required
                     />
@@ -225,9 +245,9 @@ const CustomerAuth = () => {
                 <Button
                   type="submit"
                   className="w-full h-12 rounded-xl text-base font-semibold bg-gradient-to-r from-[#236ceb] to-[#4b8cf5] hover:from-[#1e5bc9] hover:to-[#3a7de3] shadow-lg"
-                  disabled={loading || phoneNumber.length !== 10}
+                  disabled={isLoading || phoneNumber.length !== 10}
                 >
-                  {loading ? (
+                  {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                       Sending OTP...
@@ -283,7 +303,7 @@ const CustomerAuth = () => {
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     maxLength={6}
-                    disabled={loading}
+                    disabled={isLoading}
                     className="h-14 rounded-xl text-center text-2xl tracking-[0.5em] font-mono"
                     required
                   />
@@ -292,9 +312,9 @@ const CustomerAuth = () => {
                 <Button
                   type="submit"
                   className="w-full h-12 rounded-xl text-base font-semibold bg-gradient-to-r from-[#236ceb] to-[#4b8cf5] hover:from-[#1e5bc9] hover:to-[#3a7de3] shadow-lg"
-                  disabled={loading || otp.length !== 6}
+                  disabled={isLoading || otp.length !== 6}
                 >
-                  {loading ? (
+                  {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                       Verifying...
@@ -309,7 +329,7 @@ const CustomerAuth = () => {
                   variant="ghost"
                   className="w-full"
                   onClick={handleSendOTP}
-                  disabled={loading}
+                  disabled={isLoading}
                 >
                   Didn't receive code? Resend OTP
                 </Button>

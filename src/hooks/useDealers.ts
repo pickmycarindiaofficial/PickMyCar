@@ -1,71 +1,125 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase-client';
-import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
+// Dealer type for backwards compatibility with existing components
 export interface Dealer {
   id: string;
-  full_name: string;
   username: string;
-  is_pickmycar: boolean;
-}
-
-export interface DealerDetails {
-  id: string;
-  full_name: string;
-  username: string;
-  email: string;
-  phone_number: string | null;
-  is_active: boolean;
+  phone_number: string;
   dealership_name: string;
+  owner_name: string;
+  full_name: string; // Mapped from owner_name for backwards compatibility
+  email: string | null;
   business_type: string | null;
   gst_number: string | null;
   pan_number: string | null;
-  address: string;
+  address: string | null;
   city_id: string | null;
-  city_name: string | null;
-  state: string;
-  pincode: string;
-  gst_certificate_url: string | null;
-  pan_card_url: string | null;
-  shop_registration_url: string | null;
-  subscription: {
-    is_active: boolean;
-    plan_name: string;
-    listing_limit: number;
-    featured_ads_limit: number;
-    listings_remaining: number;
-    featured_ads_remaining: number;
-    ends_at: string | null;
-  } | null;
+  state: string | null;
+  pincode: string | null;
+  plan_id: string | null;
+  subscription_status: string;
+  subscription_starts_at: string;
+  subscription_ends_at: string;
+  is_active: boolean;
+  is_pickmycar?: boolean; // For display purposes
+  last_login_at: string | null;
+  created_at: string;
 }
 
+// Fetch all dealers with their subscription info
 export function useDealers() {
   return useQuery({
     queryKey: ['dealers'],
-    queryFn: async () => {
-      // @ts-ignore
-      const { data, error } = await supabase.rpc('get_dealers_list');
-      
-      if (error) {
-        console.error('Error fetching dealers:', error);
-        throw error;
+    queryFn: async (): Promise<Dealer[]> => {
+      try {
+        console.log('[useDealers] Fetching dealers from dealer_accounts...');
+
+        // Get dealers from the new dealer_accounts table
+        const { data, error } = await supabase
+          .from('dealer_accounts')
+          .select(`
+            id,
+            username,
+            phone_number,
+            dealership_name,
+            owner_name,
+            email,
+            business_type,
+            gst_number,
+            pan_number,
+            address,
+            city_id,
+            state,
+            pincode,
+            plan_id,
+            subscription_status,
+            subscription_starts_at,
+            subscription_ends_at,
+            is_active,
+            last_login_at,
+            created_at
+          `)
+          .order('created_at', { ascending: false });
+
+        console.log('[useDealers] Raw response:', { data, error });
+
+        if (error) {
+          // If table doesn't exist yet, return empty array instead of crashing
+          if (error.code === '42P01' || error.message?.includes('does not exist')) {
+            console.warn('[useDealers] dealer_accounts table not found. Please run dealer_system_schema.sql');
+            return [];
+          }
+          console.error('[useDealers] Error fetching dealers:', error);
+          return []; // Return empty array instead of throwing
+        }
+
+        // Map data to include full_name for backwards compatibility
+        const result = (data || []).map((dealer: any) => ({
+          ...dealer,
+          full_name: dealer.owner_name || dealer.dealership_name,
+          is_pickmycar: false, // All are independent dealers
+        }));
+
+        console.log('[useDealers] Mapped result:', result);
+        return result;
+      } catch (err) {
+        console.error('[useDealers] Unexpected error:', err);
+        return [];
       }
-      
-      return ((data || []) as any[]).map(d => ({
-        ...d,
-        is_pickmycar: d.is_pickmycar || false
-      })) as Dealer[];
     },
   });
 }
 
+
+
+// Get a single dealer's details
+export function useDealerDetails(dealerId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['dealer-details', dealerId],
+    queryFn: async () => {
+      if (!dealerId) return null;
+
+      const { data, error } = await supabase
+        .from('dealer_accounts')
+        .select('*')
+        .eq('id', dealerId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!dealerId,
+  });
+}
+
+// Interface for creating a dealer
 interface CreateDealerData {
+  username: string;
+  phone_number: string;
   dealership_name: string;
   owner_name: string;
-  email: string;
-  phone_number: string;
-  username: string;
-  password: string;
+  email?: string;
   business_type?: string;
   gst_number?: string;
   pan_number?: string;
@@ -73,250 +127,159 @@ interface CreateDealerData {
   city_id?: string;
   state?: string;
   pincode?: string;
-  plan_id: string;
+  plan_id?: string;
 }
 
+// Create dealer using new Edge Function
 export function useCreateDealer() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (data: CreateDealerData) => {
-      // First, create the auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            username: data.username,
-            full_name: data.owner_name,
-            phone_number: data.phone_number,
-            role: 'dealer',
-          },
-        },
-      });
+      // Get staff session from localStorage (can be staff_session or admin)
+      const staffSessionStr = localStorage.getItem('staff_session');
+      let staffId: string | null = null;
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create user');
+      if (staffSessionStr) {
+        try {
+          const staffSession = JSON.parse(staffSessionStr);
+          staffId = staffSession.staffId;
+        } catch (e) {
+          console.warn('Error parsing staff session:', e);
+        }
+      }
 
-      // Create dealer profile
-      // @ts-ignore - dealer_profiles table not in types yet
-      const { error: profileError } = await supabase.from('dealer_profiles').insert({
-        id: authData.user.id,
-        dealership_name: data.dealership_name,
-        business_type: data.business_type,
-        gst_number: data.gst_number,
-        pan_number: data.pan_number,
-        address: data.address,
-        city_id: data.city_id,
-        state: data.state,
-        pincode: data.pincode,
-        is_documents_verified: true,
-      } as any);
+      // For development/testing - try direct insert if no Edge Function
+      // This will work once dealer_system_schema.sql is run
+      try {
+        const { data: result, error } = await supabase.rpc('create_dealer_account', {
+          p_username: data.username,
+          p_phone_number: data.phone_number,
+          p_dealership_name: data.dealership_name,
+          p_owner_name: data.owner_name,
+          p_email: data.email || null,
+          p_business_type: data.business_type || null,
+          p_gst_number: data.gst_number || null,
+          p_pan_number: data.pan_number || null,
+          p_address: data.address || null,
+          p_city_id: data.city_id || null,
+          p_state: data.state || null,
+          p_pincode: data.pincode || null,
+          p_plan_id: data.plan_id || null,
+          p_created_by: staffId,
+        });
 
-      if (profileError) throw profileError;
+        if (error) {
+          // If the function doesn't exist, table might not be created yet
+          if (error.message?.includes('does not exist')) {
+            throw new Error('Database not initialized. Please run dealer_system_schema.sql in Supabase SQL Editor first.');
+          }
+          throw new Error(error.message);
+        }
 
-      // Create subscription
-      const startsAt = new Date();
-      const endsAt = new Date();
-      endsAt.setMonth(endsAt.getMonth() + 1);
-
-      // @ts-ignore - dealer_subscriptions table not in types yet
-      const { error: subError } = await supabase.from('dealer_subscriptions').insert({
-        dealer_id: authData.user.id,
-        plan_id: data.plan_id,
-        status: 'active',
-        starts_at: startsAt.toISOString(),
-        ends_at: endsAt.toISOString(),
-        manually_activated: true,
-      } as any);
-
-      if (subError) throw subError;
-
-      return authData.user;
+        return { success: true, dealer_id: result };
+      } catch (rpcError: any) {
+        console.error('RPC error:', rpcError);
+        throw new Error(rpcError.message || 'Failed to create dealer account');
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dealers'] });
-      queryClient.invalidateQueries({ queryKey: ['dealer-applications'] });
     },
   });
 }
 
-export function useDealerDetails(dealerId: string | null | undefined) {
+
+// Update dealer status
+export function useUpdateDealerStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ dealerId, isActive }: { dealerId: string; isActive: boolean }) => {
+      const { error } = await supabase
+        .from('dealer_accounts')
+        .update({ is_active: isActive, updated_at: new Date().toISOString() })
+        .eq('id', dealerId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dealers'] });
+    },
+  });
+}
+
+// Get subscription plans
+export function useSubscriptionPlans() {
   return useQuery({
-    queryKey: ['dealer-details', dealerId],
+    queryKey: ['subscription-plans'],
     queryFn: async () => {
-      if (!dealerId) return null;
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .order('price', { ascending: true });
 
-      // @ts-ignore - profiles table not in generated types
-      const { data: profile, error: profileError } = await supabase
-        // @ts-ignore
-        .from('profiles')
-        .select('id, full_name, username, phone_number, is_active')
-        .eq('id', dealerId)
-        .maybeSingle();
-
-      if (profileError) throw profileError;
-      if (!profile) return null;
-
-      // @ts-ignore - dealer_profiles table not in generated types
-      const { data: dealerProfile, error: dealerError } = await supabase
-        // @ts-ignore
-        .from('dealer_profiles')
-        .select(`
-          dealership_name,
-          business_type,
-          gst_number,
-          pan_number,
-          address,
-          city_id,
-          state,
-          pincode,
-          gst_certificate_url,
-          pan_card_url,
-          shop_registration_url,
-          cities:city_id (name)
-        `)
-        .eq('id', dealerId)
-        .maybeSingle();
-
-      if (dealerError) throw dealerError;
-
-      // @ts-ignore
-      const { data: subscriptionData } = await supabase.rpc('get_dealer_subscription_info', {
-        dealer_uuid: dealerId,
-      });
-
-      // @ts-ignore - Type assertion for complete object
-      const result: DealerDetails = {
-        // @ts-ignore
-        id: profile.id,
-        // @ts-ignore
-        full_name: profile.full_name,
-        // @ts-ignore
-        username: profile.username,
-        // @ts-ignore
-        email: profile.email || '',
-        // @ts-ignore
-        phone_number: profile.phone_number,
-        // @ts-ignore
-        is_active: profile.is_active,
-        // @ts-ignore
-        dealership_name: dealerProfile?.dealership_name || '',
-        // @ts-ignore
-        business_type: dealerProfile?.business_type || null,
-        // @ts-ignore
-        gst_number: dealerProfile?.gst_number || null,
-        // @ts-ignore
-        pan_number: dealerProfile?.pan_number || null,
-        // @ts-ignore
-        address: dealerProfile?.address || '',
-        // @ts-ignore
-        city_id: dealerProfile?.city_id || null,
-        // @ts-ignore
-        city_name: dealerProfile?.cities?.name || null,
-        // @ts-ignore
-        state: dealerProfile?.state || '',
-        // @ts-ignore
-        pincode: dealerProfile?.pincode || '',
-        // @ts-ignore
-        gst_certificate_url: dealerProfile?.gst_certificate_url || null,
-        // @ts-ignore
-        pan_card_url: dealerProfile?.pan_card_url || null,
-        // @ts-ignore
-        shop_registration_url: dealerProfile?.shop_registration_url || null,
-        subscription: subscriptionData && subscriptionData[0] ? {
-          is_active: subscriptionData[0].has_active_subscription || false,
-          plan_name: subscriptionData[0].plan_name || '',
-          listing_limit: subscriptionData[0].listing_limit || 0,
-          featured_ads_limit: subscriptionData[0].featured_limit || 0,
-          listings_remaining: subscriptionData[0].listings_remaining || 0,
-          featured_ads_remaining: subscriptionData[0].featured_remaining || 0,
-          ends_at: subscriptionData[0].subscription_ends_at || null
-        } : null,
-      };
-
-      return result;
+      if (error) throw error;
+      return data || [];
     },
-    enabled: !!dealerId,
   });
 }
 
+// Update dealer profile
 export function useUpdateDealerProfile() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ dealerId, data }: { dealerId: string; data: any }) => {
-      // @ts-ignore - profiles table not in generated types
-      const { error: profileError } = await supabase
-        // @ts-ignore
-        .from('profiles')
-        // @ts-ignore
+    mutationFn: async ({ dealerId, updates }: { dealerId: string; updates: Partial<Dealer> }) => {
+      const { error } = await supabase
+        .from('dealer_accounts')
         .update({
-          full_name: data.full_name,
-          phone_number: data.phone_number,
+          ...updates,
+          updated_at: new Date().toISOString()
         })
         .eq('id', dealerId);
 
-      if (profileError) throw profileError;
-
-      // @ts-ignore - dealer_profiles table not in generated types
-      const { error: dealerError } = await supabase
-        // @ts-ignore
-        .from('dealer_profiles')
-        // @ts-ignore
-        .update({
-          dealership_name: data.dealership_name,
-          business_type: data.business_type,
-          gst_number: data.gst_number,
-          pan_number: data.pan_number,
-          address: data.address,
-          city_id: data.city_id,
-          state: data.state,
-          pincode: data.pincode,
-        })
-        .eq('id', dealerId);
-
-      if (dealerError) throw dealerError;
+      if (error) {
+        // If table doesn't exist, just log and return
+        if (error.message?.includes('does not exist')) {
+          console.warn('dealer_accounts table not found');
+          return;
+        }
+        throw error;
+      }
     },
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dealers'] });
-      queryClient.invalidateQueries({ queryKey: ['dealer-details', variables.dealerId] });
+      queryClient.invalidateQueries({ queryKey: ['dealer-details'] });
     },
   });
 }
 
+// Suspend dealer account
 export function useSuspendDealer() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ dealerId, reason }: { dealerId: string; reason: string }) => {
-      // @ts-ignore - profiles table not in generated types
-      const { error: profileError } = await supabase
-        // @ts-ignore
-        .from('profiles')
-        // @ts-ignore
-        .update({ is_active: false })
+    mutationFn: async ({ dealerId, suspended }: { dealerId: string; suspended: boolean }) => {
+      const { error } = await supabase
+        .from('dealer_accounts')
+        .update({
+          is_active: !suspended,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', dealerId);
 
-      if (profileError) throw profileError;
-
-      // @ts-ignore - car_listings table not in generated types
-      const { error: listingsError } = await supabase
-        // @ts-ignore
-        .from('car_listings')
-        // @ts-ignore
-        .update({ status: 'inactive' })
-        .eq('seller_id', dealerId)
-        .eq('status', 'live');
-
-      if (listingsError) console.error('Error deactivating listings:', listingsError);
+      if (error) {
+        if (error.message?.includes('does not exist')) {
+          console.warn('dealer_accounts table not found');
+          return;
+        }
+        throw error;
+      }
     },
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dealers'] });
-      queryClient.invalidateQueries({ queryKey: ['dealer-details', variables.dealerId] });
-      queryClient.invalidateQueries({ queryKey: ['dealer-listings', variables.dealerId] });
+      queryClient.invalidateQueries({ queryKey: ['dealer-details'] });
     },
   });
 }

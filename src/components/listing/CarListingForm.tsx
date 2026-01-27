@@ -81,9 +81,21 @@ export function CarListingForm({
   const { data: subscription } = useDealerSubscription();
 
   // Fetch current dealer's profile to auto-load city
-  const { data: currentDealerProfile } = useDealerProfile(
-    isDealer && user?.id ? user.id : null
-  );
+  // For OTP dealers, also check localStorage for dealer ID
+  let currentDealerId = isDealer && user?.id ? user.id : null;
+  if (!currentDealerId && isDealer) {
+    try {
+      const dealerInfoStr = localStorage.getItem('dealer_info');
+      if (dealerInfoStr) {
+        const dealerInfo = JSON.parse(dealerInfoStr);
+        currentDealerId = dealerInfo.id;
+      }
+    } catch (e) {
+      console.error('Error parsing dealer info:', e);
+    }
+  }
+
+  const { data: currentDealerProfile } = useDealerProfile(currentDealerId);
 
   // Fetch selected dealer's profile for PowerDesk
   const { data: selectedDealerProfile } = useDealerProfile(

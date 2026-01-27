@@ -82,6 +82,40 @@ export function useDealerProfile(dealerId: string | null | undefined) {
           } as DealerProfile;
         }
 
+        // Fallback: Try dealer_accounts for OTP dealers
+        const { data: dealerAccountData } = await (supabase as any)
+          .from('dealer_accounts')
+          .select(`
+            id,
+            owner_name,
+            dealership_name,
+            phone_number,
+            city_id,
+            state,
+            pincode,
+            is_active,
+            cities:city_id(name, state)
+          `)
+          .eq('id', dealerId)
+          .maybeSingle();
+
+        if (dealerAccountData) {
+          return {
+            id: dealerAccountData.id,
+            full_name: dealerAccountData.owner_name || dealerAccountData.dealership_name || 'Dealer',
+            username: dealerAccountData.dealership_name?.toLowerCase().replace(/\s+/g, '_') || '',
+            phone_number: dealerAccountData.phone_number || null,
+            avatar_url: null,
+            is_active: dealerAccountData.is_active ?? true,
+            dealership_name: dealerAccountData.dealership_name || 'Dealer',
+            city_id: dealerAccountData.city_id || '',
+            city: dealerAccountData.cities?.name || '',
+            state: dealerAccountData.cities?.state || dealerAccountData.state || '',
+            logo_url: null,
+            year_established: null,
+          } as DealerProfile;
+        }
+
         // Neither found
         return null;
       } catch (error: any) {

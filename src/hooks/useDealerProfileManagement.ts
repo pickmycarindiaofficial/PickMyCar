@@ -13,12 +13,12 @@ export interface DealerProfileManagement {
   city_name: string | null;
   state: string;
   pincode: string;
-  
+
   // Branding
   logo_url: string | null;
   banner_url: string | null;
   about_text: string | null;
-  
+
   // Online Presence
   website_url: string | null;
   facebook_url: string | null;
@@ -27,23 +27,23 @@ export interface DealerProfileManagement {
   google_place_id: string | null;
   google_rating: number | null;
   google_review_count: number | null;
-  
+
   // Business Details
   year_established: number | null;
   specialization: string[] | null;
   operating_hours: any;
-  
+
   // Achievements
   certifications: string[] | null;
   awards: string[] | null;
-  
+
   // Customer Photos
   customer_photos: Array<{
     url: string;
     caption?: string;
     uploaded_at?: string;
   }> | null;
-  
+
   // Visibility Settings
   show_logo: boolean;
   show_banner: boolean;
@@ -54,7 +54,7 @@ export interface DealerProfileManagement {
   show_awards: boolean;
   show_google_rating: boolean;
   show_customer_photos: boolean;
-  
+
   // Profile Info
   full_name: string;
   username: string;
@@ -68,18 +68,40 @@ export function useDealerProfileManagement(dealerId: string | undefined) {
     queryFn: async () => {
       if (!dealerId) return null;
 
-      // Fetch profile data
-      const { data: profileData, error: profileError } = await (supabase as any)
+      // Try to fetch from profiles first (Supabase auth users)
+      let profileData: any = null;
+      const { data: supabaseProfile, error: profileError } = await (supabase as any)
         .from('profiles')
         .select('id, full_name, username, phone_number, avatar_url')
         .eq('id', dealerId)
         .maybeSingle();
 
-      if (profileError) throw profileError;
+      if (!profileError && supabaseProfile) {
+        profileData = supabaseProfile;
+      } else {
+        // Fallback: Try dealer_accounts table for OTP dealers
+        const { data: dealerAccount, error: dealerAccountError } = await (supabase as any)
+          .from('dealer_accounts')
+          .select('id, owner_name, dealership_name, phone_number, email')
+          .eq('id', dealerId)
+          .maybeSingle();
+
+        if (!dealerAccountError && dealerAccount) {
+          profileData = {
+            id: dealerAccount.id,
+            full_name: dealerAccount.owner_name || dealerAccount.dealership_name,
+            username: dealerAccount.dealership_name?.toLowerCase().replace(/\s+/g, '_') || 'dealer',
+            phone_number: dealerAccount.phone_number,
+            avatar_url: null,
+          };
+        }
+      }
+
       if (!profileData) return null;
 
       // Fetch dealer profile data with city
-      const { data: dealerData, error: dealerError } = await (supabase as any)
+      let dealerData: any = null;
+      const { data: dpData, error: dealerError } = await (supabase as any)
         .from('dealer_profiles')
         .select(`
           dealership_name,
@@ -120,7 +142,58 @@ export function useDealerProfileManagement(dealerId: string | undefined) {
         .eq('id', dealerId)
         .maybeSingle();
 
-      if (dealerError) throw dealerError;
+      if (!dealerError && dpData) {
+        dealerData = dpData;
+      } else {
+        // Fallback: Get data from dealer_accounts for OTP dealers (with city join)
+        const { data: daData } = await (supabase as any)
+          .from('dealer_accounts')
+          .select(`
+            *,
+            cities:city_id(name)
+          `)
+          .eq('id', dealerId)
+          .maybeSingle();
+
+        if (daData) {
+          dealerData = {
+            dealership_name: daData.dealership_name,
+            business_type: daData.business_type || null,
+            gst_number: daData.gst_number || null,
+            pan_number: daData.pan_number || null,
+            address: daData.address || '',
+            city_id: daData.city_id || null,
+            state: daData.state || '',
+            pincode: daData.pincode || '',
+            logo_url: null,
+            banner_url: null,
+            about_text: null,
+            website_url: null,
+            facebook_url: null,
+            instagram_url: null,
+            twitter_url: null,
+            google_place_id: null,
+            google_rating: null,
+            google_review_count: null,
+            year_established: null,
+            specialization: null,
+            operating_hours: {},
+            certifications: null,
+            awards: null,
+            customer_photos: [],
+            show_logo: true,
+            show_banner: true,
+            show_about: true,
+            show_social_media: true,
+            show_operating_hours: true,
+            show_certifications: true,
+            show_awards: true,
+            show_google_rating: true,
+            show_customer_photos: true,
+            cities: daData.cities || null
+          };
+        }
+      }
 
       const result: DealerProfileManagement = {
         id: profileData.id,
