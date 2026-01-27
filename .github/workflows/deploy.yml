@@ -26,18 +26,12 @@ jobs:
       - name: Build Project
         run: |
           npm run build
-          # explicit copy disabled for zero-config test
-          # cp public/htaccess_production dist/.htaccess
-          # Verify file exists
+          # Verify files are in dist
           ls -la dist/
         env:
-          # If you have environment variables in .env, you might need to add them here 
-          # mapping them to GitHub Secrets, e.g.:
-          # VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          # VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           CI: false
 
-      - name: Deploy to public_html (Linux/cPanel)
+      - name: Deploy to GoDaddy (Linux)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -45,14 +39,14 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: ./public_html/
           local-dir: ./dist/
-          dangerous-clean-slate: false
+          dangerous-clean-slate: true
 
-      - name: Deploy to FTP Root (./)
+      - name: Deploy to GoDaddy (Windows)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ./
+          server-dir: ./httpdocs/
           local-dir: ./dist/
-          dangerous-clean-slate: false
+          dangerous-clean-slate: true

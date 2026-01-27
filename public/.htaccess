@@ -1,0 +1,23 @@
+# Production-Grade Apache Configuration
+# Compatibility: GoDaddy, Bluehost, HostGator, etc.
+
+# Disable directory browsing
+<IfModule mod_options.c>
+    Options -Indexes
+</IfModule>
+
+# Set default document
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # Don't rewrite for real files or directories
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Handle SPA routing
+    RewriteRule ^ index.html [L]
+</IfModule>
