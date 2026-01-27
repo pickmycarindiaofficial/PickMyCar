@@ -21,6 +21,8 @@ CREATE INDEX IF NOT EXISTS idx_dealer_accounts_id ON public.dealer_accounts(id);
 -- 3. ENSURE CITY DATA IS READABLE (For Location)
 ALTER TABLE public.cities ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Cities are viewable by everyone" ON public.cities;
+
 CREATE POLICY "Cities are viewable by everyone"
 ON public.cities
 FOR SELECT

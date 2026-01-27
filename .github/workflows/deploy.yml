@@ -37,12 +37,22 @@ jobs:
           # VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           CI: false
 
-      - name: Sync files to hosting
+      - name: Deploy to public_html (Linux/cPanel)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ./
+          server-dir: ./public_html/
           local-dir: ./dist/
-          dangerous-clean-slate: false # Set to true to delete files on server that aren't in dist (use with caution)
+          dangerous-clean-slate: false
+
+      - name: Deploy to httpdocs (Windows/Plesk)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ./httpdocs/
+          local-dir: ./dist/
+          dangerous-clean-slate: false
