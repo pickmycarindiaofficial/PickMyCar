@@ -35,7 +35,11 @@ export function useCreateEnquiry() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase insert error details:', error);
+        console.log('Payload was:', enquiryData);
+        throw error;
+      }
       return data;
     },
 

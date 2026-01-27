@@ -1,9 +1,22 @@
+# Allow access to all files
+Order allow,deny
+Allow from all
+
+# Set the default index file
+DirectoryIndex index.html
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
-  RewriteRule ^index\.html$ - [L]
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteCond %{REQUEST_FILENAME} !-l
-  RewriteRule . /index.html [L]
+  
+  # If the requested file exists, serve it
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Otherwise, rewrite everything to index.html
+  RewriteRule ^ index.html [L]
 </IfModule>
+
+# Disable directory listing (Security)
+Options -Indexes

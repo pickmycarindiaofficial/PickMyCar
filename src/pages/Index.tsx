@@ -333,7 +333,10 @@ const Index = () => {
           window.location.href = `tel:${dealerProfile.phone_number}`;
           toast.success(`Calling ${dealerProfile.full_name}`);
         },
-        onError: () => toast.error('Failed to track enquiry'),
+        onError: (error) => {
+          console.error('Enquiry failed:', error);
+          toast.error(`Failed: ${error.message}`);
+        },
       });
     }, {
       message: 'Please login to contact the dealer',
