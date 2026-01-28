@@ -116,7 +116,7 @@ const DebugBanner = () => {
       fontWeight: 'bold',
       fontSize: '16px'
     }}>
-      DEBUG STATUS:
+      DEBUG STATUS (V2.1):
       URL: {url ? `✅ Found (${url.length} chars)` : '❌ MISSING'} |
       KEY: {key ? `✅ Found (${key.length} chars)` : '❌ MISSING'} |
       ID: {pid ? `✅ Found (${pid.length} chars)` : '❌ MISSING'}

@@ -34,7 +34,7 @@ jobs:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
 
-      - name: Deploy to GoDaddy (Linux)
+      - name: Deploy to GoDaddy (cPanel/Linux)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -43,13 +43,4 @@ jobs:
           server-dir: ./public_html/
           local-dir: ./dist/
           dangerous-clean-slate: true
-
-      - name: Deploy to GoDaddy (Windows)
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ./httpdocs/
-          local-dir: ./dist/
-          dangerous-clean-slate: true
+          log-level: verbose
