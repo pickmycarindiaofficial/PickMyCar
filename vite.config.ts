@@ -13,8 +13,6 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === "development" && componentTagger(),
-    // Temporarily disabled for production debugging
-    /*
     mode === "production" && compression({
       algorithm: 'gzip',
       ext: '.gz',
@@ -25,7 +23,6 @@ export default defineConfig(({ mode }) => ({
       ext: '.br',
       threshold: 1024,
     }),
-    */
   ].filter(Boolean),
   resolve: {
     alias: {
