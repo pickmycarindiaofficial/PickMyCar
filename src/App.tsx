@@ -97,36 +97,9 @@ const AppContent = () => {
   return null;
 };
 
-const DebugBanner = () => {
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  const pid = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-
-  return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100%',
-      backgroundColor: '#ff0000',
-      color: 'white',
-      zIndex: 9999,
-      padding: '12px',
-      textAlign: 'center',
-      fontWeight: 'bold',
-      fontSize: '16px'
-    }}>
-      DEBUG STATUS (V2.1):
-      URL: {url ? `✅ Found (${url.length} chars)` : '❌ MISSING'} |
-      KEY: {key ? `✅ Found (${key.length} chars)` : '❌ MISSING'} |
-      ID: {pid ? `✅ Found (${pid.length} chars)` : '❌ MISSING'}
-    </div>
-  );
-};
 
 const App = () => (
   <ErrorBoundary>
-    <DebugBanner />
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <RealtimeProvider>
