@@ -99,28 +99,9 @@ export function getThumbnailUrl(photoObj: any): string {
 
 /**
  * Optimizes a Supabase storage URL using the transformation API
- * Converts /object/public/ to /render/image/public/ and adds query params
+ * NOTE: Currently disabled as it requires Supabase Pro plan.
+ * Falls back to original URL to ensure visibility.
  */
-export function getOptimizedImageUrl(url: string, { width, quality = 80, format = 'webp' }: { width?: number, quality?: number, format?: string } = {}): string {
-  if (!url || url.includes('placeholder') || !url.includes('supabase.co')) return url;
-
-  try {
-    // Check if it's already an optimized URL
-    if (url.includes('/render/image/')) return url;
-
-    // Convert object/public to render/image/public
-    let optimizedUrl = url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/');
-
-    const params = new URLSearchParams();
-    if (width) params.append('width', width.toString());
-    if (quality) params.append('quality', quality.toString());
-    if (format) params.append('format', format);
-
-    // Add resize mode
-    params.append('resize', 'cover');
-
-    return `${optimizedUrl}?${params.toString()}`;
-  } catch (e) {
-    return url;
-  }
+export function getOptimizedImageUrl(url: string, _options: { width?: number; quality?: number; format?: string } = {}): string {
+  return url;
 }
