@@ -11,8 +11,10 @@ import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { PageLoader } from "@/components/common/PageLoader";
 import { SkipLink } from "@/components/common/SkipLink";
 import { useLocationTracking } from "@/hooks/useLocationTracking";
-import { AIChatWidget } from "@/components/ai/AIChatWidget";
+const AIChatWidget = lazy(() => import("@/components/ai/AIChatWidget").then(m => ({ default: m.AIChatWidget })));
 import { CustomerOnboardingWrapper } from "@/components/customer/CustomerOnboardingWrapper";
+import { useActiveBanners } from "@/hooks/useBanners";
+import { useCarListings } from "@/hooks/useCarListings";
 
 // ===============================================
 // LAZY LOADED PAGES - Code Splitting for Performance
@@ -92,9 +94,27 @@ const queryClient = new QueryClient({
   },
 });
 
+/**
+ * DataPreloader - Triggers critical data queries early in the App lifecycle
+ * This reduces the data waterfall by starting fetches while pages are lazy-loading
+ */
+const DataPreloader = () => {
+  // Pre-fetch critical marketplace data
+  useActiveBanners();
+  useCarListings({ status: 'live', pageSize: 12 });
+  return null;
+};
+
 const AppContent = () => {
   useLocationTracking();
-  return null;
+  return (
+    <>
+      <DataPreloader />
+      <Suspense fallback={null}>
+        <AIChatWidget />
+      </Suspense>
+    </>
+  );
 };
 
 
@@ -107,7 +127,6 @@ const App = () => (
             <SkipLink />
             <Toaster />
             <Sonner />
-            <AIChatWidget />
             <AppContent />
             <BrowserRouter>
               <CustomerOnboardingWrapper>

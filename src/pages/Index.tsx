@@ -4,22 +4,26 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Sidebar } from '@/components/filters/Sidebar';
 import { MainContent } from '@/components/content/MainContent';
 import { TopRecommendations } from '@/components/home/TopRecommendations';
-import { SmartSections } from '@/components/home/SmartSections';
-import { BannerCarousel } from '@/components/home/BannerCarousel';
-import { SortDropdown } from '@/components/content/SortDropdown';
-import { LocationPermissionBanner } from '@/components/home/LocationPermissionBanner';
-import { ExitRescueModal } from '@/components/home/ExitRescueModal';
 import { HomepageToggle } from '@/components/home/HomepageToggle';
 // Lazy load non-critical components
 const OnboardingQuiz = lazy(() => import('@/components/home/OnboardingQuiz').then(m => ({ default: m.OnboardingQuiz })));
 const QuickLoanApplicationDialog = lazy(() => import('@/components/finance/QuickLoanApplicationDialog').then(m => ({ default: m.QuickLoanApplicationDialog })));
 const EMICalculator = lazy(() => import('@/components/detail/EMICalculator').then(m => ({ default: m.EMICalculator })));
+const MobileFilterDrawer = lazy(() => import('@/components/home/MobileFilterDrawer').then(m => ({ default: m.MobileFilterDrawer })));
+const MobileSortSheet = lazy(() => import('@/components/home/MobileSortSheet').then(m => ({ default: m.MobileSortSheet })));
+const ExitRescueModal = lazy(() => import('@/components/home/ExitRescueModal').then(m => ({ default: m.ExitRescueModal })));
+const SmartSections = lazy(() => import('@/components/home/SmartSections').then(m => ({ default: m.SmartSections })));
+
+import { BannerCarousel } from '@/components/home/BannerCarousel';
+import { SortDropdown } from '@/components/content/SortDropdown';
+import { LocationPermissionBanner } from '@/components/home/LocationPermissionBanner';
 
 import { Filters, Car, SortOption } from '@/types';
 import { SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { dealers } from '@/data/mockData';
 import { toast } from 'sonner';
+import { InlineLoader } from '@/components/common/PageLoader';
 import { CarDetailPage } from '@/pages/CarDetail';
 import { useCarListings } from '@/hooks/useCarListings';
 import { CarListingWithRelations } from '@/types/car-listing';
@@ -39,14 +43,14 @@ import { TestDriveBookingDialog } from '@/components/detail/TestDriveBookingDial
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 import { useBrands } from '@/hooks/useBrands';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Mobile Components
 import { MobileNavbar } from '@/components/layout/MobileNavbar';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
-import { MobileFilterSheet } from '@/components/filters/MobileFilterSheet';
 import { MobileHomeHeader } from '@/components/home/MobileHomeHeader';
-import { MobileFilterDrawer } from '@/components/home/MobileFilterDrawer';
-import { MobileSortSheet } from '@/components/home/MobileSortSheet';
+import { MobileFilterSheet } from '@/components/filters/MobileFilterSheet';
+// MobileFilterDrawer, MobileSortSheet are lazy loaded
 
 
 const initialFilters: Filters = {
@@ -93,6 +97,15 @@ const Index = () => {
   const [emiCalculatorOpen, setEmiCalculatorOpen] = useState(false);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [mobileSortOpen, setMobileSortOpen] = useState(false);
+  const isMobile = useIsMobile();
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
+
+  useEffect(() => {
+    const checkScreen = () => setIsLargeScreen(window.innerWidth >= 1024);
+    checkScreen();
+    window.addEventListener('resize', checkScreen);
+    return () => window.removeEventListener('resize', checkScreen);
+  }, []);
 
   // Calculate active filters count for mobile badge
   const activeFiltersCount = useMemo(() => {
@@ -121,7 +134,7 @@ const Index = () => {
   // Fetch live car listings from database - Reduced initial fetch for faster TTI
   const { data: carListingsData, isLoading } = useCarListings({
     status: 'live',
-    pageSize: 24 // Optimized from 100 to reduce initial payload and TTFB
+    pageSize: 12 // Optimized to 12 for mobile performance (95+ target)
   });
 
   const { data: allBrands = [] } = useBrands();
@@ -711,37 +724,48 @@ const Index = () => {
       />
 
       {/* Mobile Filter Drawer - Full Screen */}
-      <MobileFilterDrawer
-        isOpen={mobileFilterOpen}
-        onClose={() => setMobileFilterOpen(false)}
-        filters={filters}
-        onFilterChange={(key, value) => handleFilterChange({ [key]: value })}
-        onClearAll={handleClearAll}
-        carCount={filteredCars.length}
-      />
+      <Suspense fallback={null}>
+        {mobileFilterOpen && (
+          <MobileFilterDrawer
+            isOpen={mobileFilterOpen}
+            onClose={() => setMobileFilterOpen(false)}
+            filters={filters}
+            onFilterChange={(key, value) => handleFilterChange({ [key]: value })}
+            onClearAll={handleClearAll}
+            carCount={filteredCars.length}
+          />
+        )}
+      </Suspense>
 
       {/* Mobile Sort Sheet */}
-      <MobileSortSheet
-        isOpen={mobileSortOpen}
-        onClose={() => setMobileSortOpen(false)}
-        value={sortOption}
-        onChange={setSortOption}
-      />
+      <Suspense fallback={null}>
+        {mobileSortOpen && (
+          <MobileSortSheet
+            isOpen={mobileSortOpen}
+            onClose={() => setMobileSortOpen(false)}
+            value={sortOption}
+            onChange={setSortOption}
+          />
+        )}
+      </Suspense>
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav onSearchClick={() => setMobileFilterOpen(true)} />
 
       <div className="flex gap-6 lg:gap-8 w-full mx-auto px-4 md:px-6 lg:px-8 max-w-screen-2xl pb-mobile-nav md:pb-0">
-        <Sidebar
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          onClearAll={handleClearAll}
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          allCount={allCount}
-          premiumCount={premiumCount}
-          onSegmentChange={(segment) => handleFilterChange({ segment })}
-        />
+        {/* Only render Sidebar on Desktop to avoid massive TBT on mobile (fetches 10+ master hooks) */}
+        {!isMobile && isLargeScreen && (
+          <Sidebar
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            onClearAll={handleClearAll}
+            isOpen={mobileFilterOpen}
+            onClose={() => setMobileFilterOpen(false)}
+            allCount={allCount}
+            premiumCount={premiumCount}
+            onSegmentChange={(segment) => handleFilterChange({ segment })}
+          />
+        )}
 
         {/* Main Content */}
         <div className="flex-1 min-w-0 overflow-hidden space-y-6 py-6 md:py-8">
@@ -792,19 +816,21 @@ const Index = () => {
                 />
 
                 {/* Smart Sections */}
-                <SmartSections
-                  cars={filteredCars}
-                  userLocation={geolocation.latitude && geolocation.longitude
-                    ? { latitude: geolocation.latitude, longitude: geolocation.longitude }
-                    : null
-                  }
-                  onCarClick={handleCarClick}
-                  onCallDealer={handleCallDealer}
-                  onChat={handleChat}
-                  onToggleShortlist={handleToggleShortlist}
-                  shortlistedIds={shortlistedIds}
-                  isLoading={isLoading}
-                />
+                <Suspense fallback={<div className="h-40 flex items-center justify-center"><InlineLoader /></div>}>
+                  <SmartSections
+                    cars={filteredCars}
+                    userLocation={geolocation.latitude && geolocation.longitude
+                      ? { latitude: geolocation.latitude, longitude: geolocation.longitude }
+                      : null
+                    }
+                    onCarClick={handleCarClick}
+                    onCallDealer={handleCallDealer}
+                    onChat={handleChat}
+                    onToggleShortlist={handleToggleShortlist}
+                    shortlistedIds={shortlistedIds}
+                    isLoading={isLoading}
+                  />
+                </Suspense>
               </>
             )
           ) : (
@@ -840,11 +866,15 @@ const Index = () => {
       </div>
 
       {/* Exit Rescue Modal */}
-      <ExitRescueModal
-        open={showExitModal}
-        onOpenChange={setShowExitModal}
-        onSubmitted={() => setExitModalSubmitted(true)}
-      />
+      <Suspense fallback={null}>
+        {showExitModal && (
+          <ExitRescueModal
+            open={showExitModal}
+            onOpenChange={setShowExitModal}
+            onSubmitted={() => setExitModalSubmitted(true)}
+          />
+        )}
+      </Suspense>
 
       {/* Test Drive Booking Dialog */}
       {selectedCar && (
