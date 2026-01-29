@@ -22,16 +22,25 @@ const getEnv = (key: string, fallback: string): string => {
     return value || fallback;
 };
 
+// Fallback values for development or if environment variables are missing
+const FALLBACK_URL = 'https://tfmaotjdfpqtnsghdwnl.supabase.co';
+const FALLBACK_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbWFvdGpkZnBxdG5zZ2hkd25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjExNDA4NjcsImV4cCI6MjA3NjcxNjg2N30.yArp2rMTnq5uviIv5hrY9GGwv4yljDgiOAm8xEGN8hM';
+
 export const config: Config = {
     supabase: {
-        url: getEnv('VITE_SUPABASE_URL', ''),
-        anonKey: getEnv('VITE_SUPABASE_PUBLISHABLE_KEY', ''),
-        projectId: getEnv('VITE_SUPABASE_PROJECT_ID', ''),
+        url: getEnv('VITE_SUPABASE_URL', FALLBACK_URL),
+        anonKey: getEnv('VITE_SUPABASE_PUBLISHABLE_KEY', FALLBACK_ANON_KEY),
+        projectId: getEnv('VITE_SUPABASE_PROJECT_ID', 'tfmaotjdfpqtnsghdwnl'),
     },
     isProd: import.meta.env.PROD,
     isDev: import.meta.env.DEV,
-    version: '2.1.0-prod',
+    version: '2.1.0-prod-optimized',
 };
+
+// Log warning if fallback is used in production for security monitoring
+if (config.isProd && (config.supabase.url === FALLBACK_URL)) {
+    console.warn('[Security] Warning: Using fallback Supabase credentials in production. Ensure GitHub Secrets are configured correctly.');
+}
 
 /**
  * Validates critical configuration on startup

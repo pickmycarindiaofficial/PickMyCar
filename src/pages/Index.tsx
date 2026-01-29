@@ -846,15 +846,6 @@ const Index = () => {
         onSubmitted={() => setExitModalSubmitted(true)}
       />
 
-      {/* Onboarding Quiz for First-Time Users */}
-      <OnboardingQuiz
-        open={showOnboarding}
-        onOpenChange={setShowOnboarding}
-        onComplete={() => {
-          toast.success('Welcome! Your personalized feed is ready 🎉');
-        }}
-      />
-
       {/* Test Drive Booking Dialog */}
       {selectedCar && (
         <TestDriveBookingDialog
@@ -918,7 +909,7 @@ const Index = () => {
             onComplete={() => {
               setShowOnboarding(false);
               localStorage.setItem('onboarding_complete', 'true');
-              toast.success('Preferences saved!', {
+              toast.success('Welcome! Your personalized feed is ready 🎉', {
                 description: 'We will show you cars that match your style'
               });
             }}
