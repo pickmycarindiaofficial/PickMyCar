@@ -1,6 +1,6 @@
 import { Heart, Phone, MessageCircle, Gauge, Fuel, Cog, TrendingDown, Info, Share2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Car } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,19 +15,40 @@ interface CarCardProps {
   isShortlisted: boolean;
   onCardClick?: (car: Car) => void;
   onShare?: (car: Car) => void;
+  priority?: boolean;
 }
 
-export const CarCard = ({ car, onCallDealer, onChat, onToggleShortlist, isShortlisted, onCardClick, onShare }: CarCardProps) => {
+export const CarCard = ({ car, onCallDealer, onChat, onToggleShortlist, isShortlisted, onCardClick, onShare, priority = false }: CarCardProps) => {
   const { trackFunnel } = useEventTracking();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [hasTracked, setHasTracked] = useState(false);
 
   useEffect(() => {
-    // Track funnel 'view' stage when card is visible
-    trackFunnel.mutate({
-      stage: 'view',
-      car_id: car.id,
-      meta: { card_position: 'listing_grid' }
-    });
-  }, [car.id]);
+    // Optimization: Use IntersectionObserver to track views only when visible
+    // This prevents 100+ API calls on page load (API Flooding)
+    if (hasTracked) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          trackFunnel.mutate({
+            stage: 'view',
+            car_id: car.id,
+            meta: { card_position: 'listing_grid' }
+          });
+          setHasTracked(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 } // Require 50% visibility
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [car.id, hasTracked]);
 
   const formatPrice = (value: number) => {
     if (value >= 10000000) return `₹${(value / 10000000).toFixed(2)} Cr`;
@@ -41,6 +62,7 @@ export const CarCard = ({ car, onCallDealer, onChat, onToggleShortlist, isShortl
 
   return (
     <div
+      ref={cardRef}
       className={`group relative overflow-hidden rounded-2xl border-2 bg-card shadow-md transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1 cursor-pointer ${car.isFeatured
         ? 'border-blue-500 hover:border-blue-600'
         : 'border-border hover:border-primary/50'
@@ -52,7 +74,7 @@ export const CarCard = ({ car, onCallDealer, onChat, onToggleShortlist, isShortl
         <img
           src={car.imageUrl}
           alt={car.title}
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
           decoding="async"
           width={400}
           height={300}

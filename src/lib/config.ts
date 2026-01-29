@@ -24,9 +24,9 @@ const getEnv = (key: string, fallback: string): string => {
 
 export const config: Config = {
     supabase: {
-        url: getEnv('VITE_SUPABASE_URL', 'https://tfmaotjdfpqtnsghdwnl.supabase.co'),
-        anonKey: getEnv('VITE_SUPABASE_PUBLISHABLE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbWFvdGpkZnBxdG5zZ2hkd25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjExNDA4NjcsImV4cCI6MjA3NjcxNjg2N30.yArp2rMTnq5uviIv5hrY9GGwv4yljDgiOAm8xEGN8hM'),
-        projectId: getEnv('VITE_SUPABASE_PROJECT_ID', 'tfmaotjdfpqtnsghdwnl'),
+        url: getEnv('VITE_SUPABASE_URL', ''),
+        anonKey: getEnv('VITE_SUPABASE_PUBLISHABLE_KEY', ''),
+        projectId: getEnv('VITE_SUPABASE_PROJECT_ID', ''),
     },
     isProd: import.meta.env.PROD,
     isDev: import.meta.env.DEV,

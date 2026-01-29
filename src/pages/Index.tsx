@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/layout/Navbar';
 import { Sidebar } from '@/components/filters/Sidebar';
@@ -10,7 +10,11 @@ import { SortDropdown } from '@/components/content/SortDropdown';
 import { LocationPermissionBanner } from '@/components/home/LocationPermissionBanner';
 import { ExitRescueModal } from '@/components/home/ExitRescueModal';
 import { HomepageToggle } from '@/components/home/HomepageToggle';
-import { OnboardingQuiz } from '@/components/home/OnboardingQuiz';
+// Lazy load non-critical components
+const OnboardingQuiz = lazy(() => import('@/components/home/OnboardingQuiz').then(m => ({ default: m.OnboardingQuiz })));
+const QuickLoanApplicationDialog = lazy(() => import('@/components/finance/QuickLoanApplicationDialog').then(m => ({ default: m.QuickLoanApplicationDialog })));
+const EMICalculator = lazy(() => import('@/components/detail/EMICalculator').then(m => ({ default: m.EMICalculator })));
+
 import { Filters, Car, SortOption } from '@/types';
 import { SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -32,9 +36,7 @@ import { sendUserConfirmation, triggerDealerNotification } from '@/services/what
 import { ShareDialog } from '@/components/common/ShareDialog';
 import { useSavedCars, useAddSavedCar, useRemoveSavedCar } from '@/hooks/useSavedCars';
 import { TestDriveBookingDialog } from '@/components/detail/TestDriveBookingDialog';
-import { QuickLoanApplicationDialog } from '@/components/finance/QuickLoanApplicationDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { EMICalculator } from '@/components/detail/EMICalculator';
 
 import { useBrands } from '@/hooks/useBrands';
 
@@ -624,15 +626,17 @@ const Index = () => {
         />
 
         {/* Loan Application Dialog */}
-        <QuickLoanApplicationDialog
-          open={loanDialogOpen}
-          onOpenChange={setLoanDialogOpen}
-          carListingId={selectedCar.id}
-          carBrand={selectedCar.brand}
-          carModel={selectedCar.model}
-          carVariant={selectedCar.variant || ''}
-          carPrice={selectedCar.price}
-        />
+        <Suspense fallback={null}>
+          <QuickLoanApplicationDialog
+            open={loanDialogOpen}
+            onOpenChange={setLoanDialogOpen}
+            carListingId={selectedCar.id}
+            carBrand={selectedCar.brand}
+            carModel={selectedCar.model}
+            carVariant={selectedCar.variant || ''}
+            carPrice={selectedCar.price}
+          />
+        </Suspense>
       </>
     );
   }
@@ -864,33 +868,63 @@ const Index = () => {
       )}
 
       {/* Loan Application Dialog */}
-      {selectedCarForLoan && (
-        <QuickLoanApplicationDialog
-          open={loanDialogOpen}
-          onOpenChange={setLoanDialogOpen}
-          carListingId={selectedCarForLoan.id}
-          carBrand={selectedCarForLoan.brand}
-          carModel={selectedCarForLoan.model}
-          carVariant={selectedCarForLoan.variant}
-          carPrice={selectedCarForLoan.price}
-        />
-      )}
+      <Suspense fallback={null}>
+        {loanDialogOpen && (
+          <QuickLoanApplicationDialog
+            open={loanDialogOpen}
+            onOpenChange={setLoanDialogOpen}
+            carListingId={selectedCarForLoan?.id || filteredCars[0]?.id || ''}
+            carBrand={selectedCarForLoan?.brand || filteredCars[0]?.brand || ''}
+            carModel={selectedCarForLoan?.model || filteredCars[0]?.model || ''}
+            carVariant={selectedCarForLoan?.variant || filteredCars[0]?.variant || ''}
+            carPrice={selectedCarForLoan?.price || filteredCars[0]?.price || 0}
+          />
+        )}
+      </Suspense>
 
       {/* EMI Calculator Dialog */}
-      <Dialog open={emiCalculatorOpen} onOpenChange={setEmiCalculatorOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>EMI Calculator</DialogTitle>
-          </DialogHeader>
-          <EMICalculator
-            carPrice={averageCarPrice}
-            onApplyForFinance={() => {
-              setEmiCalculatorOpen(false);
-              handleApplyForLoan();
+      <Suspense fallback={null}>
+        {emiCalculatorOpen && (
+          <Dialog open={emiCalculatorOpen} onOpenChange={setEmiCalculatorOpen}>
+            <DialogContent className="max-w-4xl p-0 overflow-hidden border-none sm:rounded-2xl shadow-2xl">
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-white">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl font-bold text-white flex items-center gap-2">
+                    <span className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">🧮</span>
+                    EMI Calculator
+                  </DialogTitle>
+                </DialogHeader>
+              </div>
+              <div className="p-1">
+                <EMICalculator
+                  carPrice={averageCarPrice}
+                  onApplyForFinance={() => {
+                    setEmiCalculatorOpen(false);
+                    handleApplyForLoan();
+                  }}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </Suspense>
+
+      {/* Onboarding Quiz */}
+      <Suspense fallback={null}>
+        {showOnboarding && (
+          <OnboardingQuiz
+            open={showOnboarding}
+            onOpenChange={setShowOnboarding}
+            onComplete={() => {
+              setShowOnboarding(false);
+              localStorage.setItem('onboarding_complete', 'true');
+              toast.success('Preferences saved!', {
+                description: 'We will show you cars that match your style'
+              });
             }}
           />
-        </DialogContent>
-      </Dialog>
+        )}
+      </Suspense>
     </div>
   );
 };

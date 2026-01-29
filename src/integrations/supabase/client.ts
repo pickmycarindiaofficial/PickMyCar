@@ -3,6 +3,7 @@ import type { Database } from './types';
 import { config, validateConfig } from '@/lib/config';
 
 // Validate configuration on initialization
+// This ensures that the application fails early if VITE_SUPABASE keys are missing
 validateConfig();
 
 export const supabase = createClient<Database>(

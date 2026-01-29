@@ -47,6 +47,9 @@ export const BannerCarousel = () => {
                                     <img
                                         src={banner.image_url}
                                         alt={banner.title}
+                                        loading={banners.indexOf(banner) === 0 ? "eager" : "lazy"}
+                                        decoding="async"
+                                        fetchPriority={banners.indexOf(banner) === 0 ? "high" : "auto"}
                                         className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
                                     />
                                     {/* Optional: Overlay title if needed, but banners usually have text embedded */}

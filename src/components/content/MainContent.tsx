@@ -126,7 +126,7 @@ export const MainContent = ({
           <>
             {/* First 3 Cars */}
             <div className="grid gap-4 sm:grid-cols-2 md:gap-5 lg:grid-cols-2 lg:gap-6 xl:grid-cols-3">
-              {paginatedCars.slice(0, 3).map((car) => (
+              {paginatedCars.slice(0, 3).map((car, index) => (
                 <CarCard
                   key={car.id}
                   car={car}
@@ -136,6 +136,7 @@ export const MainContent = ({
                   isShortlisted={shortlistedIds.includes(car.id)}
                   onCardClick={onCarClick}
                   onShare={onShare}
+                  priority={index < 2} // Priority for top 2 on mobile
                 />
               ))}
             </div>
