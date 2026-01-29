@@ -84,16 +84,16 @@ export const TopRecommendations = ({
                 <CarouselItem key={car.id} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
                   <div className="relative">
                     {index < 3 && (
-                      <Badge 
-                        className="absolute -top-2 -right-2 z-10" 
+                      <Badge
+                        className="absolute -top-2 -right-2 z-10"
                         variant={index === 0 ? 'default' : 'secondary'}
                       >
                         #{index + 1} Match
                       </Badge>
                     )}
                     {fitScore && fitScore >= 75 && (
-                      <Badge 
-                        className="absolute -top-2 -left-2 z-10 bg-green-600 text-white" 
+                      <Badge
+                        className="absolute -top-2 -left-2 z-10 bg-green-600 text-white"
                         variant="default"
                       >
                         {Math.round(fitScore)}% Match
@@ -106,6 +106,7 @@ export const TopRecommendations = ({
                       onToggleShortlist={() => onToggleShortlist(car.id)}
                       isShortlisted={shortlistedIds.includes(car.id)}
                       onCardClick={() => onCarClick(car)}
+                      priority={index === 0}
                     />
                   </div>
                 </CarouselItem>

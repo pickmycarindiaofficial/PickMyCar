@@ -8,7 +8,8 @@ import {
 } from "@/components/ui/carousel";
 import { useActiveBanners } from "@/hooks/useBanners";
 import { Skeleton } from "@/components/ui/skeleton";
-import Autoplay from "embla-carousel-autoplay"; // Assuming this is installed as it is standard with shadcn/ui carousel, otherwise I might need to check packages
+import Autoplay from "embla-carousel-autoplay";
+import { getOptimizedImageUrl } from "@/lib/photoUtils";
 
 export const BannerCarousel = () => {
     const { data: banners, isLoading } = useActiveBanners();
@@ -45,7 +46,7 @@ export const BannerCarousel = () => {
                             <a href={banner.link_url || '#'} className="block h-full">
                                 <div className="relative overflow-hidden rounded-xl aspect-[16/8] md:aspect-[16/7] group">
                                     <img
-                                        src={banner.image_url}
+                                        src={getOptimizedImageUrl(banner.image_url, { width: 1200, quality: 85 })}
                                         alt={banner.title}
                                         loading={banners.indexOf(banner) === 0 ? "eager" : "lazy"}
                                         decoding="async"

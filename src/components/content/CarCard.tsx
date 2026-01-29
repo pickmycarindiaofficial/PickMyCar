@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useEventTracking } from '@/hooks/useEventTracking';
+import { getOptimizedImageUrl } from '@/lib/photoUtils';
 
 interface CarCardProps {
   car: Car;
@@ -72,12 +73,12 @@ export const CarCard = ({ car, onCallDealer, onChat, onToggleShortlist, isShortl
       {/* Image Section */}
       <div className="relative aspect-[4/3] overflow-hidden rounded-t-2xl">
         <img
-          src={car.imageUrl}
+          src={getOptimizedImageUrl(car.imageUrl, { width: 400, quality: 75 })}
           alt={car.title}
           loading={priority ? "eager" : "lazy"}
           decoding="async"
-          width={400}
-          height={300}
+          fetchPriority={priority ? "high" : "auto"}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
 

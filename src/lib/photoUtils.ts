@@ -9,13 +9,13 @@
 function extractUrlFromObject(photoObj: any): string | null {
   if (typeof photoObj === 'string') return photoObj;
   if (typeof photoObj !== 'object' || photoObj === null) return null;
-  
+
   // Try different possible keys
-  return photoObj.url || 
-         photoObj.medium_url || 
-         photoObj.photo_url || 
-         photoObj.thumbnail_url || 
-         null;
+  return photoObj.url ||
+    photoObj.medium_url ||
+    photoObj.photo_url ||
+    photoObj.thumbnail_url ||
+    null;
 }
 
 /**
@@ -31,7 +31,7 @@ export function parsePhotos(photos: any): string[] {
   try {
     // If null or undefined, return empty array
     if (!photos) return [];
-    
+
     // If already an array
     if (Array.isArray(photos)) {
       return photos
@@ -43,7 +43,7 @@ export function parsePhotos(photos: any): string[] {
         })
         .filter((url): url is string => typeof url === 'string' && url.length > 0);
     }
-    
+
     // If it's a JSON string, parse it
     if (typeof photos === 'string') {
       try {
@@ -55,13 +55,13 @@ export function parsePhotos(photos: any): string[] {
         return [photos];
       }
     }
-    
+
     // If it's a single object, try to extract URL
     if (typeof photos === 'object') {
       const url = extractUrlFromObject(photos);
       return url ? [url] : [];
     }
-    
+
     return [];
   } catch (error) {
     console.error('Error parsing photos:', error, photos);
@@ -75,12 +75,12 @@ export function parsePhotos(photos: any): string[] {
 export function getBestPhotoUrl(photoObj: any): string {
   if (typeof photoObj === 'string') return photoObj;
   if (!photoObj) return '/placeholder.svg';
-  
-  return photoObj.medium_url || 
-         photoObj.url || 
-         photoObj.photo_url || 
-         photoObj.thumbnail_url || 
-         '/placeholder.svg';
+
+  return photoObj.medium_url ||
+    photoObj.url ||
+    photoObj.photo_url ||
+    photoObj.thumbnail_url ||
+    '/placeholder.svg';
 }
 
 /**
@@ -89,10 +89,38 @@ export function getBestPhotoUrl(photoObj: any): string {
 export function getThumbnailUrl(photoObj: any): string {
   if (typeof photoObj === 'string') return photoObj;
   if (!photoObj) return '/placeholder.svg';
-  
-  return photoObj.thumbnail_url || 
-         photoObj.url || 
-         photoObj.medium_url || 
-         photoObj.photo_url || 
-         '/placeholder.svg';
+
+  return photoObj.thumbnail_url ||
+    photoObj.url ||
+    photoObj.medium_url ||
+    photoObj.photo_url ||
+    '/placeholder.svg';
+}
+
+/**
+ * Optimizes a Supabase storage URL using the transformation API
+ * Converts /object/public/ to /render/image/public/ and adds query params
+ */
+export function getOptimizedImageUrl(url: string, { width, quality = 80, format = 'webp' }: { width?: number, quality?: number, format?: string } = {}): string {
+  if (!url || url.includes('placeholder') || !url.includes('supabase.co')) return url;
+
+  try {
+    // Check if it's already an optimized URL
+    if (url.includes('/render/image/')) return url;
+
+    // Convert object/public to render/image/public
+    let optimizedUrl = url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/');
+
+    const params = new URLSearchParams();
+    if (width) params.append('width', width.toString());
+    if (quality) params.append('quality', quality.toString());
+    if (format) params.append('format', format);
+
+    // Add resize mode
+    params.append('resize', 'cover');
+
+    return `${optimizedUrl}?${params.toString()}`;
+  } catch (e) {
+    return url;
+  }
 }

@@ -118,10 +118,10 @@ const Index = () => {
   const addSavedCar = useAddSavedCar();
   const removeSavedCar = useRemoveSavedCar();
 
-  // Fetch live car listings from database
+  // Fetch live car listings from database - Reduced initial fetch for faster TTI
   const { data: carListingsData, isLoading } = useCarListings({
     status: 'live',
-    pageSize: 100
+    pageSize: 24 // Optimized from 100 to reduce initial payload and TTFB
   });
 
   const { data: allBrands = [] } = useBrands();
