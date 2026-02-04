@@ -17,7 +17,8 @@ export function useCarShare() {
 
   const generateShareUrl = (carId: string, source: string) => {
     const baseUrl = window.location.origin;
-    return `${baseUrl}/car/${carId}?utm_source=${source}&utm_medium=share&utm_campaign=car_share`;
+    // Use PHP script for rich social previews (og:image)
+    return `${baseUrl}/share.php?id=${carId}&utm_source=${source}&utm_medium=share`;
   };
 
   const generateShareText = (car: Car) => {
@@ -62,7 +63,7 @@ ${car.year} • ${car.transmission} • ${car.fuelType} • ${car.kmsDriven.toLo
     const shareUrl = generateShareUrl(car.id, 'whatsapp');
     const shareText = generateShareText(car);
     const message = `${shareText}\n${shareUrl}`;
-    
+
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
     toast.success('Opening WhatsApp...');
@@ -71,7 +72,7 @@ ${car.year} • ${car.transmission} • ${car.fuelType} • ${car.kmsDriven.toLo
   const shareViaTelegram = ({ car, source }: ShareOptions) => {
     const shareUrl = generateShareUrl(car.id, 'telegram');
     const shareText = generateShareText(car);
-    
+
     const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
     window.open(telegramUrl, '_blank');
     toast.success('Opening Telegram...');

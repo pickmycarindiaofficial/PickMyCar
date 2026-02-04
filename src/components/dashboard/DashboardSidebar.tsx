@@ -159,7 +159,7 @@ export function DashboardSidebar() {
 
     // Dealer Routes
     { title: 'My Profile', url: '/dashboard/dealer-profile-info', icon: Building2, roles: ['dealer'] },
-    { title: 'My Inventory', url: '/dashboard/inventory', icon: Car, roles: ['dealer'] },
+    // My Inventory removed as requested
     { title: 'My Listings', url: '/dashboard/my-listings', icon: Package, roles: ['dealer'] },
     { title: 'Print Stock List', url: '/dashboard/print-stock-list', icon: Printer, roles: ['powerdesk', 'dealer'] },
     { title: 'Plans', url: '/dashboard/plans', icon: DollarSign, roles: ['dealer'] },

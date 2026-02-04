@@ -15,7 +15,7 @@ interface SortDropdownProps {
 export const SortDropdown = ({ value, onChange }: SortDropdownProps) => {
   return (
     <Select value={value} onValueChange={(v) => onChange(v as SortOption)}>
-      <SelectTrigger className="w-[180px] bg-background">
+      <SelectTrigger className="w-[180px] bg-background h-9">
         <SelectValue placeholder="Sort by" />
       </SelectTrigger>
       <SelectContent className="bg-popover">

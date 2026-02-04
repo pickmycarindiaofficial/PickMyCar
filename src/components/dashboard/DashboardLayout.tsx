@@ -39,83 +39,79 @@ export function DashboardLayout() {
 
   return (
     <SidebarProvider>
-      <div 
-        className="min-h-screen flex w-full" 
-        style={isDealer ? { 
+      <div
+        className="min-h-screen flex w-full"
+        style={isDealer ? {
           backgroundColor: 'hsl(var(--dealer-bg))'
-        } : { 
-          backgroundColor: 'hsl(var(--background))' 
+        } : {
+          backgroundColor: 'hsl(var(--background))'
         }}
       >
         {!isFullScreenRoute && <DashboardSidebar />}
-        
+
         <div className="flex-1 flex flex-col">
           {/* Header */}
           <header
             className="sticky top-0 z-40 flex h-16 items-center gap-4 px-6"
-            style={isDealer ? { 
+            style={isDealer ? {
               backgroundColor: 'white',
               boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
               borderBottom: 'none',
-            } : { 
+            } : {
               backgroundColor: 'hsl(var(--background) / 0.95)',
               borderBottom: '1px solid hsl(var(--border))'
             }}
           >
             <SidebarTrigger />
-              
-              <div className="flex-1" />
-              
-              {/* Notifications */}
-              <NotificationBell />
 
-              {/* User Menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                    <Avatar className="h-9 w-9">
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        {profile?.full_name ? getInitials(profile.full_name) : 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{profile?.full_name}</p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        @{profile?.username}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate('/dashboard/profile')}>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/')}>
-                    <span>Back to Website</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Sign Out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <div className="flex-1" />
+
+            {/* Notifications */}
+            <NotificationBell />
+
+            {/* User Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {profile?.full_name ? getInitials(profile.full_name) : 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{profile?.full_name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      @{profile?.username}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/dashboard/profile')}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/')}>
+                  <span>Back to Website</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sign Out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </header>
 
           {/* Main Content */}
           <main className={`flex-1 ${isFullScreenRoute ? '' : 'overflow-y-auto p-6'}`}>
             {isFullScreenRoute ? (
               <Outlet />
-            ) : isDealer ? (
-              <div className="max-w-7xl mx-auto">
-                <Outlet />
-              </div>
             ) : (
-              <div className="container py-8">
+              <div className="max-w-7xl mx-auto w-full">
                 <Outlet />
               </div>
             )}

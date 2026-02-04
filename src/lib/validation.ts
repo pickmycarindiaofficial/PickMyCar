@@ -139,9 +139,9 @@ export const fileUploadSchema = z.object({
   file: z.instanceof(File)
     .refine((file) => file.size <= 10 * 1024 * 1024, 'File size must be less than 10MB')
     .refine(
-      (file) => ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 
-                  'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                  'text/plain'].includes(file.type),
+      (file) => ['image/jpeg', 'image/png', 'image/webp', 'application/pdf',
+        'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain'].includes(file.type),
       'Invalid file type. Allowed: JPG, PNG, WEBP, PDF, DOC, DOCX, TXT'
     ),
 });
@@ -166,32 +166,32 @@ export const uuidSchema = z.string().uuid('Invalid ID format');
 export const carListingSchema = z.object({
   seller_type: z.enum(['individual', 'dealer']),
   seller_name: z.string().optional(),
-  
+
   brand_id: z.string().uuid({ message: "Please select a brand" }),
   model_id: z.string().uuid({ message: "Please select a model" }),
   variant: z.string().min(1, "Variant is required").max(100),
   year_of_make: z.number()
-    .min(1990, "Year must be 1990 or later")
-    .max(new Date().getFullYear() + 1, "Year cannot be in future"),
+    .min(2000, "Year must be 2000 or later")
+    .max(new Date().getFullYear(), "Year cannot be in future"),
   year_of_purchase: z.number().optional(),
-  
+
   kms_driven: z.number()
     .min(0, "Cannot be negative")
     .max(1000000, "Kilometers seems too high"),
   fuel_type_id: z.string().uuid("Please select fuel type"),
   transmission_id: z.string().uuid("Please select transmission"),
   body_type_id: z.string().uuid("Please select body type"),
-  color: z.string().min(1, "Color is required"),
+  color: z.string().optional().or(z.literal('')),
   seats: z.number().min(2).max(15).optional(),
-  
+
   owner_type_id: z.string().uuid("Please select owner type"),
   car_condition: z.enum(['excellent', 'good', 'fair', 'needs_work']),
-  
+
   expected_price: z.number()
     .min(10000, "Price must be at least ₹10,000")
     .max(100000000, "Price seems too high"),
   price_type: z.enum(['fixed', 'negotiable']),
-  
+
   photos: z.array(z.object({
     url: z.string(),
     thumbnail_url: z.string().optional(),
@@ -201,7 +201,7 @@ export const carListingSchema = z.object({
   }))
     .min(3, "Upload at least 3 photos")
     .max(20, "Maximum 20 photos allowed"),
-  
+
   rc_book_url: z.preprocess(
     (val) => (val === '' ? undefined : val),
     z.string().url().optional()
@@ -215,7 +215,7 @@ export const carListingSchema = z.object({
     z.string().url().optional()
   ),
   has_loan: z.boolean(),
-  
+
   primary_phone: z.preprocess(
     (val) => (val === '' ? undefined : val),
     z.string().regex(/^[6-9]\d{9}$/, "Invalid mobile number").optional()
@@ -226,7 +226,7 @@ export const carListingSchema = z.object({
   ),
   city_id: z.string().uuid("Please select city"),
   full_address: z.string().max(500).optional(),
-  
+
   description: z.string()
     .min(50, "Description must be at least 50 characters")
     .max(2000, "Description too long")
@@ -239,10 +239,10 @@ export const carListingSchema = z.object({
       "Each highlight must be less than 100 characters"
     ),
   feature_ids: z.array(z.string().uuid()).max(20, "Maximum 20 features allowed").optional(),
-  
+
   category_id: z.string().uuid().optional(),
   is_featured: z.boolean().optional().default(false),
-  
+
   registration_number: z.string()
     .min(4, "Registration number must be at least 4 characters")
     .max(20, "Registration number too long")
@@ -311,10 +311,10 @@ export const encodeForUrl = (input: string): string => {
 };
 
 // Validation helper for forms
-export const validateForm = <T>(schema: z.ZodSchema<T>, data: unknown): { 
-  success: boolean; 
-  data?: T; 
-  errors?: Record<string, string[]> 
+export const validateForm = <T>(schema: z.ZodSchema<T>, data: unknown): {
+  success: boolean;
+  data?: T;
+  errors?: Record<string, string[]>
 } => {
   try {
     const validatedData = schema.parse(data);

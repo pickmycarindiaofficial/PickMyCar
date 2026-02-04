@@ -752,7 +752,7 @@ const Index = () => {
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav onSearchClick={() => setMobileFilterOpen(true)} />
 
-      <div className="flex gap-6 lg:gap-8 w-full mx-auto px-4 md:px-6 lg:px-8 max-w-screen-2xl pb-mobile-nav md:pb-0">
+      <div className="flex gap-6 lg:gap-8 w-full mx-auto px-4 md:px-6 lg:px-8 max-w-7xl pb-mobile-nav md:pb-0">
         {/* Only render Sidebar on Desktop to avoid massive TBT on mobile (fetches 10+ master hooks) */}
         {!isMobile && isLargeScreen && (
           <Sidebar
@@ -773,7 +773,7 @@ const Index = () => {
           <BannerCarousel />
 
           {/* Sticky Header: Car Count + Sort/Toggle - Hidden on mobile/tablet (MobileHomeHeader handles it) */}
-          <div className="sticky top-16 z-30 hidden lg:flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 md:p-4 shadow-sm">
+          <div className="sticky top-16 z-30 hidden lg:flex flex-col sm:flex-row items-center justify-between gap-2.5 rounded-lg border border-border bg-card px-4 py-2 shadow-sm">
             <div className="flex items-center gap-2 md:gap-4 flex-wrap">
               <h2 className="text-lg md:text-xl font-semibold">
                 {filteredCars.length} Used Cars

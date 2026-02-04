@@ -279,19 +279,6 @@ export function ImageUploader({
   const remainingSlots = maxImages - images.length;
   const isMinimumMet = images.length >= minImages;
 
-  // Calculate total compression stats
-  const totalStats = images.reduce(
-    (acc, img) => ({
-      original: acc.original + (img.originalSize || 0),
-      compressed: acc.compressed + img.size,
-    }),
-    { original: 0, compressed: 0 }
-  );
-  const totalSaved = totalStats.original - totalStats.compressed;
-  const totalSavedPercent = totalStats.original > 0
-    ? Math.round((totalSaved / totalStats.original) * 100)
-    : 0;
-
   return (
     <div className="space-y-4">
       {/* Upload Zone */}
@@ -379,23 +366,6 @@ export function ImageUploader({
             )}
           </div>
 
-          {/* Total Compression Stats */}
-          {totalStats.original > 0 && (
-            <div className="mb-4 p-3 bg-[#edf1ff] dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-blue-900 dark:text-blue-100">
-                  Total Compression Savings
-                </span>
-                <span className="font-bold text-blue-600 dark:text-blue-400">
-                  {(totalSaved / 1024 / 1024).toFixed(1)} MB saved ({totalSavedPercent}%)
-                </span>
-              </div>
-              <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                Estimated storage cost savings: ₹{((totalSaved / 1024 / 1024) * 0.5).toFixed(2)}/month
-              </p>
-            </div>
-          )}
-
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={images.map((img) => img.url)} strategy={rectSortingStrategy}>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -414,15 +384,18 @@ export function ImageUploader({
           <p className="text-xs text-muted-foreground mt-3">
             💡 Tip: Drag images to reorder. First image will be used as the thumbnail.
           </p>
-        </div>
-      )}
+        </div >
+      )
+      }
 
-      {images.length === 0 && (
-        <div className="text-center py-8 text-muted-foreground">
-          <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">No images uploaded yet</p>
-        </div>
-      )}
-    </div>
+      {
+        images.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">No images uploaded yet</p>
+          </div>
+        )
+      }
+    </div >
   );
 }

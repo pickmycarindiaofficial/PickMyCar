@@ -271,7 +271,15 @@ export const OnboardingQuiz = ({ open, onOpenChange, onComplete }: OnboardingQui
                     ? 'border-primary bg-primary/5'
                     : 'border-border hover:border-primary/50'
                     }`}
-                  onClick={() => setIntent(option.value)}
+                  onClick={() => {
+                    if (option.value === 'cold') {
+                      localStorage.setItem('onboarding_complete', 'true');
+                      toast.info('Enjoy exploring! Filter cars anytime.');
+                      onOpenChange(false);
+                    } else {
+                      setIntent(option.value);
+                    }
+                  }}
                 >
                   <RadioGroupItem value={option.value} id={option.value} />
                   <Label

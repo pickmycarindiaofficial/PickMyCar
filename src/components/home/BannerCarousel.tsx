@@ -17,7 +17,7 @@ export const BannerCarousel = () => {
     if (isLoading) {
         return (
             <div className="w-full mb-8">
-                <Skeleton className="w-full h-48 md:h-64 rounded-xl" />
+                <Skeleton className="w-full h-32 md:h-48 rounded-xl" />
             </div>
         );
     }
@@ -44,7 +44,7 @@ export const BannerCarousel = () => {
                     {banners.map((banner) => (
                         <CarouselItem key={banner.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
                             <a href={banner.link_url || '#'} className="block h-full">
-                                <div className="relative overflow-hidden rounded-xl aspect-[16/8] md:aspect-[16/7] group">
+                                <div className="relative overflow-hidden rounded-xl aspect-[16/6] md:aspect-[16/5] group">
                                     <img
                                         src={getOptimizedImageUrl(banner.image_url, { width: 1200, quality: 85 })}
                                         alt={banner.title}

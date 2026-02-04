@@ -128,7 +128,7 @@ export const CarDetailPage = ({
         title={car ? `${car.brand} ${car.model}` : 'Car Details'}
       />
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto w-full px-4 py-6">
         <Breadcrumbs car={car} onBack={onBack} />
 
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">

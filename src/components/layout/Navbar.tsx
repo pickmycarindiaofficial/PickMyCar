@@ -24,7 +24,7 @@ export const Navbar = ({ onSearch, onNavigate }: NavbarProps) => {
   const { user, profile, signOut, roles } = useAuth();
   const navigate = useNavigate();
 
-  const isStaffUser = roles.some(role => 
+  const isStaffUser = roles.some(role =>
     ['powerdesk', 'website_manager', 'dealer', 'sales', 'finance', 'inspection'].includes(role)
   );
 
@@ -35,16 +35,16 @@ export const Navbar = ({ onSearch, onNavigate }: NavbarProps) => {
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
-      <div className="container mx-auto max-w-[1400px] px-6">
+      <div className="container mx-auto max-w-7xl px-6">
         <div className="flex h-16 items-center justify-between gap-4">
           {/* Logo */}
           <button
             onClick={() => onNavigate('home')}
             className="flex items-center hover:opacity-90 transition-opacity"
           >
-            <img 
-              src={logoImage} 
-              alt="PickMyCar" 
+            <img
+              src={logoImage}
+              alt="PickMyCar"
               className="h-24 w-auto"
             />
           </button>

@@ -40,6 +40,7 @@ import { toast } from 'sonner';
 import type { z } from 'zod';
 import { supabase } from '@/lib/supabase-client';
 import { numberToWords, formatPriceWithWords } from '@/lib/numberToWords';
+import { MockAIService } from '@/lib/mock-ai';
 
 type CarListingFormData = z.infer<typeof carListingSchema>;
 
@@ -295,25 +296,19 @@ export function CarListingForm({
     setIsGenerating(prev => ({ ...prev, [type]: true }));
 
     try {
-      const { data, error } = await supabase.functions.invoke('generate-car-content', {
-        body: {
-          type,
-          carDetails: {
-            brand,
-            model,
-            variant,
-            year,
-            kms,
-            fuel,
-            transmission,
-            color,
-            condition,
-            owner,
-          },
-        },
+      // Use Mock AI Service instead of failing Edge Function
+      const data = await MockAIService.generateContent(type, {
+        brand,
+        model,
+        variant,
+        year,
+        kms,
+        fuel,
+        transmission,
+        color,
+        condition,
+        owner,
       });
-
-      if (error) throw error;
 
       if (type === 'description' && data?.description) {
         form.setValue('description', data.description);
@@ -482,7 +477,29 @@ export function CarListingForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Model</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        // Auto-fill body type and seats based on model defaults
+                        const selectedModel = filteredModels?.find(m => m.id === value) as any;
+                        if (selectedModel) {
+                          // Auto-fill seats if model has default
+                          if (selectedModel.default_seats) {
+                            form.setValue('seats', selectedModel.default_seats);
+                          }
+                          // Auto-fill body type if model has default
+                          if (selectedModel.default_body_type && bodyTypes) {
+                            const matchingBodyType = bodyTypes.find(
+                              (bt: any) => bt.name.toLowerCase() === selectedModel.default_body_type.toLowerCase()
+                            );
+                            if (matchingBodyType) {
+                              form.setValue('body_type_id', matchingBodyType.id);
+                            }
+                          }
+                        }
+                      }}
+                      value={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select model" />
@@ -523,10 +540,16 @@ export function CarListingForm({
                     <FormLabel>Year of Make</FormLabel>
                     <FormControl>
                       <Input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
                         placeholder="2020"
+                        maxLength={4}
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        value={field.value || ''}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                          field.onChange(val ? parseInt(val) : undefined);
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -566,13 +589,13 @@ export function CarListingForm({
                 control={form.control}
                 name="insurance_status"
                 render={({ field }) => (
-                  <FormItem className="col-span-2">
+                  <FormItem>
                     <FormLabel>Insurance Status</FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
                         defaultValue={field.value}
-                        className="flex flex-wrap gap-4"
+                        className="flex flex-col gap-2"
                       >
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value="valid" id="insurance-valid" />
@@ -594,9 +617,6 @@ export function CarListingForm({
                         </div>
                       </RadioGroup>
                     </FormControl>
-                    <FormDescription className="text-xs">
-                      Select the current insurance status
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -655,22 +675,6 @@ export function CarListingForm({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="color"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Color</FormLabel>
-                    <FormControl>
-                      <ColorPicker
-                        selected={field.value || ''}
-                        onChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <FormField
                 control={form.control}
@@ -914,6 +918,24 @@ export function CarListingForm({
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Color Picker - Full Width */}
+              <FormField
+                control={form.control}
+                name="color"
+                render={({ field }) => (
+                  <FormItem className="col-span-2">
+                    <FormLabel>Color (Optional)</FormLabel>
+                    <FormControl>
+                      <ColorPicker
+                        selected={field.value || ''}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

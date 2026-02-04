@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase-client';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface GalleryImage {
     id: string;
@@ -41,6 +42,8 @@ export function useGalleryImages(folder?: string) {
 // Upload image mutation
 export function useUploadGalleryImage() {
     const queryClient = useQueryClient();
+    // @ts-ignore
+    const { user } = useAuth();
 
     return useMutation({
         mutationFn: async ({
@@ -52,8 +55,7 @@ export function useUploadGalleryImage() {
             folder?: string;
             name?: string;
         }) => {
-            // Get current user
-            const { data: { user } } = await supabase.auth.getUser();
+            // Check authentication from context
             if (!user) throw new Error('Not authenticated');
 
             // Generate unique filename
@@ -70,7 +72,9 @@ export function useUploadGalleryImage() {
                 });
 
             if (uploadError) {
-                // If bucket doesn't exist, try car-listings bucket as fallback
+                console.error('Initial upload failed:', uploadError);
+
+                // If bucket doesn't exist or permission denied, try car-listings bucket as fallback
                 const fallbackPath = `gallery/${folder}/${timestamp}-${sanitizedName}`;
                 const { data: fallbackData, error: fallbackError } = await supabase.storage
                     .from('car-listings')
@@ -95,7 +99,7 @@ export function useUploadGalleryImage() {
                         url: publicUrl,
                         file_size: file.size,
                         file_type: file.type,
-                        uploaded_by: user.id,
+                        uploaded_by: user.id, // Use ID from context user
                         folder,
                     })
                     .select()
@@ -119,7 +123,7 @@ export function useUploadGalleryImage() {
                     url: publicUrl,
                     file_size: file.size,
                     file_type: file.type,
-                    uploaded_by: user.id,
+                    uploaded_by: user.id, // Use ID from context user
                     folder,
                 })
                 .select()

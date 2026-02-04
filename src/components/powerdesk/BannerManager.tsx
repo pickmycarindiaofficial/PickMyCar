@@ -11,6 +11,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useBanners, useCreateBanner, useUpdateBanner, useDeleteBanner, Banner } from '@/hooks/useBanners'; // Assuming useBanners hook is created as planned
 import { toast } from 'sonner';
 
+import { GalleryManager } from './GalleryManager';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
 export function BannerManager() {
     const { data: banners = [], isLoading } = useBanners();
     const createBanner = useCreateBanner();
@@ -18,6 +21,7 @@ export function BannerManager() {
     const deleteBanner = useDeleteBanner();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isGalleryOpen, setIsGalleryOpen] = useState(false);
     const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
     const [formData, setFormData] = useState({
         title: '',
@@ -206,6 +210,15 @@ export function BannerManager() {
                                 onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                                 placeholder="https://..."
                             />
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => setIsGalleryOpen(true)}
+                                title="Select from Gallery"
+                            >
+                                <ImageIcon className="h-4 w-4" />
+                            </Button>
                         </div>
                         {formData.image_url && (
                             <div className="mt-2 relative h-32 rounded-md overflow-hidden border bg-muted">
@@ -218,6 +231,23 @@ export function BannerManager() {
                             </div>
                         )}
                     </div>
+
+                    {/* Gallery Selection Modal */}
+                    <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
+                        <DialogContent className="max-w-5xl h-[80vh] flex flex-col">
+                            <DialogHeader>
+                                <DialogTitle>Select Image from Gallery</DialogTitle>
+                            </DialogHeader>
+                            <div className="flex-1 overflow-y-auto p-1">
+                                <GalleryManager
+                                    onSelect={(url) => {
+                                        setFormData(prev => ({ ...prev, image_url: url }));
+                                        setIsGalleryOpen(false);
+                                    }}
+                                />
+                            </div>
+                        </DialogContent>
+                    </Dialog>
 
                     <div className="space-y-2">
                         <Label htmlFor="link_url">Link URL (Optional)</Label>

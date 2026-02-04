@@ -20,7 +20,11 @@ const FOLDERS = [
     { value: 'backgrounds', label: 'Backgrounds' },
 ];
 
-export function GalleryManager() {
+interface GalleryManagerProps {
+    onSelect?: (url: string) => void;
+}
+
+export function GalleryManager({ onSelect }: GalleryManagerProps) {
     const [selectedFolder, setSelectedFolder] = useState('all');
     const [uploadFolder, setUploadFolder] = useState('general');
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -82,15 +86,17 @@ export function GalleryManager() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-2xl font-bold tracking-tight">Gallery</h2>
-                    <p className="text-muted-foreground">
-                        Upload and manage images. Copy URLs to use anywhere.
-                    </p>
+            {/* Header - Only show if not in picker mode */}
+            {!onSelect && (
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight">Gallery</h2>
+                        <p className="text-muted-foreground">
+                            Upload and manage images. Copy URLs to use anywhere.
+                        </p>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Upload Zone */}
             <Card>
@@ -183,7 +189,13 @@ export function GalleryManager() {
                         >
                             <div
                                 className="aspect-square relative cursor-pointer"
-                                onClick={() => setPreviewImage(image)}
+                                onClick={() => {
+                                    if (onSelect) {
+                                        onSelect(image.url);
+                                    } else {
+                                        setPreviewImage(image);
+                                    }
+                                }}
                             >
                                 <img
                                     src={image.url}
@@ -207,17 +219,19 @@ export function GalleryManager() {
                                             <Copy className="h-4 w-4" />
                                         )}
                                     </Button>
-                                    <Button
-                                        size="icon"
-                                        variant="destructive"
-                                        className="h-8 w-8"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDelete(image);
-                                        }}
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    {!onSelect && (
+                                        <Button
+                                            size="icon"
+                                            variant="destructive"
+                                            className="h-8 w-8"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDelete(image);
+                                            }}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                             <div className="p-2">

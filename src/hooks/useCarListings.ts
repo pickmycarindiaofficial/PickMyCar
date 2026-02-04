@@ -210,6 +210,9 @@ export function useCreateCarListing() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['car-listings'] });
+      queryClient.invalidateQueries({ queryKey: ['my-car-listings'] });
+      queryClient.invalidateQueries({ queryKey: ['dealer-listings'] });
+      queryClient.invalidateQueries({ queryKey: ['car-listing-stats'] });
       queryClient.invalidateQueries({ queryKey: ['dealer-subscription'] });
       toast.success('🎉 Car listing published successfully!');
     },

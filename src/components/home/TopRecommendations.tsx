@@ -52,8 +52,8 @@ export const TopRecommendations = ({
         <div className="flex items-center gap-3">
           <Sparkles className="w-6 h-6 text-primary" />
           <div>
-            <h2 className="text-3xl font-bold">Recommended for You</h2>
-            <p className="text-sm text-muted-foreground mt-1">
+            <h2 className="text-xl font-bold">Recommended for You</h2>
+            <p className="text-sm text-muted-foreground mt-0.5">
               Personalized picks based on your preferences
             </p>
           </div>
