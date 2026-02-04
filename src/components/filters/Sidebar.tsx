@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { FilterSection } from './FilterSection';
 import { SegmentToggle } from './SegmentToggle';
 import { CheckboxFilterGroup } from './CheckboxFilterGroup';
+import { BrandModelFilter } from './BrandModelFilter';
 import { PriceRangeFilter } from './PriceRangeFilter';
 import { ColorFilter } from './ColorFilter';
 import { Filters, CarSegment } from '@/types';
@@ -140,31 +141,16 @@ export const Sidebar = ({ filters, onFilterChange, onClearAll, isOpen, onClose, 
               />
             </FilterSection>
 
-            {/* Brands & Models */}
-            <FilterSection title="Brands & Models">
-              <CheckboxFilterGroup
-                options={activeBrands.map(b => b.name)}
-                selected={filters.brands}
-                onChange={(brands) => onFilterChange({ brands })}
-                showSearch
+            {/* Brands & Models - Professional Accordion Style */}
+            <FilterSection title="Brands + Models">
+              <BrandModelFilter
+                brands={activeBrands}
+                allModels={allModels.filter(m => m.is_active)}
+                selectedBrands={filters.brands}
+                selectedModels={filters.models}
+                onBrandsChange={(brands) => onFilterChange({ brands })}
+                onModelsChange={(models) => onFilterChange({ models })}
               />
-              {filters.brands.length > 0 && (
-                <div className="mt-4 pl-4 space-y-2 border-l-2 border-accent">
-                  {filters.brands.map((brandName) => {
-                    const models = modelsByBrand[brandName] || [];
-                    return (
-                      <div key={brandName}>
-                        <p className="text-xs font-semibold text-muted-foreground mb-2">{brandName}</p>
-                        <CheckboxFilterGroup
-                          options={models}
-                          selected={filters.models}
-                          onChange={(models) => onFilterChange({ models })}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
             </FilterSection>
 
 

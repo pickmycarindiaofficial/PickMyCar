@@ -9,6 +9,7 @@ export interface Brand {
   logo_url: string | null;
   is_active: boolean;
   is_luxury: boolean;
+  sort_order: number;
   created_at: string;
 }
 
@@ -27,7 +28,7 @@ export function useBrands() {
       const { data, error } = await supabase
         .from('brands')
         .select('*')
-        .order('name');
+        .order('sort_order');
 
       if (error) throw error;
       return data as Brand[];

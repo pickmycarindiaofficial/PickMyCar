@@ -8,6 +8,7 @@ export interface Model {
   name: string;
   brand_id: string | null;
   is_active: boolean;
+  sort_order: number;
   created_at: string;
 }
 
@@ -25,8 +26,8 @@ export function useModels() {
       const { data, error } = await supabase
         .from('models')
         .select('*')
-        .order('name');
-      
+        .order('sort_order');
+
       if (error) throw error;
       return data as Model[];
     },
@@ -38,14 +39,14 @@ export function useModelsByBrand(brandId: string | null) {
     queryKey: ['models', brandId],
     queryFn: async () => {
       if (!brandId) return [];
-      
+
       // @ts-ignore - Table exists but not in generated types
       const { data, error } = await supabase
         .from('models')
         .select('*')
         .eq('brand_id', brandId)
-        .order('name');
-      
+        .order('sort_order');
+
       if (error) throw error;
       return data as Model[];
     },
@@ -55,7 +56,7 @@ export function useModelsByBrand(brandId: string | null) {
 
 export function useCreateModel() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (input: ModelInput) => {
       // @ts-ignore - Table exists but not in generated types
@@ -64,7 +65,7 @@ export function useCreateModel() {
         .insert([input])
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -80,7 +81,7 @@ export function useCreateModel() {
 
 export function useUpdateModel() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ id, ...input }: ModelInput & { id: string }) => {
       // @ts-ignore - Table exists but not in generated types
@@ -90,7 +91,7 @@ export function useUpdateModel() {
         .eq('id', id)
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -106,7 +107,7 @@ export function useUpdateModel() {
 
 export function useDeleteModel() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: string) => {
       // @ts-ignore - Table exists but not in generated types
@@ -114,7 +115,7 @@ export function useDeleteModel() {
         .from('models')
         .update({ is_active: false })
         .eq('id', id);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
