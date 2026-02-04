@@ -50,13 +50,11 @@ export function useUpdateDealerProfile(dealerId: string | undefined) {
     mutationFn: async (data: UpdateDealerProfileData) => {
       if (!dealerId) throw new Error('Dealer ID is required');
 
-      const { error } = await (supabase as any)
-        .from('dealer_profiles')
-        .upsert({
-          id: dealerId,
-          ...data,
-          updated_at: new Date().toISOString(),
-        });
+      // Use RPC to bypass RLS (since OTP users might not have auth.uid())
+      const { error } = await supabase.rpc('upsert_dealer_profile_secure', {
+        p_id: dealerId,
+        p_data: data
+      });
 
       if (error) throw error;
     },
