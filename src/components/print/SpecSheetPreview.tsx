@@ -12,10 +12,11 @@ interface SpecSheetPreviewProps {
   template: 'standard' | 'compact' | 'premium';
   selectedFields: string[];
   showPreview: boolean;
+  customPhone?: string;
 }
 
 const SpecSheetPreview = forwardRef<HTMLDivElement, SpecSheetPreviewProps>(
-  ({ carData, dealerProfile, template, selectedFields, showPreview }, ref) => {
+  ({ carData, dealerProfile, template, selectedFields, showPreview, customPhone }, ref) => {
     const [zoomLevel, setZoomLevel] = useState(0.65);
 
     if (!showPreview) {
@@ -52,30 +53,30 @@ const SpecSheetPreview = forwardRef<HTMLDivElement, SpecSheetPreviewProps>(
           <span className="text-sm">
             <span className="font-semibold">Preview Mode:</span> What you see is what you print
           </span>
-          
+
           <div className="flex items-center gap-2">
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               variant="ghost"
               onClick={() => setZoomLevel(prev => Math.max(0.3, prev - 0.1))}
               className="h-7 w-7 p-0"
             >
               <ZoomOut className="h-3 w-3" />
             </Button>
-            
+
             <span className="text-xs font-mono bg-background px-2 py-1 rounded">
               {Math.round(zoomLevel * 100)}%
             </span>
-            
-            <Button 
-              size="sm" 
+
+            <Button
+              size="sm"
               variant="ghost"
               onClick={() => setZoomLevel(prev => Math.min(1.5, prev + 0.1))}
               className="h-7 w-7 p-0"
             >
               <ZoomIn className="h-3 w-3" />
             </Button>
-            
+
             <Button
               size="sm"
               variant="ghost"
@@ -86,9 +87,9 @@ const SpecSheetPreview = forwardRef<HTMLDivElement, SpecSheetPreviewProps>(
             </Button>
           </div>
         </div>
-        
+
         <div className="border rounded-lg overflow-hidden flex items-start justify-center" style={{ minHeight: 'calc(100vh - 16rem)' }}>
-          <div 
+          <div
             className="spec-sheet-preview-wrapper"
             style={{ '--zoom-level': zoomLevel } as React.CSSProperties}
           >
@@ -98,6 +99,7 @@ const SpecSheetPreview = forwardRef<HTMLDivElement, SpecSheetPreviewProps>(
                   carData={carData}
                   dealerProfile={dealerProfile}
                   selectedFields={selectedFields}
+                  customPhone={customPhone}
                 />
               )}
               {template === 'compact' && (

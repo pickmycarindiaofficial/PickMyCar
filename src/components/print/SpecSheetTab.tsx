@@ -36,6 +36,7 @@ export default function SpecSheetTab() {
     'brand_model', 'variant', 'year', 'km', 'fuel', 'transmission', 'ownership', 'price', 'features'
   ]);
   const [showPreview, setShowPreview] = useState(false);
+  const [customPhone, setCustomPhone] = useState('');
 
   const { data: cars = [] } = usePrintStockList();
   const { data: carData } = useCarWithFeatures(selectedCarId);
@@ -60,7 +61,7 @@ export default function SpecSheetTab() {
             <h3 className="font-semibold mb-1">Step 1: Select Car</h3>
             <p className="text-sm text-muted-foreground">Choose the car for spec sheet</p>
           </div>
-          
+
           <div className="space-y-2">
             <Label>Car Listing</Label>
             <Select value={selectedCarId} onValueChange={setSelectedCarId}>
@@ -93,7 +94,7 @@ export default function SpecSheetTab() {
                 <div className="text-sm text-muted-foreground">Classic layout matching sample</div>
               </Label>
             </div>
-            
+
             <div className="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-accent">
               <RadioGroupItem value="compact" id="compact" />
               <Label htmlFor="compact" className="flex-1 cursor-pointer">
@@ -101,7 +102,7 @@ export default function SpecSheetTab() {
                 <div className="text-sm text-muted-foreground">Smaller size, 2 per page</div>
               </Label>
             </div>
-            
+
             <div className="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer hover:bg-accent">
               <RadioGroupItem value="premium" id="premium" />
               <Label htmlFor="premium" className="flex-1 cursor-pointer">
@@ -112,26 +113,40 @@ export default function SpecSheetTab() {
           </RadioGroup>
         </Card>
 
-        {/* Step 3: Customize Fields */}
+        {/* Step 3: Customize Fields & Content */}
         <Card className="p-6 space-y-4">
           <div>
-            <h3 className="font-semibold mb-1">Step 3: Customize Fields</h3>
+            <h3 className="font-semibold mb-1">Step 3: Customize Content</h3>
             <p className="text-sm text-muted-foreground">Select details to display</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            {SPEC_FIELDS.map(field => (
-              <div key={field.key} className="flex items-center space-x-2">
-                <Checkbox
-                  id={field.key}
-                  checked={selectedFields.includes(field.key)}
-                  onCheckedChange={() => toggleField(field.key)}
-                />
-                <Label htmlFor={field.key} className="text-sm cursor-pointer">
-                  {field.label}
-                </Label>
-              </div>
-            ))}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="customPhone">Contact Number on Sheet</Label>
+              <input
+                id="customPhone"
+                type="text"
+                value={customPhone}
+                onChange={(e: any) => setCustomPhone(e.target.value)}
+                placeholder="e.g. +91 99999 88888"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              {SPEC_FIELDS.map(field => (
+                <div key={field.key} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={field.key}
+                    checked={selectedFields.includes(field.key)}
+                    onCheckedChange={() => toggleField(field.key)}
+                  />
+                  <Label htmlFor={field.key} className="text-sm cursor-pointer">
+                    {field.label}
+                  </Label>
+                </div>
+              ))}
+            </div>
           </div>
         </Card>
 
@@ -184,6 +199,7 @@ export default function SpecSheetTab() {
           template={template}
           selectedFields={selectedFields}
           showPreview={showPreview}
+          customPhone={customPhone}
         />
       </div>
     </div>
