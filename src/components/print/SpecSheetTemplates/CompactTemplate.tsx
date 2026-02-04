@@ -21,7 +21,7 @@ export default function CompactTemplate({ carData, dealerProfile, selectedFields
             )}
           </div>
           <div className="text-right text-sm font-bold">
-            {dealerProfile?.profiles?.phone_number}
+            {dealerProfile?.phone_number}
           </div>
         </div>
       </div>
@@ -81,13 +81,13 @@ export default function CompactTemplate({ carData, dealerProfile, selectedFields
 
       {/* Compact Price */}
       {hasField('price') && (
-        <div style={{ 
-          fontSize: '24px', 
-          fontWeight: 'bold', 
-          color: '#22c55e', 
-          textAlign: 'center', 
-          padding: '10px', 
-          border: '2px solid #22c55e', 
+        <div style={{
+          fontSize: '24px',
+          fontWeight: 'bold',
+          color: '#22c55e',
+          textAlign: 'center',
+          padding: '10px',
+          border: '2px solid #22c55e',
           backgroundColor: '#f0fdf4',
           marginBottom: '10px'
         }}>

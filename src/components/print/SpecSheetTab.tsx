@@ -1,3 +1,4 @@
+import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -30,6 +31,7 @@ const SPEC_FIELDS = [
 ];
 
 export default function SpecSheetTab() {
+  const { user } = useAuth();
   const [selectedCarId, setSelectedCarId] = useState<string>('');
   const [template, setTemplate] = useState<'standard' | 'compact' | 'premium'>('standard');
   const [selectedFields, setSelectedFields] = useState<string[]>([
@@ -40,7 +42,7 @@ export default function SpecSheetTab() {
 
   const { data: cars = [] } = usePrintStockList();
   const { data: carData } = useCarWithFeatures(selectedCarId);
-  const { data: dealerProfile } = useDealerProfile(undefined);
+  const { data: dealerProfile } = useDealerProfile(user?.id);
   const { componentRef, handlePrint, handleSaveAsPDF } = usePrintSpecSheet();
 
   const toggleField = (key: string) => {

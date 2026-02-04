@@ -32,7 +32,7 @@ export default function StandardTemplate({ carData, dealerProfile, selectedField
           <div className="text-right">
             <div className="flex items-center gap-2 justify-end text-3xl font-extrabold">
               <Phone className="h-8 w-8" />
-              <span>{customPhone || dealerProfile?.profiles?.phone_number || 'Contact Number'}</span>
+              <span>{customPhone || dealerProfile?.phone_number || 'Contact Number'}</span>
             </div>
             {dealerProfile?.about_text && (
               <div className="text-sm mt-1 text-muted-foreground" style={{ maxWidth: '400px', marginLeft: 'auto', lineHeight: '1.2' }}>
