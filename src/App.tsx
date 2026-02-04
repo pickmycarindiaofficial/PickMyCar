@@ -58,6 +58,7 @@ const CarListings = lazy(() => import("@/pages/dashboard/modules/CarListings"));
 
 // Website Manager Modules
 const Content = lazy(() => import("@/pages/dashboard/modules/Content"));
+const Gallery = lazy(() => import("@/pages/dashboard/modules/Gallery"));
 const SEO = lazy(() => import("@/pages/dashboard/modules/SEO"));
 
 // Dealer/Sales/Finance/Inspection Modules
@@ -217,6 +218,7 @@ const App = () => (
 
                       {/* Website Manager Routes */}
                       <Route path="content" element={<Content />} />
+                      <Route path="gallery" element={<Gallery />} />
                       <Route path="seo" element={<SEO />} />
                       <Route path="master-data" element={<PlaceholderPage title="Master Data" description="View-only access to master data" features={['View cities and locations', 'View brands and models', 'View categories']} />} />
                       <Route path="campaigns" element={<PlaceholderPage title="Campaigns" description="Manage promotional campaigns" features={['Create campaigns', 'Track performance', 'Manage offers']} />} />

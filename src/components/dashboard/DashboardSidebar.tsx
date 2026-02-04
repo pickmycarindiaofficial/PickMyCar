@@ -3,7 +3,7 @@ import {
   FileText, Globe, Database, Tag, BarChart3, Car, UserCircle,
   ClipboardList, TrendingUp, DollarSign, Calculator, FolderOpen,
   CheckCircle, FileCheck, Heart, Send, Package, Wrench, Building2, Store, Printer, TrendingDown,
-  Brain, Lightbulb, LineChart, Target, Gauge, Sparkles, User, CalendarClock
+  Brain, Lightbulb, LineChart, Target, Gauge, Sparkles, User, CalendarClock, Image
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import logoImage from '@/assets/logo.png';
@@ -139,6 +139,7 @@ export function DashboardSidebar() {
     { title: 'Plans Management', url: '/dashboard/subscription-management', icon: Wrench, roles: ['powerdesk'] },
     { title: 'Permissions', url: '/dashboard/permissions', icon: Lock, roles: ['powerdesk'] },
     { title: 'Reports', url: '/dashboard/reports', icon: FileText, roles: ['powerdesk'] },
+    { title: 'Gallery', url: '/dashboard/gallery', icon: Image, roles: ['powerdesk', 'website_manager'] },
 
     // Analytics Routes
     { title: 'Lead Intelligence', url: '/dashboard/lead-intelligence', icon: Brain, roles: ['powerdesk', 'sales'] },
