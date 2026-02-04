@@ -296,7 +296,6 @@ export function useDeleteCarListing() {
 
       if (fetchError) {
         console.error('Error fetching listing before delete:', fetchError);
-        // We proceed to delete anyway if we can't fetch, to avoid getting stuck
       }
 
       // 2. Delete images from storage if they exist
@@ -304,10 +303,8 @@ export function useDeleteCarListing() {
         const pathsToRemove: string[] = [];
 
         listing.photos.forEach((photo: any) => {
-          // Helper to extract path from public URL
           const extractPath = (url: string) => {
             if (!url) return null;
-            // Matches anything after /car-listings/
             const match = url.match(/\/car-listings\/(.+)/);
             return match ? match[1] : null;
           };
@@ -328,27 +325,37 @@ export function useDeleteCarListing() {
 
           if (storageError) {
             console.error('Error deleting images from storage:', storageError);
-            // Non-blocking error
           }
         }
       }
 
-      // 3. Delete the listing record
-      console.log('🗑️ Deleting listing record from database...');
-      const { error, data } = await supabase
-        .from('car_listings')
-        .delete()
-        .eq('id', id)
-        .select();
+      // 3. Try RPC function first (bypasses RLS)
+      console.log('🗑️ Attempting delete via RPC function...');
+      const { data: rpcResult, error: rpcError } = await (supabase as any)
+        .rpc('delete_car_listing', { listing_id: id });
 
-      if (error) {
-        console.error('❌ Delete error:', error);
-        throw error;
+      if (!rpcError && rpcResult === true) {
+        console.log('✅ Delete successful via RPC function');
+        return id;
       }
 
-      console.log('✅ Delete successful, affected rows:', data);
+      if (rpcError) {
+        console.warn('⚠️ RPC delete failed, trying direct delete:', rpcError.message);
+      }
 
-      // Verify deletion
+      // 4. Fallback: Direct delete
+      console.log('🗑️ Attempting direct delete...');
+      const { error: directError } = await supabase
+        .from('car_listings')
+        .delete()
+        .eq('id', id);
+
+      if (directError) {
+        console.error('❌ Direct delete error:', directError);
+        throw new Error(`Delete failed: ${directError.message}`);
+      }
+
+      // 5. Verify deletion
       const { data: verifyData } = await supabase
         .from('car_listings')
         .select('id')
@@ -357,26 +364,20 @@ export function useDeleteCarListing() {
 
       if (verifyData) {
         console.error('❌ Listing still exists after delete!');
-        throw new Error('Delete failed: Listing still exists. Check RLS policies.');
+        throw new Error('Delete failed: Listing still exists. Please run the SQL fix in Supabase.');
       }
 
-      console.log('✅ Verified: Listing no longer exists in database');
+      console.log('✅ Verified: Listing deleted successfully');
       return id;
     },
-    onSuccess: (deletedId) => {
+    onSuccess: () => {
       console.log('🔄 Refetching queries after delete...');
-
-      // Force immediate refetch of all related queries
       queryClient.refetchQueries({ queryKey: ['car-listings'] });
       queryClient.refetchQueries({ queryKey: ['car-listing-stats'] });
       queryClient.refetchQueries({ queryKey: ['my-car-listings'] });
       queryClient.refetchQueries({ queryKey: ['dealer-listings'] });
-
-      // Also invalidate to clear any stale cache
       queryClient.invalidateQueries({ queryKey: ['car-listings'] });
       queryClient.invalidateQueries({ queryKey: ['car-listing-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['my-car-listings'] });
-      queryClient.invalidateQueries({ queryKey: ['dealer-listings'] });
 
       toast.success('Listing deleted successfully!', {
         description: 'The listing and all associated images have been removed.',
@@ -390,6 +391,7 @@ export function useDeleteCarListing() {
     }
   });
 }
+
 
 // Update listing status mutation
 export function useUpdateListingStatus() {
