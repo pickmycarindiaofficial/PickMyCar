@@ -7,16 +7,18 @@ $supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 
 // Get Car ID from URL (e.g., share.php?id=123)
 $carId = isset($_GET['id']) ? $_GET['id'] : null;
+$debug = isset($_GET['debug']) && $_GET['debug'] == 'true';
 
 // Default Meta (Fallback)
 $metaTitle = "PickMyCar - Find Your Perfect Used Car";
-$metaDesc = "Discover certified used cars across India with warranty assured.";
+$metaDesc = "Discover certified used cars across India with warranty assured, easy financing, and hassle-free insurance.";
 $metaImage = "https://pickmycar.co.in/og-image.png";
 $redirectUrl = "https://pickmycar.co.in/";
 
 if ($carId) {
-    // Fetch Car Data from Supabase
-    $apiEndpoint = "$supabaseUrl/rest/v1/car_listings?id=eq.$carId&select=title,price,brand,model,year,images,city";
+    // UPDATED: Use the VIEW 'car_listings_detailed' instead of raw table
+    // UPDATED: Correct column names (expected_price, photos)
+    $apiEndpoint = "$supabaseUrl/rest/v1/car_listings_detailed?id=eq.$carId&select=title,expected_price,brand_name,model_name,year_of_make,city_name,photos";
     
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $apiEndpoint);
@@ -28,47 +30,77 @@ if ($carId) {
     ));
     
     $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
+    
+    if ($debug) {
+        echo "<h1>Debug Info</h1>";
+        echo "<p>API: $apiEndpoint</p>";
+        echo "<p>HTTP Code: $httpCode</p>";
+        echo "<pre>Response: $response</pre>";
+    }
     
     $data = json_decode($response, true);
     
     if (!empty($data) && isset($data[0])) {
         $car = $data[0];
         
-        // Format Price (e.g. 5.50 Lakh)
-        $price = $car['price'];
+        // Format Price (e.g. 5.50 Lakh) using 'expected_price'
+        $price = isset($car['expected_price']) ? $car['expected_price'] : 0;
+        
         if ($price >= 10000000) {
             $formattedPrice = number_format($price / 10000000, 2) . ' Cr';
         } else {
             $formattedPrice = number_format($price / 100000, 2) . ' Lakh';
         }
         
-        $metaTitle = "{$car['year']} {$car['brand']} {$car['model']} - ₹{$formattedPrice}";
-        $metaDesc = "Check out this {$car['title']} in {$car['city']} on PickMyCar. Verified, Inspected, and ready to drive!";
+        // Use flattened view columns: brand_name, model_name
+        $brand = isset($car['brand_name']) ? $car['brand_name'] : 'Car';
+        $model = isset($car['model_name']) ? $car['model_name'] : '';
+        $year = isset($car['year_of_make']) ? $car['year_of_make'] : '';
+        $city = isset($car['city_name']) ? $car['city_name'] : '';
+        $title = isset($car['title']) ? $car['title'] : "$brand $model";
+
+        $metaTitle = "$year $brand $model - ₹$formattedPrice";
+        $metaDesc = "Check out this $title in $city on PickMyCar. Verified, Inspected, and ready to drive!";
         
-        // Handle Image Array (Supabase usually stores as array or JSON)
-        // Adjust based on your actual DB schema. Assuming 'images' is text[] or jsonb
-        if (!empty($car['images']) && is_array($car['images'])) {
-             $metaImage = $car['images'][0];
-        } elseif (!empty($car['images']) && is_string($car['images'])) {
-             // Handle if stored as JSON string or single URL
-             // Simple check if it starts with [
-             if (strpos($car['images'], '[') === 0) {
-                 $imgs = json_decode($car['images'], true);
-                 $metaImage = $imgs[0] ?? $metaImage;
-             } else {
-                 $metaImage = $car['images'];
+        // Handle Photos (Column is 'photos')
+        if (!empty($car['photos'])) {
+             // If photos is already an array (from JSON response)
+             if (is_array($car['photos'])) {
+                 $firstPhoto = $car['photos'][0];
+                 // Check if it's an object with 'url' (ImageUpload interface)
+                 if (is_array($firstPhoto) && isset($firstPhoto['url'])) {
+                     $metaImage = $firstPhoto['url'];
+                 } elseif (is_object($firstPhoto) && isset($firstPhoto->url)) {
+                     $metaImage = $firstPhoto->url;
+                 } else {
+                     // Maybe it's just a string URL?
+                     $metaImage = $firstPhoto;
+                 }
+             } elseif (is_string($car['photos'])) {
+                 // If it's a JSON string
+                 $photos = json_decode($car['photos'], true);
+                 if (!empty($photos) && isset($photos[0]['url'])) {
+                     $metaImage = $photos[0]['url'];
+                 }
              }
         }
 
         $redirectUrl = "https://pickmycar.co.in/car/$carId";
+    } elseif ($debug) {
+        echo "<p>No data found for ID: $carId</p>";
+        exit;
     }
 } else {
     // If no ID, redirect home
-    header("Location: https://pickmycar.co.in/");
-    exit();
+    if (!$debug) {
+        header("Location: https://pickmycar.co.in/");
+        exit();
+    }
 }
 
+if ($debug) exit; // Stop here if debugging
 ?>
 <!DOCTYPE html>
 <html lang="en">
