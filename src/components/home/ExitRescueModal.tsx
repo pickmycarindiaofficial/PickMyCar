@@ -74,9 +74,10 @@ export const ExitRescueModal = ({ open, onOpenChange, onSubmitted }: ExitRescueM
       onSubmitted?.();
 
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving unmet demand:', error);
-      toast.error('Failed to save your preferences');
+      // Show specific error message from Supabase or fallback
+      toast.error(error?.message || error?.error_monitor || 'Failed to save your preferences. Please try again.');
     } finally {
       setSubmitting(false);
     }

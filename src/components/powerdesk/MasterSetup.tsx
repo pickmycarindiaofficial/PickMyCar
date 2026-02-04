@@ -9,6 +9,7 @@ import { TypeManager } from './TypeManager';
 import { StatusManager } from './StatusManager';
 import { BannerManager } from './BannerManager';
 import { StaffManager } from './StaffManager';
+import { GalleryManager } from './GalleryManager';
 import { PermissionGate } from '@/components/common/PermissionGate';
 
 export function MasterSetup() {
@@ -25,8 +26,9 @@ export function MasterSetup() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="staff">Staff</TabsTrigger>
+            <TabsTrigger value="gallery">Gallery</TabsTrigger>
             <TabsTrigger value="cities">Cities</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="brands">Brands</TabsTrigger>
@@ -38,6 +40,10 @@ export function MasterSetup() {
 
           <TabsContent value="staff" className="space-y-4">
             <StaffManager />
+          </TabsContent>
+
+          <TabsContent value="gallery" className="space-y-4">
+            <GalleryManager />
           </TabsContent>
 
           <TabsContent value="cities" className="space-y-4">

@@ -64,14 +64,14 @@ export const CarCard = ({ car, onCallDealer, onChat, onToggleShortlist, isShortl
   return (
     <div
       ref={cardRef}
-      className={`group relative overflow-hidden rounded-2xl border-2 bg-card shadow-md transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1 cursor-pointer ${car.isFeatured
-        ? 'border-blue-500 hover:border-blue-600'
-        : 'border-border hover:border-primary/50'
+      className={`group relative overflow-hidden rounded-xl border bg-card shadow-sm transition-all duration-300 hover:shadow-md cursor-pointer ${car.isFeatured
+        ? 'border-blue-500/50'
+        : 'border-border'
         }`}
       onClick={() => onCardClick?.(car)}
     >
-      {/* Image Section */}
-      <div className="relative aspect-[4/3] overflow-hidden rounded-t-2xl">
+      {/* Image Section - 16:10 Aspect Ratio for Compactness */}
+      <div className="relative aspect-[16/10] overflow-hidden bg-muted">
         <img
           src={getOptimizedImageUrl(car.imageUrl, { width: 400, quality: 75 })}
           alt={car.title}
@@ -79,176 +79,106 @@ export const CarCard = ({ car, onCallDealer, onChat, onToggleShortlist, isShortl
           decoding="async"
           fetchPriority={priority ? "high" : "auto"}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
 
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+        {/* Gradient Overlay for Text Readability if needed */}
+        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent opacity-60" />
 
-        {/* Badges - Top Left */}
-        <div className="absolute top-3 left-3 flex flex-col gap-2">
-          <div className="flex flex-wrap gap-2">
+        {/* Badges - Top Left - Compact */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1">
+          <div className="flex flex-wrap gap-1">
             {car.isFeatured && (
-              <Badge className="bg-yellow-400 text-black border-0 px-2.5 py-1 text-xs font-semibold shadow-sm hover:bg-yellow-500">
-                ⭐ Featured
+              <Badge className="bg-yellow-400 text-black border-0 px-1.5 py-0.5 text-[10px] font-bold shadow-sm">
+                FEATURED
               </Badge>
             )}
             {(car.category === 'Brand Warranty' || car.category === 'New Car Warranty') && (
-              <Badge className="bg-[#236ceb] text-white border-0 px-2.5 py-1 text-xs font-semibold shadow-sm">
+              <Badge className="bg-blue-600 text-white border-0 px-1.5 py-0.5 text-[10px] font-semibold shadow-sm">
                 Warranty
               </Badge>
             )}
-            {car.owner === '1st Owner' && (
-              <Badge className="bg-[hsl(var(--badge-owner-bg))] text-[hsl(var(--badge-owner-text))] border-0 px-2.5 py-1 text-xs font-semibold shadow-sm">
-                1st Owner
-              </Badge>
-            )}
-            {car.category === 'Certified' && (
-              <Badge className="bg-[hsl(var(--badge-certified-bg))] text-[hsl(var(--badge-certified-text))] border-0 px-2.5 py-1 text-xs font-semibold shadow-sm">
-                Certified
-              </Badge>
-            )}
           </div>
-
-          {/* Price Drop */}
-          {car.priceDrop && (
-            <div className="flex">
-              <Badge className="bg-[hsl(var(--badge-price-drop-bg))] text-[hsl(var(--badge-price-drop-text))] border-0 px-2.5 py-1 text-xs font-semibold shadow-md animate-pulse">
-                <TrendingDown className="mr-1 h-3 w-3" />
-                ₹{(car.priceDrop.amount / 1000).toFixed(0)}K Drop {car.priceDrop.label && `• ${car.priceDrop.label}`}
-              </Badge>
-            </div>
-          )}
         </div>
 
-        {/* Heart + Share Icons - Top Right (Stacked) */}
-        <div className="absolute top-3 right-3 flex flex-col gap-2">
-          {/* Heart Button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleShortlist(car.id);
-            }}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/95 shadow-lg backdrop-blur-sm transition-all hover:scale-110 hover:bg-white"
-          >
-            <Heart
-              className={`h-5 w-5 ${isShortlisted ? 'fill-red-500 text-red-500' : 'text-gray-700'}`}
-            />
-          </button>
+        {/* Heart Icon - Top Right - Compact */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleShortlist(car.id);
+          }}
+          className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 backdrop-blur-md transition-transform hover:scale-110 active:scale-95"
+        >
+          <Heart
+            className={`h-4 w-4 ${isShortlisted ? 'fill-red-500 text-red-500' : 'text-white'}`}
+          />
+        </button>
 
-          {/* Share Button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onShare?.(car);
-            }}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/95 shadow-lg backdrop-blur-sm transition-all hover:scale-110 hover:bg-white"
-          >
-            <Share2 className="h-4 w-4 text-gray-700" />
-          </button>
-        </div>
-
+        {/* Price Drop - Bottom Left Overlay */}
+        {car.priceDrop && (
+          <div className="absolute bottom-2 left-2">
+            <Badge className="bg-green-500/90 backdrop-blur-sm text-white border-0 px-1.5 py-0.5 text-[10px] font-medium animate-pulse">
+              <TrendingDown className="mr-0.5 h-3 w-3" />
+              ₹{(car.priceDrop.amount / 1000).toFixed(0)}k Off
+            </Badge>
+          </div>
+        )}
       </div>
 
-      {/* Content Section */}
-      <div className="p-4 space-y-3">
-        {/* Title + Price Row - Always side by side */}
-        <div className="flex items-start justify-between gap-2">
+      {/* Content Section - Compact Padding */}
+      <div className="p-3 space-y-2">
+        {/* Title & Price Row */}
+        <div className="flex justify-between items-start gap-2">
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-bold text-foreground truncate">
+            <h3 className="text-base font-extrabold text-gray-900 dark:text-gray-50 leading-tight truncate">
               {car.year} {car.brand} {car.model}
             </h3>
-            <p className="text-sm text-muted-foreground truncate">
+            <p className="text-xs text-muted-foreground truncate">
               {car.variant}
             </p>
           </div>
-          {/* Modern Price Design */}
-          <div className="flex-shrink-0 text-right">
-            <div className="text-xl font-extrabold bg-gradient-to-r from-[#236ceb] to-[#4b8cf5] bg-clip-text text-transparent whitespace-nowrap">
+          <div className="text-right flex-shrink-0">
+            <div className="text-xl font-extrabold text-[#236ceb] leading-tight">
               {formatPrice(car.price)}
             </div>
             {car.emiPerMonth && (
-              <div className="inline-flex items-center gap-1 mt-0.5 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 rounded-full text-[10px] font-semibold">
-                <span className="inline-block w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                ₹{car.emiPerMonth.toLocaleString('en-IN')}/mo
+              <div className="text-[10px] font-bold text-muted-foreground">
+                ₹{(car.emiPerMonth / 1000).toFixed(1)}k/mo
               </div>
             )}
           </div>
         </div>
 
-        {/* Specs Row - Icon Based Design */}
-        <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-xl">
-          <div className="flex items-center gap-1.5">
-            <Gauge className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-foreground font-medium">{formatKms(car.kmsDriven)}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Fuel className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-foreground font-medium">{car.fuelType}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Cog className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-foreground font-medium">{car.transmission}</span>
-          </div>
+        {/* Inline Specs - Single Line - High Density & High Contrast */}
+        <div className="flex items-center gap-2 text-[13px] text-gray-700 dark:text-gray-300 font-medium overflow-hidden whitespace-nowrap">
+          <span className="flex items-center gap-1">
+            {formatKms(car.kmsDriven)}
+          </span>
+          <span className="text-gray-400">•</span>
+          <span>{car.fuelType}</span>
+          <span className="text-gray-400">•</span>
+          <span>{car.transmission}</span>
+          <span className="text-gray-400">•</span>
+          <span className="truncate max-w-[80px]">{car.location}</span>
         </div>
 
-        {/* Location */}
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <svg className="h-4 w-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-          </svg>
-          <span className="truncate">{car.location}</span>
+        {/* Action Buttons - Full Width, Compact */}
+        {/* Action Button - Single Contact Dealer */}
+        <div className="pt-2 pb-1">
+          <Button
+            variant="default"
+            size="default"
+            onClick={(e) => {
+              e.stopPropagation();
+              onCallDealer(car);
+            }}
+            className="w-full h-11 font-bold bg-gradient-to-r from-[#236ceb] to-[#4b8cf5] hover:from-[#1e5bc9] hover:to-[#3a7de3] text-white shadow-md hover:shadow-lg transition-all text-sm uppercase tracking-wide"
+          >
+            <Phone className="mr-2 h-4 w-4" />
+            Contact Dealer
+          </Button>
         </div>
 
-        {/* Highlights - Fixed 2-line height for consistent card alignment */}
-        <div className="min-h-[52px] flex flex-col gap-1">
-          {car.reasonsToBuy && car.reasonsToBuy.length > 0 ? (
-            <>
-              {/* First line - always show first highlight */}
-              <div className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 rounded-md text-xs font-medium w-fit">
-                <svg className="h-3 w-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-                <span className="truncate max-w-[180px]">{car.reasonsToBuy[0]}</span>
-              </div>
-              {/* Second line - show remaining highlights (2nd and 3rd) together or just 2nd */}
-              {car.reasonsToBuy.length >= 2 && (
-                <div className="flex flex-wrap gap-1">
-                  {car.reasonsToBuy.slice(1, 3).map((highlight, idx) => (
-                    <div
-                      key={idx}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 rounded-md text-xs font-medium"
-                    >
-                      <svg className="h-3 w-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      <span className="truncate max-w-[100px]">{highlight}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            /* Empty placeholder to maintain consistent height when no highlights */
-            <div className="h-full" />
-          )}
-        </div>
-      </div>
-
-      {/* Action Footer */}
-      <div className="border-t border-border bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 px-4 py-3 rounded-b-2xl">
-        <Button
-          variant="default"
-          size="default"
-          onClick={(e) => {
-            e.stopPropagation();
-            onCallDealer(car);
-          }}
-          className="w-full font-semibold bg-gradient-to-r from-[#236ceb] to-[#4b8cf5] hover:from-[#1e5bc9] hover:to-[#3a7de3] text-white shadow-md hover:shadow-lg transition-all"
-        >
-          <Phone className="mr-2 h-4 w-4" />
-          Contact Dealer
-        </Button>
       </div>
     </div>
   );
