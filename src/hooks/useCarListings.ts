@@ -285,6 +285,8 @@ export function useDeleteCarListing() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
+      console.log('🗑️ Starting delete for listing:', id);
+
       // 1. Fetch listing to get image URLs
       const { data: listing, error: fetchError } = await supabase
         .from('car_listings')
@@ -332,19 +334,59 @@ export function useDeleteCarListing() {
       }
 
       // 3. Delete the listing record
-      const { error } = await supabase.from('car_listings').delete().eq('id', id);
-      if (error) throw error;
+      console.log('🗑️ Deleting listing record from database...');
+      const { error, data } = await supabase
+        .from('car_listings')
+        .delete()
+        .eq('id', id)
+        .select();
+
+      if (error) {
+        console.error('❌ Delete error:', error);
+        throw error;
+      }
+
+      console.log('✅ Delete successful, affected rows:', data);
+
+      // Verify deletion
+      const { data: verifyData } = await supabase
+        .from('car_listings')
+        .select('id')
+        .eq('id', id)
+        .single();
+
+      if (verifyData) {
+        console.error('❌ Listing still exists after delete!');
+        throw new Error('Delete failed: Listing still exists. Check RLS policies.');
+      }
+
+      console.log('✅ Verified: Listing no longer exists in database');
+      return id;
     },
-    onSuccess: () => {
-      // Invalidate everything to ensure immediate reflection
+    onSuccess: (deletedId) => {
+      console.log('🔄 Refetching queries after delete...');
+
+      // Force immediate refetch of all related queries
+      queryClient.refetchQueries({ queryKey: ['car-listings'] });
+      queryClient.refetchQueries({ queryKey: ['car-listing-stats'] });
+      queryClient.refetchQueries({ queryKey: ['my-car-listings'] });
+      queryClient.refetchQueries({ queryKey: ['dealer-listings'] });
+
+      // Also invalidate to clear any stale cache
       queryClient.invalidateQueries({ queryKey: ['car-listings'] });
       queryClient.invalidateQueries({ queryKey: ['car-listing-stats'] });
       queryClient.invalidateQueries({ queryKey: ['my-car-listings'] });
       queryClient.invalidateQueries({ queryKey: ['dealer-listings'] });
-      toast.success('Listing and images deleted successfully');
+
+      toast.success('Listing deleted successfully!', {
+        description: 'The listing and all associated images have been removed.',
+      });
     },
     onError: (error: Error) => {
-      toast.error(`Failed: ${error.message}`);
+      console.error('❌ Delete mutation error:', error);
+      toast.error('Failed to delete listing', {
+        description: error.message || 'Please check your permissions and try again.',
+      });
     }
   });
 }
