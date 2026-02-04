@@ -7,30 +7,30 @@ export interface UpdateDealerProfileData {
   logo_url?: string | null;
   banner_url?: string | null;
   about_text?: string | null;
-  
+
   // Online Presence
   website_url?: string | null;
   facebook_url?: string | null;
   instagram_url?: string | null;
   twitter_url?: string | null;
   google_place_id?: string | null;
-  
+
   // Business Details
   year_established?: number | null;
   specialization?: string[] | null;
   operating_hours?: any;
-  
+
   // Achievements
   certifications?: string[] | null;
   awards?: string[] | null;
-  
+
   // Customer Photos
   customer_photos?: Array<{
     url: string;
     caption?: string;
     uploaded_at?: string;
   }> | null;
-  
+
   // Visibility Settings
   show_logo?: boolean;
   show_banner?: boolean;
@@ -52,11 +52,11 @@ export function useUpdateDealerProfile(dealerId: string | undefined) {
 
       const { error } = await (supabase as any)
         .from('dealer_profiles')
-        .update({
+        .upsert({
+          id: dealerId,
           ...data,
           updated_at: new Date().toISOString(),
-        })
-        .eq('id', dealerId);
+        });
 
       if (error) throw error;
     },
@@ -65,10 +65,10 @@ export function useUpdateDealerProfile(dealerId: string | undefined) {
       queryClient.invalidateQueries({ queryKey: ['dealer-profile-management', dealerId] });
       queryClient.invalidateQueries({ queryKey: ['dealer-full-profile', dealerId] });
       queryClient.invalidateQueries({ queryKey: ['dealer-profile', dealerId] });
-      
+
       // Refetch immediately to ensure consistency
       queryClient.refetchQueries({ queryKey: ['dealer-full-profile', dealerId] });
-      
+
       toast.success('Profile updated successfully');
     },
     onError: (error: any) => {
