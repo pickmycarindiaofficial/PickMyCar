@@ -270,7 +270,7 @@ const CustomerAuth = () => {
                   type="button"
                   variant="outline"
                   className="w-full h-12 rounded-xl border-2 font-semibold hover:bg-gray-50 dark:hover:bg-gray-900"
-                  onClick={() => navigate('/staff-login')}
+                  onClick={() => navigate('/dealer/login')}
                 >
                   Staff / Dealer Login
                 </Button>

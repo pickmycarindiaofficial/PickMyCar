@@ -23,7 +23,7 @@ export default function StandardTemplate({ carData, dealerProfile, selectedField
               <img
                 src={dealerProfile.logo_url}
                 alt="Dealer Logo"
-                style={{ height: '60px', objectFit: 'contain' }}
+                style={{ height: '120px', width: 'auto', maxWidth: '300px', objectFit: 'contain' }}
               />
             )}
             <div className="mt-1 text-lg font-bold">{dealerProfile?.dealership_name || 'Dealer Name'}</div>

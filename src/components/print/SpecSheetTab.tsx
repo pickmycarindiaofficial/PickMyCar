@@ -31,7 +31,7 @@ const SPEC_FIELDS = [
 ];
 
 export default function SpecSheetTab() {
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
   const [selectedCarId, setSelectedCarId] = useState<string>('');
   const [template, setTemplate] = useState<'standard' | 'compact' | 'premium'>('standard');
   const [selectedFields, setSelectedFields] = useState<string[]>([
@@ -40,9 +40,28 @@ export default function SpecSheetTab() {
   const [showPreview, setShowPreview] = useState(false);
   const [customPhone, setCustomPhone] = useState('');
 
+  // Determine dealerId (handle both AuthContext user and localStorage fallback for OTP)
+  let dealerId = user?.id; // Default to authenticated user ID
+
+  // If no user ID but has dealer role (OTP session), try getting from localStorage
+  if (!dealerId) {
+    try {
+      // Check for dealer_info in localStorage (set by DealerLogin)
+      const dealerInfoStr = localStorage.getItem('dealer_info');
+      if (dealerInfoStr) {
+        const dealerInfo = JSON.parse(dealerInfoStr);
+        if (dealerInfo?.id) {
+          dealerId = dealerInfo.id;
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing dealer info:', e);
+    }
+  }
+
   const { data: cars = [] } = usePrintStockList();
   const { data: carData } = useCarWithFeatures(selectedCarId);
-  const { data: dealerProfile } = useDealerProfile(user?.id);
+  const { data: dealerProfile } = useDealerProfile(dealerId);
   const { componentRef, handlePrint, handleSaveAsPDF } = usePrintSpecSheet();
 
   const toggleField = (key: string) => {

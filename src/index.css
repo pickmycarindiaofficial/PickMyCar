@@ -42,7 +42,7 @@ All colors MUST be HSL.
 
     --gradient-primary: linear-gradient(135deg, hsl(218 83% 53%) 0%, hsl(218 83% 63%) 100%);
     --gradient-hero: linear-gradient(135deg, hsl(210 54% 24%) 0%, hsl(210 54% 34%) 100%);
-    
+
     --shadow-sm: 0 1px 2px 0 hsl(210 54% 24% / 0.05);
     --shadow-md: 0 4px 6px -1px hsl(210 54% 24% / 0.1);
     --shadow-lg: 0 10px 15px -3px hsl(210 54% 24% / 0.1);
@@ -160,7 +160,12 @@ All colors MUST be HSL.
     @apply bg-background text-foreground antialiased;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-semibold;
   }
 }
@@ -189,6 +194,7 @@ body.user-intelligence-fullscreen main {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -199,6 +205,7 @@ body.user-intelligence-fullscreen main {
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -206,11 +213,12 @@ body.user-intelligence-fullscreen main {
 
 /* Mobile-First Performance Optimizations */
 @layer utilities {
+
   /* Safe area insets for notched devices */
   .safe-area-top {
     padding-top: env(safe-area-inset-top, 0px);
   }
-  
+
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
@@ -247,12 +255,36 @@ body.user-intelligence-fullscreen main {
 
 /* Mobile touch targets - min 44px as per Apple HIG */
 @media (max-width: 768px) {
+
   button:not(.icon-only),
   [role="button"],
   input[type="checkbox"],
   input[type="radio"],
   select {
     min-height: 44px;
+  }
+
+  /* Mobile Form Input Heights */
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="date"],
+  textarea {
+    min-height: 48px;
+    font-size: 16px !important;
+    /* Prevent iOS zoom on focus */
+  }
+
+  /* Larger labels for touch */
+  label {
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+
+  /* Form card optimizations */
+  .space-y-6>*+* {
+    margin-top: 1.5rem;
   }
 
   /* Optimize scrolling performance */
@@ -269,6 +301,7 @@ body.user-intelligence-fullscreen main {
 
   /* Reduce motion for performance */
   @media (prefers-reduced-motion: reduce) {
+
     *,
     ::before,
     ::after {
@@ -289,8 +322,41 @@ body.user-intelligence-fullscreen main {
 
 /* Print optimization - hide mobile nav */
 @media print {
+
   .md\\:hidden,
   [class*="fixed bottom-0"] {
     display: none !important;
+  }
+}
+
+/* Mobile optimizations for Cards */
+@media (max-width: 640px) {
+
+  /* Flatten cards on mobile */
+  .card-mobile-flat {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    padding: 0;
+  }
+
+  /* Reduce internal card padding */
+  .p-6,
+  .p-mobile-tight {
+    padding: 1rem !important;
+    /* was 1.5rem (24px) */
+  }
+
+  /* Make inputs full width and taller */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+    /* Prevent zoom */
+  }
+
+  /* Adjust spacing for mobile workflow */
+  .space-y-6>*+* {
+    margin-top: 1.25rem;
   }
 }

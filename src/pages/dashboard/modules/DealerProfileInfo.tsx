@@ -95,7 +95,17 @@ export default function DealerProfileInfo() {
     try {
       const url = await uploadLogo.mutateAsync(file);
       // Auto-save logo immediately
-      await updateProfile.mutateAsync({ logo_url: url });
+      await updateProfile.mutateAsync({
+        logo_url: url,
+        dealership_name: formData.dealership_name || profile?.dealership_name,
+        business_type: formData.business_type || profile?.business_type,
+        gst_number: formData.gst_number || profile?.gst_number,
+        pan_number: formData.pan_number || profile?.pan_number,
+        address: formData.address || profile?.address,
+        city_id: formData.city_id || profile?.city_id,
+        state: formData.state || profile?.state,
+        pincode: formData.pincode || profile?.pincode
+      });
       setFormData({ ...formData, logo_url: url });
     } catch (error) {
       console.error('Failed to upload logo:', error);
@@ -112,7 +122,17 @@ export default function DealerProfileInfo() {
     try {
       const url = await uploadBanner.mutateAsync(file);
       // Auto-save banner immediately
-      await updateProfile.mutateAsync({ banner_url: url });
+      await updateProfile.mutateAsync({
+        banner_url: url,
+        dealership_name: formData.dealership_name || profile?.dealership_name,
+        business_type: formData.business_type || profile?.business_type,
+        gst_number: formData.gst_number || profile?.gst_number,
+        pan_number: formData.pan_number || profile?.pan_number,
+        address: formData.address || profile?.address,
+        city_id: formData.city_id || profile?.city_id,
+        state: formData.state || profile?.state,
+        pincode: formData.pincode || profile?.pincode
+      });
       setFormData({ ...formData, banner_url: url });
     } catch (error) {
       console.error('Failed to upload banner:', error);
@@ -122,6 +142,14 @@ export default function DealerProfileInfo() {
   const handleSave = async () => {
     try {
       await updateProfile.mutateAsync({
+        dealership_name: formData.dealership_name || profile?.dealership_name,
+        business_type: formData.business_type || profile?.business_type,
+        gst_number: formData.gst_number || profile?.gst_number,
+        pan_number: formData.pan_number || profile?.pan_number,
+        address: formData.address || profile?.address,
+        city_id: formData.city_id || profile?.city_id,
+        state: formData.state || profile?.state,
+        pincode: formData.pincode || profile?.pincode,
         logo_url: formData.logo_url,
         banner_url: formData.banner_url,
         about_text: formData.about_text,

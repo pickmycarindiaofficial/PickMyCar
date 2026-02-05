@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,12 +34,16 @@ import { useSaveCarListingFeatures } from '@/hooks/useCarListingFeatures';
 import { useDealerSubscription } from '@/hooks/useDealerSubscription';
 import { useDealerProfile } from '@/hooks/useDealerProfile';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, User, Building2, X, Star, Sparkles, Lightbulb } from 'lucide-react';
+import { Loader2, User, Building2, X, Star, Sparkles, Lightbulb, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import type { z } from 'zod';
 import { supabase } from '@/lib/supabase-client';
 import { numberToWords, formatPriceWithWords } from '@/lib/numberToWords';
 import { MockAIService } from '@/lib/mock-ai';
+import { cn } from "@/lib/utils";
+import { ResponsiveSelect } from '@/components/ui/responsive-select';
+import { MobileRadioCard } from '@/components/ui/mobile-radio-card';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type CarListingFormData = z.infer<typeof carListingSchema>;
 
@@ -376,31 +379,17 @@ export function CarListingForm({
             <CardContent>
               <div className="space-y-4">
                 <FormLabel>Dealer / PickMyCar</FormLabel>
-                <Select value={selectedDealer} onValueChange={setSelectedDealer} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select dealer or PickMyCar stock" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {dealers?.map((dealer) => (
-                      <SelectItem key={dealer.id} value={dealer.id}>
-                        <div className="flex items-center gap-2">
-                          {dealer.is_pickmycar && (
-                            <Star className="h-4 w-4 text-primary fill-primary" />
-                          )}
-                          <span className={dealer.is_pickmycar ? 'font-semibold' : ''}>
-                            {dealer.full_name}
-                          </span>
-                          {dealer.is_pickmycar && (
-                            <Badge variant="secondary" className="ml-2">Our Stock</Badge>
-                          )}
-                          {!dealer.is_pickmycar && (
-                            <span className="text-muted-foreground text-xs">@{dealer.username}</span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ResponsiveSelect
+                  value={selectedDealer}
+                  onValueChange={setSelectedDealer}
+                  placeholder="Select dealer or PickMyCar stock"
+                  title="Select Dealer"
+                  withFormControl={false}
+                  options={(dealers || []).map(dealer => ({
+                    value: dealer.id,
+                    label: `${dealer.full_name} ${dealer.is_pickmycar ? '(Our Stock)' : ''}`
+                  }))}
+                />
                 <FormDescription>
                   Choose <strong>PickMyCar</strong> for website's own inventory, or select a specific dealer
                 </FormDescription>
@@ -433,39 +422,29 @@ export function CarListingForm({
         )}
 
         {/* Basic Car Details */}
-        <Card>
+        <Card className="card-mobile-flat">
           <CardHeader>
             <CardTitle>Car Details</CardTitle>
             <CardDescription>Enter the basic information about the car</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className="space-y-5 p-mobile-tight">
+            <div className="flex flex-col gap-5 md:grid md:grid-cols-2 md:gap-4">
               <FormField
                 control={form.control}
                 name="brand_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Brand</FormLabel>
-                    <Select
+                    <ResponsiveSelect
+                      value={field.value}
                       onValueChange={(value) => {
                         field.onChange(value);
                         setSelectedBrand(value);
                       }}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select brand" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {brands?.map((brand) => (
-                          <SelectItem key={brand.id} value={brand.id}>
-                            {brand.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      placeholder="Select brand"
+                      title="Select Brand"
+                      options={(brands || []).map(b => ({ value: b.id, label: b.name }))}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -477,7 +456,8 @@ export function CarListingForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Model</FormLabel>
-                    <Select
+                    <ResponsiveSelect
+                      value={field.value}
                       onValueChange={(value) => {
                         field.onChange(value);
                         // Auto-fill body type and seats based on model defaults
@@ -498,21 +478,10 @@ export function CarListingForm({
                           }
                         }
                       }}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select model" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {filteredModels?.map((model) => (
-                          <SelectItem key={model.id} value={model.id}>
-                            {model.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      placeholder="Select model"
+                      title="Select Model"
+                      options={(filteredModels || []).map(m => ({ value: m.id, label: m.name }))}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -589,33 +558,18 @@ export function CarListingForm({
                 control={form.control}
                 name="insurance_status"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="col-span-1 md:col-span-2">
                     <FormLabel>Insurance Status</FormLabel>
                     <FormControl>
-                      <RadioGroup
+                      <MobileRadioCard
+                        value={field.value}
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex flex-col gap-2"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="valid" id="insurance-valid" />
-                          <Label htmlFor="insurance-valid" className="font-normal cursor-pointer">
-                            Valid (with expiry date)
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="expired" id="insurance-expired" />
-                          <Label htmlFor="insurance-expired" className="font-normal cursor-pointer">
-                            Expired
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="not_applicable" id="insurance-na" />
-                          <Label htmlFor="insurance-na" className="font-normal cursor-pointer">
-                            Not Applicable
-                          </Label>
-                        </div>
-                      </RadioGroup>
+                        options={[
+                          { value: 'valid', label: 'Valid', description: 'With expiry date' },
+                          { value: 'expired', label: 'Expired', description: 'Insurance has lapsed' },
+                          { value: 'not_applicable', label: 'Not Applicable', description: 'No insurance needed' }
+                        ]}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -682,20 +636,13 @@ export function CarListingForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Fuel Type</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select fuel type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {(fuelTypes as any)?.map((fuel: any) => (
-                          <SelectItem key={fuel.id} value={fuel.id}>
-                            {fuel.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <ResponsiveSelect
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder="Select fuel type"
+                      title="Select Fuel Type"
+                      options={(fuelTypes as any || []).map((f: any) => ({ value: f.id, label: f.name }))}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -707,20 +654,13 @@ export function CarListingForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Transmission</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select transmission" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {(transmissions as any)?.map((trans: any) => (
-                          <SelectItem key={trans.id} value={trans.id}>
-                            {trans.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <ResponsiveSelect
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder="Select transmission"
+                      title="Select Transmission"
+                      options={(transmissions as any || []).map((t: any) => ({ value: t.id, label: t.name }))}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -732,20 +672,13 @@ export function CarListingForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Body Type</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select body type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {(bodyTypes as any)?.map((body: any) => (
-                          <SelectItem key={body.id} value={body.id}>
-                            {body.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <ResponsiveSelect
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder="Select body type"
+                      title="Select Body Type"
+                      options={(bodyTypes as any || []).map((b: any) => ({ value: b.id, label: b.name }))}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -757,20 +690,13 @@ export function CarListingForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Seats</FormLabel>
-                    <Select onValueChange={(val) => field.onChange(parseInt(val))} value={field.value?.toString()}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select seats" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {(seatOptions as any)?.map((seat: any) => (
-                          <SelectItem key={seat.id} value={seat.seats.toString()}>
-                            {seat.seats} Seater
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <ResponsiveSelect
+                      value={field.value}
+                      onValueChange={(val) => field.onChange(parseInt(val))}
+                      placeholder="Select seats"
+                      title="Select Seats"
+                      options={(seatOptions as any || []).map((s: any) => ({ value: s.seats, label: `${s.seats} Seater` }))}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -782,20 +708,13 @@ export function CarListingForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Owner Type</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select owner type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {(ownerTypes as any)?.map((owner: any) => (
-                          <SelectItem key={owner.id} value={owner.id}>
-                            {owner.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <ResponsiveSelect
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder="Select owner type"
+                      title="Select Owner Type"
+                      options={(ownerTypes as any || []).map((o: any) => ({ value: o.id, label: o.name }))}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -827,19 +746,18 @@ export function CarListingForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Condition</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select condition" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="excellent">Excellent</SelectItem>
-                        <SelectItem value="good">Good</SelectItem>
-                        <SelectItem value="fair">Fair</SelectItem>
-                        <SelectItem value="needs_work">Needs Work</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <ResponsiveSelect
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder="Select condition"
+                      title="Select Condition"
+                      options={[
+                        { value: 'excellent', label: 'Excellent' },
+                        { value: 'good', label: 'Good' },
+                        { value: 'fair', label: 'Fair' },
+                        { value: 'needs_work', label: 'Needs Work' }
+                      ]}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -849,37 +767,26 @@ export function CarListingForm({
                 control={form.control}
                 name="city_id"
                 render={({ field }) => {
+                  // Determine if city is auto-loaded and locked
+                  const isPowerDesk = hasRole('powerdesk');
+                  const isDealer = hasRole('dealer');
+                  // For PowerDesk: locked if dealer selected has city
+                  // For Dealer: locked if their profile has city
                   const dealerProfile = isPowerDesk ? selectedDealerProfile : currentDealerProfile;
-                  const isAutoLoaded = (isDealer || isPowerDesk) && !!dealerProfile?.city_id;
+                  const isAutoLoaded = !!(isDealer && dealerProfile?.city_id);
 
                   return (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        City
-                        {isAutoLoaded && dealerProfile?.city && (
-                          <Badge variant="secondary" className="text-xs font-normal">
-                            {isPowerDesk ? 'From Selected Dealer' : 'From Your Profile'}
-                          </Badge>
-                        )}
-                      </FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
+                      <FormLabel>City</FormLabel>
+                      <ResponsiveSelect
                         value={field.value}
+                        onValueChange={field.onChange}
                         disabled={isAutoLoaded}
-                      >
-                        <FormControl>
-                          <SelectTrigger className={isAutoLoaded ? "cursor-not-allowed opacity-75 bg-muted" : ""}>
-                            <SelectValue placeholder="Select city" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {cities?.map((city) => (
-                            <SelectItem key={city.id} value={city.id}>
-                              {city.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        placeholder="Select city"
+                        title="Select City"
+                        className={isAutoLoaded ? "cursor-not-allowed opacity-75 bg-muted" : ""}
+                        options={(cities || []).map(city => ({ value: city.id, label: city.name }))}
+                      />
                       {isAutoLoaded && dealerProfile?.city && (
                         <FormDescription className="text-xs text-muted-foreground">
                           {isPowerDesk
@@ -904,20 +811,13 @@ export function CarListingForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category (Optional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categories?.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <ResponsiveSelect
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder="Select category"
+                      title="Select Category"
+                      options={(categories || []).map(c => ({ value: c.id, label: c.name }))}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -945,12 +845,12 @@ export function CarListingForm({
         </Card>
 
         {/* Pricing */}
-        <Card>
+        <Card className="card-mobile-flat">
           <CardHeader>
             <CardTitle>Pricing</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className="space-y-4 p-mobile-tight">
+            <div className="flex flex-col gap-5 md:grid md:grid-cols-2 md:gap-4">
               <FormField
                 control={form.control}
                 name="expected_price"
@@ -981,17 +881,16 @@ export function CarListingForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Price Type</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="fixed">Fixed</SelectItem>
-                        <SelectItem value="negotiable">Negotiable</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <ResponsiveSelect
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder="Select type"
+                      title="Select Price Type"
+                      options={[
+                        { value: 'fixed', label: 'Fixed' },
+                        { value: 'negotiable', label: 'Negotiable' }
+                      ]}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1001,12 +900,12 @@ export function CarListingForm({
         </Card>
 
         {/* Photos */}
-        <Card>
+        <Card className="card-mobile-flat">
           <CardHeader>
             <CardTitle>Photos</CardTitle>
             <CardDescription>Upload at least 3 high-quality photos of the car</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-mobile-tight">
             <FormField
               control={form.control}
               name="photos"
@@ -1028,12 +927,12 @@ export function CarListingForm({
         {/* Conditional: Individual Seller Fields */}
         {sellerType === 'individual' && (
           <>
-            <Card>
+            <Card className="card-mobile-flat">
               <CardHeader>
                 <CardTitle>Documents</CardTitle>
                 <CardDescription>Upload required documents for verification</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 p-mobile-tight">
                 <FormField
                   control={form.control}
                   name="rc_book_url"
@@ -1109,12 +1008,12 @@ export function CarListingForm({
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="card-mobile-flat">
               <CardHeader>
                 <CardTitle>Contact Details</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <CardContent className="space-y-4 p-mobile-tight">
+                <div className="flex flex-col gap-5 md:grid md:grid-cols-2 md:gap-4">
                   <FormField
                     control={form.control}
                     name="primary_phone"
@@ -1122,7 +1021,7 @@ export function CarListingForm({
                       <FormItem>
                         <FormLabel>Primary Phone</FormLabel>
                         <FormControl>
-                          <Input placeholder="9876543210" {...field} />
+                          <Input type="tel" inputMode="numeric" placeholder="9876543210" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -1136,7 +1035,7 @@ export function CarListingForm({
                       <FormItem>
                         <FormLabel>Alternate Phone (Optional)</FormLabel>
                         <FormControl>
-                          <Input placeholder="9876543210" {...field} />
+                          <Input type="tel" inputMode="numeric" placeholder="9876543210" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -1167,11 +1066,11 @@ export function CarListingForm({
 
 
         {/* Additional Information */}
-        <Card>
+        <Card className="card-mobile-flat">
           <CardHeader>
             <CardTitle>Additional Information</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 p-mobile-tight">
             <FormField
               control={form.control}
               name="description"
@@ -1357,12 +1256,12 @@ export function CarListingForm({
         </Card>
 
         {/* Car Features */}
-        <Card>
+        <Card className="card-mobile-flat">
           <CardHeader>
             <CardTitle>Car Features</CardTitle>
             <CardDescription>Select all features that apply to this car</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-mobile-tight">
             <FormField
               control={form.control}
               name="feature_ids"
@@ -1383,37 +1282,45 @@ export function CarListingForm({
                           <h4 className="font-semibold text-sm mb-3 text-muted-foreground uppercase tracking-wide">
                             {category}
                           </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                             {categoryFeatures.map((feature) => (
                               <FormField
                                 key={feature.id}
                                 control={form.control}
                                 name="feature_ids"
                                 render={({ field }) => {
+                                  const isSelected = field.value?.includes(feature.id);
                                   return (
                                     <FormItem
                                       key={feature.id}
-                                      className="flex flex-row items-start space-x-3 space-y-0"
+                                      className="space-y-0"
                                     >
                                       <FormControl>
-                                        <Checkbox
-                                          checked={field.value?.includes(feature.id)}
-                                          onCheckedChange={(checked) => {
-                                            return checked
-                                              ? field.onChange([...(field.value || []), feature.id])
-                                              : field.onChange(
-                                                field.value?.filter(
-                                                  (value) => value !== feature.id
-                                                )
-                                              );
+                                        <div
+                                          onClick={() => {
+                                            const newValue = isSelected
+                                              ? field.value?.filter((val) => val !== feature.id)
+                                              : [...(field.value || []), feature.id];
+                                            field.onChange(newValue);
                                           }}
-                                        />
+                                          className={cn(
+                                            "cursor-pointer flex items-center justify-between p-3 rounded-lg border text-sm transition-all touch-manipulation",
+                                            isSelected
+                                              ? "border-primary bg-primary/5 text-primary font-medium shadow-sm"
+                                              : "border-muted bg-background text-muted-foreground hover:bg-muted/30"
+                                          )}
+                                        >
+                                          <span className="truncate mr-2">{feature.name}</span>
+                                          {isSelected && (
+                                            <div className="h-4 w-4 bg-primary rounded-full flex items-center justify-center shrink-0">
+                                              <Check className="h-3 w-3 text-primary-foreground" />
+                                            </div>
+                                          )}
+                                          {!isSelected && (
+                                            <div className="h-4 w-4 rounded-full border border-muted-foreground/30 shrink-0" />
+                                          )}
+                                        </div>
                                       </FormControl>
-                                      <div className="space-y-1 leading-none">
-                                        <FormLabel className="text-sm font-normal cursor-pointer">
-                                          {feature.name}
-                                        </FormLabel>
-                                      </div>
                                     </FormItem>
                                   );
                                 }}
@@ -1462,19 +1369,15 @@ export function CarListingForm({
         </Card>
 
         {/* Submit */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col-reverse md:flex-row items-center gap-4 pt-4 pb-8">
           <Button
             type="submit"
             size="lg"
             disabled={createListing.isPending || updateListing.isPending || loadingExisting}
-            className="flex-1"
+            className="w-full md:flex-1 h-14 md:h-11 text-base font-semibold"
             onClick={async () => {
-              // Trigger validation
               await form.trigger();
-
               const errors = form.formState.errors;
-
-              // Show validation errors to user
               if (!form.formState.isValid && Object.keys(errors).length > 0) {
                 const errorFields = Object.keys(errors).join(', ');
                 toast.error('Form has errors', {
@@ -1485,7 +1388,7 @@ export function CarListingForm({
             }}
           >
             {(createListing.isPending || updateListing.isPending) && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
             )}
             {isEditMode ? 'Update Listing' : 'Create Listing'}
           </Button>

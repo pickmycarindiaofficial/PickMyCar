@@ -4,6 +4,14 @@ import { toast } from 'sonner';
 
 export interface UpdateDealerProfileData {
   // Branding
+  dealership_name?: string;
+  business_type?: string | null;
+  gst_number?: string | null;
+  pan_number?: string | null;
+  address?: string;
+  city_id?: string | null;
+  state?: string;
+  pincode?: string;
   logo_url?: string | null;
   banner_url?: string | null;
   about_text?: string | null;

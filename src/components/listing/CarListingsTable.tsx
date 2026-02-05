@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { MoreHorizontal, Eye, Edit, Trash, CheckCircle, Power, PowerOff, DollarSign, Phone } from 'lucide-react';
+import { MoreHorizontal, Eye, Edit, Trash, CheckCircle, Power, PowerOff, DollarSign, Phone, Calendar, Gauge, Fuel } from 'lucide-react';
 import {
   useUpdateListingStatus,
   useVerifyCarListing,
@@ -19,8 +19,10 @@ import {
   useMarkAsUnsoldListing
 } from '@/hooks/useCarListings';
 import { useAuth } from '@/contexts/AuthContext';
-import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 const statusConfig = {
   pending_verification: { label: 'Pending', variant: 'secondary' as const, className: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400' },
@@ -38,9 +40,12 @@ interface CarListingsTableProps {
 }
 
 export function CarListingsTable({ data, onEdit, onViewDetails }: CarListingsTableProps) {
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { roles } = useAuth();
   const isPowerDesk = roles?.includes('powerdesk');
+
+  // Hooks for actions
   const updateStatus = useUpdateListingStatus();
   const verifyListing = useVerifyCarListing();
   const deleteListing = useDeleteCarListing();
@@ -48,9 +53,11 @@ export function CarListingsTable({ data, onEdit, onViewDetails }: CarListingsTab
   const deactivateListing = useDeactivateCarListing();
   const markAsSold = useMarkAsSoldListing();
   const markAsUnsold = useMarkAsUnsoldListing();
+
   const [selectedListing, setSelectedListing] = useState<CarListingWithRelations | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
+  // Action Handlers
   const handleVerify = async (id: string) => {
     try {
       await verifyListing.mutateAsync(id);
@@ -126,6 +133,100 @@ export function CarListingsTable({ data, onEdit, onViewDetails }: CarListingsTab
     navigate(`/car/${id}`);
   };
 
+  // Shared Actions Component
+  const ListingActions = ({ listing }: { listing: CarListingWithRelations }) => (
+    <div className="flex items-center gap-1">
+      {!isMobile && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onViewDetails ? onViewDetails(listing) : handleViewDetails(listing.id)}
+          className="h-8"
+        >
+          <Eye className="h-4 w-4 mr-1" />
+          View
+        </Button>
+      )}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => onViewDetails ? onViewDetails(listing) : handleViewDetails(listing.id)}>
+            <Eye className="mr-2 h-4 w-4" />
+            View Details
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onEdit?.(listing)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edit
+          </DropdownMenuItem>
+
+          {/* Status Management Actions */}
+          {listing.status !== 'live' && listing.status !== 'sold' && (
+            <DropdownMenuItem onClick={() => handleActivate(listing.id)}>
+              <Power className="mr-2 h-4 w-4 text-green-600" />
+              Activate
+            </DropdownMenuItem>
+          )}
+          {listing.status === 'live' && (
+            <>
+              <DropdownMenuItem onClick={() => handleDeactivate(listing.id)}>
+                <PowerOff className="mr-2 h-4 w-4 text-orange-600" />
+                Deactivate
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleMarkAsSold(listing.id)}>
+                <DollarSign className="mr-2 h-4 w-4 text-blue-600" />
+                Mark as Sold
+              </DropdownMenuItem>
+            </>
+          )}
+          {listing.status === 'sold' && (
+            <DropdownMenuItem onClick={() => handleMarkAsUnsold(listing.id)}>
+              <Power className="mr-2 h-4 w-4 text-green-600" />
+              Mark as Unsold
+            </DropdownMenuItem>
+          )}
+
+          {/* PowerDesk Actions */}
+          {isPowerDesk && (
+            <>
+              <DropdownMenuSeparator />
+              {listing.status === 'pending_verification' && (
+                <DropdownMenuItem onClick={() => handleVerify(listing.id)}>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Verify
+                </DropdownMenuItem>
+              )}
+              {listing.status === 'verified' && (
+                <DropdownMenuItem onClick={() => handlePublish(listing.id)}>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Publish to Live
+                </DropdownMenuItem>
+              )}
+            </>
+          )}
+
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => {
+              setSelectedListing(listing);
+              setShowDeleteDialog(true);
+            }}
+            className="text-destructive"
+          >
+            <Trash className="mr-2 h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+
+  // Desktop Columns
   const columns: ColumnDef<CarListingWithRelations>[] = [
     {
       accessorKey: 'photos',
@@ -262,100 +363,72 @@ export function CarListingsTable({ data, onEdit, onViewDetails }: CarListingsTab
     {
       id: 'actions',
       header: 'Actions',
-      cell: ({ row }) => {
-        const listing = row.original;
-        return (
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onViewDetails ? onViewDetails(listing) : handleViewDetails(listing.id)}
-              className="h-8"
-            >
-              <Eye className="h-4 w-4 mr-1" />
-              View
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onEdit?.(listing)}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-
-                {/* Status Management Actions */}
-                {listing.status !== 'live' && listing.status !== 'sold' && (
-                  <DropdownMenuItem onClick={() => handleActivate(listing.id)}>
-                    <Power className="mr-2 h-4 w-4 text-green-600" />
-                    Activate
-                  </DropdownMenuItem>
-                )}
-                {listing.status === 'live' && (
-                  <>
-                    <DropdownMenuItem onClick={() => handleDeactivate(listing.id)}>
-                      <PowerOff className="mr-2 h-4 w-4 text-orange-600" />
-                      Deactivate
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleMarkAsSold(listing.id)}>
-                      <DollarSign className="mr-2 h-4 w-4 text-blue-600" />
-                      Mark as Sold
-                    </DropdownMenuItem>
-                  </>
-                )}
-                {listing.status === 'sold' && (
-                  <DropdownMenuItem onClick={() => handleMarkAsUnsold(listing.id)}>
-                    <Power className="mr-2 h-4 w-4 text-green-600" />
-                    Mark as Unsold
-                  </DropdownMenuItem>
-                )}
-
-                {/* PowerDesk Actions */}
-                {isPowerDesk && (
-                  <>
-                    <DropdownMenuSeparator />
-                    {listing.status === 'pending_verification' && (
-                      <DropdownMenuItem onClick={() => handleVerify(listing.id)}>
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        Verify
-                      </DropdownMenuItem>
-                    )}
-                    {listing.status === 'verified' && (
-                      <DropdownMenuItem onClick={() => handlePublish(listing.id)}>
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        Publish to Live
-                      </DropdownMenuItem>
-                    )}
-                  </>
-                )}
-
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSelectedListing(listing);
-                    setShowDeleteDialog(true);
-                  }}
-                  className="text-destructive"
-                >
-                  <Trash className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        );
-      },
+      cell: ({ row }) => <ListingActions listing={row.original} />,
     },
   ];
 
   return (
     <>
-      <DataTable columns={columns} data={data} />
+      {isMobile ? (
+        <div className="grid grid-cols-1 gap-4">
+          {data.map((listing) => {
+            const status = listing.status as keyof typeof statusConfig;
+            const config = statusConfig[status];
+            const photos = listing.photos as any[];
+            const thumbnail = photos?.[0]?.thumbnail_url || photos?.[0]?.url;
+
+            return (
+              <Card key={listing.id} className="overflow-hidden border-none shadow-sm bg-card">
+                <div className="flex p-3 gap-3">
+                  {/* Image */}
+                  <div
+                    className="h-24 w-24 shrink-0 rounded-lg bg-muted bg-cover bg-center"
+                    style={{ backgroundImage: thumbnail ? `url(${thumbnail})` : undefined }}
+                  >
+                    {!thumbnail && <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">No Image</div>}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold text-sm truncate pr-2">
+                            {listing.brand?.name} {listing.model?.name}
+                          </h3>
+                          <p className="text-xs text-muted-foreground truncate">{listing.variant}</p>
+                        </div>
+                        <ListingActions listing={listing} />
+                      </div>
+
+                      <div className="mt-2 flex items-center gap-2">
+                        <div className="font-bold text-base">₹{listing.expected_price.toLocaleString()}</div>
+                        <Badge variant={config.variant} className={cn("text-[10px] px-1.5 py-0 h-5", config.className)}>
+                          {config.label}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded">
+                        <Calendar className="h-3 w-3" /> {listing.year_of_make}
+                      </span>
+                      <span className="flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded">
+                        <Fuel className="h-3 w-3" /> {listing.fuel_type?.name}
+                      </span>
+                      <span className="flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded">
+                        <Gauge className="h-3 w-3" /> {listing.kms_driven.toLocaleString()}km
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      ) : (
+        <DataTable columns={columns} data={data} />
+      )}
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>

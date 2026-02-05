@@ -287,14 +287,16 @@ export default function CarListings() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="all">All ({stats.total})</TabsTrigger>
-            <TabsTrigger value="pending">Pending ({stats.pending})</TabsTrigger>
-            <TabsTrigger value="verified">Verified ({stats.verified})</TabsTrigger>
-            <TabsTrigger value="live">Live ({stats.live})</TabsTrigger>
-            <TabsTrigger value="rejected">Rejected ({stats.rejected})</TabsTrigger>
-            <TabsTrigger value="sold">Sold ({stats.sold})</TabsTrigger>
-          </TabsList>
+          <div className="w-full overflow-x-auto pb-2">
+            <TabsList className="inline-flex w-auto min-w-full justify-start p-1 md:w-full md:grid md:grid-cols-6">
+              <TabsTrigger value="all" className="min-w-[100px] flex-1">All ({stats.total})</TabsTrigger>
+              <TabsTrigger value="pending" className="min-w-[100px] flex-1">Pending ({stats.pending})</TabsTrigger>
+              <TabsTrigger value="verified" className="min-w-[100px] flex-1">Verified ({stats.verified})</TabsTrigger>
+              <TabsTrigger value="live" className="min-w-[100px] flex-1">Live ({stats.live})</TabsTrigger>
+              <TabsTrigger value="rejected" className="min-w-[100px] flex-1">Rejected ({stats.rejected})</TabsTrigger>
+              <TabsTrigger value="sold" className="min-w-[100px] flex-1">Sold ({stats.sold})</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="all" className="space-y-4">
             {isLoading ? (
