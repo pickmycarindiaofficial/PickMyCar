@@ -11,8 +11,12 @@ import { ROLE_LABELS } from '@/types/auth';
 import { useDealerDashboardStats } from '@/hooks/useDealerDashboardStats';
 import { useMemo } from 'react';
 
+import { useIsMobile } from '@/hooks/use-mobile';
 export function DashboardHome() {
   const { profile, roles, user } = useAuth();
+  const isMobile = useIsMobile();
+
+
   const navigate = useNavigate();
   const primaryRole = roles[0] || 'user';
   const isDealer = primaryRole === 'dealer';
@@ -161,20 +165,34 @@ export function DashboardHome() {
       </div>
 
       {/* Metrics Grid - Responsive: 1 col mobile, 2 cols tablet, 4 cols desktop */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        {roleMetrics.map((metric, index) => (
-          <div key={index} className="animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
-            <StatsCard
-              title={metric.title}
-              value={metric.value}
-              icon={metric.icon}
-              trend={isDealer ? undefined : metric.trend}
-              isDealer={isDealer}
-              index={index}
-            />
-          </div>
-        ))}
-      </div>
+      {/* Metrics Grid - Responsive: 1 col mobile, 2 cols tablet, 4 cols desktop */}
+      {isMobile ? (
+        <div className="grid grid-cols-4 gap-2">
+          {roleMetrics.map((metric, index) => (
+            <div key={index} className="bg-card border rounded-lg p-2 text-center shadow-sm flex flex-col items-center justify-center min-h-[80px]">
+              <div className="text-xl font-bold leading-none mb-1">{metric.value}</div>
+              <div className="text-[10px] text-muted-foreground uppercase leading-tight line-clamp-2">
+                {metric.title.replace('Total ', '').replace('Active ', '').replace('This Month ', '').replace('Pending ', '')}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {roleMetrics.map((metric, index) => (
+            <div key={index} className="animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
+              <StatsCard
+                title={metric.title}
+                value={metric.value}
+                icon={metric.icon}
+                trend={isDealer ? undefined : metric.trend}
+                isDealer={isDealer}
+                index={index}
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Quick Actions - Responsive Grid */}
       {isDealer ? (

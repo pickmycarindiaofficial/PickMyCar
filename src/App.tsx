@@ -225,7 +225,7 @@ const App = () => (
                       <Route path="analytics" element={<PlaceholderPage title="Analytics" description="Website analytics and insights" features={['Traffic analytics', 'User behavior', 'Conversion tracking']} />} />
 
                       {/* Dealer Routes */}
-                      <Route path="inventory" element={<Inventory />} />
+                      <Route path="inventory" element={<CarListings />} />
                       <Route path="leads" element={<Leads />} />
                       <Route path="my-listings" element={<CarListings />} />
                       <Route

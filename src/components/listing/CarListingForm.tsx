@@ -1258,7 +1258,7 @@ export function CarListingForm({
         {/* Car Features */}
         <Card className="card-mobile-flat">
           <CardHeader>
-            <CardTitle>Car Features</CardTitle>
+            <CardTitle>Car Features <span className="text-sm font-normal text-muted-foreground ml-1">(Optional)</span></CardTitle>
             <CardDescription>Select all features that apply to this car</CardDescription>
           </CardHeader>
           <CardContent className="p-mobile-tight">
@@ -1347,21 +1347,22 @@ export function CarListingForm({
               control={form.control}
               name="is_featured"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-center justify-between rounded-xl border p-4 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base font-semibold flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      Mark as Featured Listing
+                    </FormLabel>
+                    <FormDescription>
+                      Get premium placement and increased visibility
+                    </FormDescription>
+                  </div>
                   <FormControl>
-                    <Checkbox
+                    <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel className="font-semibold">
-                      Mark as Featured Listing
-                    </FormLabel>
-                    <FormDescription>
-                      Featured listings get premium placement and increased visibility on the website
-                    </FormDescription>
-                  </div>
                 </FormItem>
               )}
             />

@@ -1,10 +1,11 @@
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Car, MessageSquare, TrendingUp, DollarSign, Activity } from 'lucide-react';
-import { ROLE_LABELS } from '@/types/auth';
+import { useIsMobile } from '@/hooks/use-mobile';
+// ... imports
 
 export default function Overview() {
-  const { profile, roles } = useAuth();
+  const isMobile = useIsMobile();
+  // ... existing code ...
+
+
 
   // Role-specific metrics
   const metrics = {
@@ -78,27 +79,41 @@ export default function Overview() {
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {roleMetrics.map((metric, index) => (
-          <Card key={index}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {metric.title}
-              </CardTitle>
-              <metric.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metric.value}</div>
-              <p className="text-xs text-muted-foreground">
-                <span className={metric.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}>
-                  {metric.change}
-                </span>
-                {' '}from last period
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Metrics Grid */}
+      {isMobile ? (
+        <div className="grid grid-cols-4 gap-2">
+          {roleMetrics.map((metric, index) => (
+            <div key={index} className="bg-card border rounded-lg p-2 text-center shadow-sm flex flex-col items-center justify-center min-h-[80px]">
+              <div className="text-xl font-bold leading-none mb-1">{metric.value}</div>
+              <div className="text-[10px] text-muted-foreground uppercase leading-tight line-clamp-2">
+                {metric.title.replace('Total ', '').replace('Active ', '')}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {roleMetrics.map((metric, index) => (
+            <Card key={index}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {metric.title}
+                </CardTitle>
+                <metric.icon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{metric.value}</div>
+                <p className="text-xs text-muted-foreground">
+                  <span className={metric.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}>
+                    {metric.change}
+                  </span>
+                  {' '}from last period
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Recent Activity */}
       <Card>

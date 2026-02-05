@@ -258,33 +258,41 @@ export default function CarListings() {
             ))}
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <StatsCard
-              title="Total Listings"
-              value={stats.total}
-              icon={Car}
-            />
-            <StatsCard
-              title="Pending Verification"
-              value={stats.pending}
-              icon={Clock}
-              className="border-warning/20"
-            />
-            <StatsCard
-              title="Live"
-              value={stats.live}
-              icon={Eye}
-              className="border-success/20"
-            />
-            <StatsCard
-              title="Sold"
-              value={stats.sold}
-              icon={DollarSign}
-              className="border-primary/20"
-            />
+          <div className="grid grid-cols-4 gap-2 md:gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {/* Custom Mobile Simple Cards or Standard StatsCards with Responsive Classes */}
+            {/* The user wants "simple in 4 box". Let's try responsive StatsCard first but it might be too much markup.
+                Replacing with a conditional render or just custom styles for all breakpoints is tricky.
+                Let's use the StatsCard but override styles via className for mobile density.
+            */}
+            <div className="contents md:hidden">
+              {/* Mobile Specific Simple View */}
+              <div className="bg-card border rounded-lg p-2 text-center shadow-sm">
+                <div className="text-xl font-bold">{stats.total}</div>
+                <div className="text-[10px] text-muted-foreground uppercase">Total</div>
+              </div>
+              <div className="bg-card border rounded-lg p-2 text-center shadow-sm">
+                <div className="text-xl font-bold">{stats.pending}</div>
+                <div className="text-[10px] text-muted-foreground uppercase text-yellow-600">Pending</div>
+              </div>
+              <div className="bg-card border rounded-lg p-2 text-center shadow-sm">
+                <div className="text-xl font-bold">{stats.live}</div>
+                <div className="text-[10px] text-muted-foreground uppercase text-green-600">Live</div>
+              </div>
+              <div className="bg-card border rounded-lg p-2 text-center shadow-sm">
+                <div className="text-xl font-bold">{stats.sold}</div>
+                <div className="text-[10px] text-muted-foreground uppercase text-gray-500">Sold</div>
+              </div>
+            </div>
+
+            {/* Desktop Original StatsCards */}
+            <div className="hidden md:contents">
+              <StatsCard title="Total Listings" value={stats.total} icon={Car} />
+              <StatsCard title="Pending Verification" value={stats.pending} icon={Clock} className="border-warning/20" />
+              <StatsCard title="Live" value={stats.live} icon={Eye} className="border-success/20" />
+              <StatsCard title="Sold" value={stats.sold} icon={DollarSign} className="border-primary/20" />
+            </div>
           </div>
         )}
-
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="w-full overflow-x-auto pb-2">
