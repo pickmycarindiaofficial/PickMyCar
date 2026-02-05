@@ -86,7 +86,7 @@ export const CarCard = ({ car, onCallDealer, onChat, onToggleShortlist, isShortl
           alt={`${car.year} ${car.brand} ${car.model}`}
           loading={priority ? "eager" : "lazy"}
           decoding="async"
-          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+          className="h-full w-full object-contain transition-transform duration-700"
         />
 
         {/* Overlay Gradient - Bottom only for text contrast if needed */}

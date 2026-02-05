@@ -40,21 +40,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Hash token using SHA-256
-const hashToken = async (token: string): Promise<string> => {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(token);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-};
-
-// Generate secure random token
-const generateToken = (): string => {
-  const array = new Uint8Array(32);
-  crypto.getRandomValues(array);
-  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-};
+import { hashToken, generateToken } from '@/lib/auth-utils';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -82,7 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       const tokenHash = await hashToken(token);
-      const { data, error } = await supabase.rpc('validate_staff_session', {
+      const { data, error } = await (supabase.rpc as any)('validate_staff_session', {
         p_token_hash: tokenHash,
       });
 
@@ -147,7 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const token = generateToken();
     const tokenHash = await hashToken(token);
 
-    const { data, error } = await supabase.rpc('create_staff_session', {
+    const { data, error } = await (supabase.rpc as any)('create_staff_session', {
       p_staff_id: staffId,
       p_token_hash: tokenHash,
       p_ip_address: null,
@@ -378,7 +364,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (token) {
       try {
         const tokenHash = await hashToken(token);
-        await supabase.rpc('revoke_staff_session', { p_token_hash: tokenHash });
+        await (supabase.rpc as any)('revoke_staff_session', { p_token_hash: tokenHash });
       } catch (error) {
         console.error('Error revoking staff session:', error);
       }

@@ -83,6 +83,8 @@ export function CarDetailRoute() {
       description: listing.description || '',
       reasonsToBuy: listing.highlights || [],
       emiPerMonth: calculateEMI(Number(listing.expected_price)),
+      dealerPhone: listing.seller?.phone_number || '',
+      dealerName: listing.seller?.full_name || 'Dealer',
     } as Car;
   }, [carListing]);
 
@@ -98,7 +100,8 @@ export function CarDetailRoute() {
     return {
       id: dealerProfile.id,
       name: dealerProfile.dealership_name || dealerProfile.full_name,
-      phone: user ? (dealerProfile.phone_number || '') : '', // Only show phone if logged in
+      // Use phone from profile if available, otherwise fallback to car listing phone
+      phone: user ? (dealerProfile.phone_number || selectedCar?.dealerPhone || '') : '',
       city: dealerProfile.city || '',
       rating: 4.5,
       carsCount: 0,
@@ -109,20 +112,27 @@ export function CarDetailRoute() {
 
   const handleCallDealer = async (car: Car) => {
     requireAuth(async () => {
-      const { data: dealerProfile, error: dealerError } = await (supabase as any)
-        .from('profiles')
-        .select('id, full_name, phone_number')
-        .eq('id', car.dealerId)
-        .single();
+      let dealerName = car.dealerName;
+      let dealerPhone = car.dealerPhone;
 
-      if (dealerError || !dealerProfile?.phone_number) {
-        toast.error('Dealer contact not available');
-        return;
+      if (!dealerPhone) {
+        const { data: dealerProfile, error: dealerError } = await (supabase as any)
+          .from('profiles')
+          .select('id, full_name, phone_number')
+          .eq('id', car.dealerId)
+          .single();
+
+        if (dealerError || !dealerProfile?.phone_number) {
+          toast.error('Dealer contact not available');
+          return;
+        }
+        dealerName = dealerProfile.full_name;
+        dealerPhone = dealerProfile.phone_number;
       }
 
       createEnquiry.mutate({
         carListingId: car.id,
-        dealerId: dealerProfile.id,
+        dealerId: car.dealerId,
         enquiryType: 'call',
       }, {
         onSuccess: async (data) => {
@@ -136,12 +146,12 @@ export function CarDetailRoute() {
                 price: car.price,
                 listingId: car.id,
               },
-              dealerProfile.full_name
+              dealerName || 'Dealer'
             );
 
             await triggerDealerNotification(
               data.id,
-              dealerProfile.id,
+              car.dealerId,
               {
                 brand: car.brand,
                 model: car.model,
@@ -160,9 +170,9 @@ export function CarDetailRoute() {
             console.error('Notification error:', error);
           }
 
-          window.location.href = `tel:${dealerProfile.phone_number}`;
-          toast.success(`Calling ${dealerProfile.full_name}`, {
-            description: `Phone: ${dealerProfile.phone_number}`,
+          window.location.href = `tel:${dealerPhone}`;
+          toast.success(`Calling ${dealerName || 'Dealer'}`, {
+            description: `Phone: ${dealerPhone}`,
           });
         },
         onError: (error) => {
@@ -178,28 +188,35 @@ export function CarDetailRoute() {
 
   const handleWhatsAppEnquiry = async (car: Car) => {
     requireAuth(async () => {
-      const { data: dealerProfile, error: dealerError } = await (supabase as any)
-        .from('profiles')
-        .select('id, full_name, phone_number')
-        .eq('id', car.dealerId)
-        .single();
+      let dealerName = car.dealerName;
+      let dealerPhone = car.dealerPhone;
 
-      if (dealerError || !dealerProfile?.phone_number) {
-        toast.error('Dealer contact not available');
-        return;
+      if (!dealerPhone) {
+        const { data: dealerProfile, error: dealerError } = await (supabase as any)
+          .from('profiles')
+          .select('id, full_name, phone_number')
+          .eq('id', car.dealerId)
+          .single();
+
+        if (dealerError || !dealerProfile?.phone_number) {
+          toast.error('Dealer contact not available');
+          return;
+        }
+        dealerName = dealerProfile.full_name;
+        dealerPhone = dealerProfile.phone_number;
       }
 
       createEnquiry.mutate({
         carListingId: car.id,
-        dealerId: dealerProfile.id,
+        dealerId: car.dealerId,
         enquiryType: 'whatsapp',
       }, {
         onSuccess: (data) => {
           const message = `Hi, I'm interested in ${car.title} priced at ₹${(car.price / 100000).toFixed(2)} Lakh. Can you provide more details?`;
-          const whatsappUrl = `https://wa.me/${dealerProfile.phone_number.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+          const whatsappUrl = `https://wa.me/${dealerPhone!.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
           window.open(whatsappUrl, '_blank');
           toast.success('Opening WhatsApp...', {
-            description: `Contacting ${dealerProfile.full_name}`,
+            description: `Contacting ${dealerName || 'Dealer'}`,
           });
         },
         onError: (error) => {

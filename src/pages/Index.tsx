@@ -191,6 +191,8 @@ const Index = () => {
         availability: 'In Stock' as any,
         isFeatured: listing.is_featured || false,
         dealerId: listing.seller_id,
+        dealerPhone: listing.seller?.phone_number || '',
+        dealerName: listing.seller?.full_name || 'Dealer',
         multipleImageUrls: photos?.map(p => p.url || p.thumbnail_url) || [],
         description: listing.description || '',
         reasonsToBuy: listing.highlights || [],
@@ -303,20 +305,27 @@ const Index = () => {
     requireAuth(async () => {
       trackEvent.mutate({ event: 'contact_click', car_id: car.id, meta: { type: 'call' } });
 
-      const { data: dealerProfile, error: dealerError } = await (supabase as any)
-        .from('profiles')
-        .select('id, full_name, phone_number')
-        .eq('id', car.dealerId)
-        .single();
+      let dealerName = car.dealerName;
+      let dealerPhone = car.dealerPhone;
 
-      if (dealerError || !dealerProfile?.phone_number) {
-        toast.error('Dealer contact not available');
-        return;
+      if (!dealerPhone) {
+        const { data: dealerProfile, error: dealerError } = await (supabase as any)
+          .from('profiles')
+          .select('id, full_name, phone_number')
+          .eq('id', car.dealerId)
+          .single();
+
+        if (dealerError || !dealerProfile?.phone_number) {
+          toast.error('Dealer contact not available');
+          return;
+        }
+        dealerName = dealerProfile.full_name;
+        dealerPhone = dealerProfile.phone_number;
       }
 
       createEnquiry.mutate({
         carListingId: car.id,
-        dealerId: dealerProfile.id,
+        dealerId: car.dealerId,
         enquiryType: 'call',
       }, {
         onSuccess: async (data) => {
@@ -327,9 +336,9 @@ const Index = () => {
               variant: car.variant,
               price: car.price,
               listingId: car.id,
-            }, dealerProfile.full_name);
+            }, dealerName || 'Dealer');
 
-            await triggerDealerNotification(data.id, dealerProfile.id, {
+            await triggerDealerNotification(data.id, car.dealerId, {
               brand: car.brand,
               model: car.model,
               variant: car.variant,
@@ -345,8 +354,8 @@ const Index = () => {
             console.error('Notification error:', error);
           }
 
-          window.location.href = `tel:${dealerProfile.phone_number}`;
-          toast.success(`Calling ${dealerProfile.full_name}`);
+          window.location.href = `tel:${dealerPhone}`;
+          toast.success(`Calling ${dealerName || 'Dealer'}`);
         },
         onError: (error) => {
           console.error('Enquiry failed:', error);
@@ -363,25 +372,30 @@ const Index = () => {
     requireAuth(async () => {
       trackEvent.mutate({ event: 'contact_click', car_id: car.id, meta: { type: 'whatsapp' } });
 
-      const { data: dealerProfile, error: dealerError } = await (supabase as any)
-        .from('profiles')
-        .select('id, full_name, phone_number')
-        .eq('id', car.dealerId)
-        .single();
+      let dealerPhone = car.dealerPhone;
 
-      if (dealerError || !dealerProfile?.phone_number) {
-        toast.error('Dealer contact not available');
-        return;
+      if (!dealerPhone) {
+        const { data: dealerProfile, error: dealerError } = await (supabase as any)
+          .from('profiles')
+          .select('phone_number')
+          .eq('id', car.dealerId)
+          .single();
+
+        if (dealerError || !dealerProfile?.phone_number) {
+          toast.error('Dealer contact not available');
+          return;
+        }
+        dealerPhone = dealerProfile.phone_number;
       }
 
       createEnquiry.mutate({
         carListingId: car.id,
-        dealerId: dealerProfile.id,
+        dealerId: car.dealerId,
         enquiryType: 'whatsapp',
       }, {
         onSuccess: () => {
           const message = `Hi, I'm interested in ${car.title} priced at ₹${(car.price / 100000).toFixed(2)} Lakh.`;
-          const url = `https://wa.me/${dealerProfile.phone_number.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+          const url = `https://wa.me/${dealerPhone!.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
           window.open(url, '_blank');
           toast.success('Opening WhatsApp...');
         },

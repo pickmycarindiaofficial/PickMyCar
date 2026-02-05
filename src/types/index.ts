@@ -29,6 +29,8 @@ export interface Car {
   isFeatured?: boolean;
   dealerId: string;
   sellerId?: string;
+  dealerPhone?: string;
+  dealerName?: string;
   multipleImageUrls?: string[];
   description?: string;
   reasonsToBuy?: string[];
