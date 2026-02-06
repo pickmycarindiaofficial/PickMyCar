@@ -358,7 +358,7 @@ export function StaffManager() {
                 </CardContent>
             </Card>
 
-            {/* Staff Table */}
+            {/* Staff List */}
             <Card>
                 <CardHeader>
                     <CardTitle>Staff Accounts ({filteredStaff?.length || 0})</CardTitle>
@@ -369,24 +369,123 @@ export function StaffManager() {
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
                         </div>
                     ) : (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Staff</TableHead>
-                                    <TableHead>Username</TableHead>
-                                    <TableHead>Role</TableHead>
-                                    <TableHead>Phone</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Last Login</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
+                        <>
+                            {/* Desktop View - Table */}
+                            <div className="hidden md:block">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Staff</TableHead>
+                                            <TableHead>Username</TableHead>
+                                            <TableHead>Role</TableHead>
+                                            <TableHead>Phone</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead>Last Login</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredStaff?.map((staff) => {
+                                            const roleConfig = getRoleConfig(staff.role);
+                                            return (
+                                                <TableRow key={staff.id}>
+                                                    <TableCell>
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                                                {staff.role === 'powerdesk' ? (
+                                                                    <Shield className="h-5 w-5 text-primary" />
+                                                                ) : (
+                                                                    <span className="font-medium text-primary">
+                                                                        {staff.full_name.charAt(0).toUpperCase()}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-medium">{staff.full_name}</p>
+                                                                <p className="text-xs text-muted-foreground">{staff.email || 'No email'}</p>
+                                                            </div>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="font-mono text-sm">{staff.username}</TableCell>
+                                                    <TableCell>
+                                                        <Badge className={roleConfig.color}>{roleConfig.label}</Badge>
+                                                    </TableCell>
+                                                    <TableCell>{staff.phone_number}</TableCell>
+                                                    <TableCell>
+                                                        {staff.is_locked ? (
+                                                            <Badge variant="destructive">Locked</Badge>
+                                                        ) : staff.is_active ? (
+                                                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                                                Active
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge variant="outline" className="bg-gray-50 text-gray-500">
+                                                                Inactive
+                                                            </Badge>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {staff.last_login_at
+                                                            ? format(new Date(staff.last_login_at), 'dd MMM, HH:mm')
+                                                            : 'Never'}
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost" size="icon">
+                                                                    <MoreVertical className="h-4 w-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+                                                                <DropdownMenuItem onClick={() => openEdit(staff)}>
+                                                                    <Pencil className="mr-2 h-4 w-4" />
+                                                                    Edit Details
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem onClick={() => openResetPassword(staff)}>
+                                                                    <KeyRound className="mr-2 h-4 w-4" />
+                                                                    Reset Password
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    onClick={() =>
+                                                                        toggleLock.mutate({ staffId: staff.id, lock: !staff.is_locked })
+                                                                    }
+                                                                >
+                                                                    {staff.is_locked ? (
+                                                                        <>
+                                                                            <Unlock className="mr-2 h-4 w-4" />
+                                                                            Unlock Account
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <Lock className="mr-2 h-4 w-4" />
+                                                                            Lock Account
+                                                                        </>
+                                                                    )}
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
+                                        {filteredStaff?.length === 0 && (
+                                            <TableRow>
+                                                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                                                    No staff accounts found
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
+
+                            {/* Mobile View - Cards */}
+                            <div className="md:hidden space-y-4">
                                 {filteredStaff?.map((staff) => {
                                     const roleConfig = getRoleConfig(staff.role);
                                     return (
-                                        <TableRow key={staff.id}>
-                                            <TableCell>
+                                        <div key={staff.id} className="bg-white rounded-lg border p-4 shadow-sm space-y-3">
+                                            <div className="flex justify-between items-start">
                                                 <div className="flex items-center gap-3">
                                                     <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                                                         {staff.role === 'powerdesk' ? (
@@ -399,37 +498,12 @@ export function StaffManager() {
                                                     </div>
                                                     <div>
                                                         <p className="font-medium">{staff.full_name}</p>
-                                                        <p className="text-xs text-muted-foreground">{staff.email || 'No email'}</p>
+                                                        <p className="text-xs text-muted-foreground">{staff.username}</p>
                                                     </div>
                                                 </div>
-                                            </TableCell>
-                                            <TableCell className="font-mono text-sm">{staff.username}</TableCell>
-                                            <TableCell>
-                                                <Badge className={roleConfig.color}>{roleConfig.label}</Badge>
-                                            </TableCell>
-                                            <TableCell>{staff.phone_number}</TableCell>
-                                            <TableCell>
-                                                {staff.is_locked ? (
-                                                    <Badge variant="destructive">Locked</Badge>
-                                                ) : staff.is_active ? (
-                                                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                                        Active
-                                                    </Badge>
-                                                ) : (
-                                                    <Badge variant="outline" className="bg-gray-50 text-gray-500">
-                                                        Inactive
-                                                    </Badge>
-                                                )}
-                                            </TableCell>
-                                            <TableCell>
-                                                {staff.last_login_at
-                                                    ? format(new Date(staff.last_login_at), 'dd MMM, HH:mm')
-                                                    : 'Never'}
-                                            </TableCell>
-                                            <TableCell className="text-right">
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon">
+                                                        <Button variant="ghost" size="icon" className="-mr-2">
                                                             <MoreVertical className="h-4 w-4" />
                                                         </Button>
                                                     </DropdownMenuTrigger>
@@ -461,19 +535,53 @@ export function StaffManager() {
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
-                                            </TableCell>
-                                        </TableRow>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-2 text-sm">
+                                                <div className="space-y-1">
+                                                    <p className="text-muted-foreground text-xs">Role</p>
+                                                    <Badge className={roleConfig.color} variant="secondary">{roleConfig.label}</Badge>
+                                                </div>
+                                                <div className="space-y-1 text-right">
+                                                    <p className="text-muted-foreground text-xs">Status</p>
+                                                    <div>
+                                                        {staff.is_locked ? (
+                                                            <Badge variant="destructive" className="h-5">Locked</Badge>
+                                                        ) : staff.is_active ? (
+                                                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 h-5">
+                                                                Active
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge variant="outline" className="bg-gray-50 text-gray-500 h-5">
+                                                                Inactive
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="pt-2 border-t grid grid-cols-2 gap-2 text-sm">
+                                                <div>
+                                                    <p className="text-muted-foreground text-xs">Phone</p>
+                                                    <p>{staff.phone_number}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-muted-foreground text-xs">Last Login</p>
+                                                    <p>{staff.last_login_at
+                                                        ? format(new Date(staff.last_login_at), 'dd MMM, HH:mm')
+                                                        : 'Never'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     );
                                 })}
                                 {filteredStaff?.length === 0 && (
-                                    <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                                            No staff accounts found
-                                        </TableCell>
-                                    </TableRow>
+                                    <div className="text-center py-8 text-muted-foreground bg-muted/20 rounded-lg border border-dashed">
+                                        No staff accounts found
+                                    </div>
                                 )}
-                            </TableBody>
-                        </Table>
+                            </div>
+                        </>
                     )}
                 </CardContent>
             </Card>

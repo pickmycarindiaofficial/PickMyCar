@@ -19,17 +19,21 @@ interface ActiveDealersTableProps {
   onViewListings: (dealerId: string) => void;
   onSendMessage: (dealerId: string) => void;
   onSuspendAccount: (dealerId: string) => void;
+  onActivateAccount?: (dealerId: string) => void;
   onEditProfileInfo?: (dealerId: string) => void;
+  onDeleteAccount?: (dealerId: string) => void;
 }
 
-export function ActiveDealersTable({ 
-  dealers, 
-  onViewProfile, 
-  onEditDetails, 
-  onViewListings, 
-  onSendMessage, 
+export function ActiveDealersTable({
+  dealers,
+  onViewProfile,
+  onEditDetails,
+  onViewListings,
+  onSendMessage,
   onSuspendAccount,
-  onEditProfileInfo
+  onActivateAccount,
+  onEditProfileInfo,
+  onDeleteAccount
 }: ActiveDealersTableProps) {
   const columns = [
     {
@@ -62,53 +66,80 @@ export function ActiveDealersTable({
     {
       id: 'status',
       header: 'Status',
-      cell: () => (
-        <Badge variant="default" className="bg-green-600">
-          Active
-        </Badge>
-      ),
+      cell: ({ row }: any) => {
+        const isActive = row.original.is_active;
+        return (
+          <Badge
+            variant={isActive ? 'default' : 'destructive'}
+            className={isActive ? 'bg-green-600' : ''}
+          >
+            {isActive ? 'Active' : 'Suspended'}
+          </Badge>
+        );
+      },
     },
     {
       id: 'actions',
       header: 'Actions',
-      cell: ({ row }: any) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onViewProfile(row.original.id)}>
-              <Eye className="h-4 w-4 mr-2" />
-              View Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onEditDetails(row.original.id)}>
-              Edit Details
-            </DropdownMenuItem>
-            {onEditProfileInfo && (
-              <DropdownMenuItem onClick={() => onEditProfileInfo(row.original.id)}>
-                Edit Profile Info
+      cell: ({ row }: any) => {
+        const isSuspended = !row.original.is_active;
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onViewProfile(row.original.id)}>
+                <Eye className="h-4 w-4 mr-2" />
+                View Profile
               </DropdownMenuItem>
-            )}
-            <DropdownMenuItem onClick={() => onViewListings(row.original.id)}>
-              View Listings
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onSendMessage(row.original.id)}>
-              Send Message
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              className="text-destructive"
-              onClick={() => onSuspendAccount(row.original.id)}
-            >
-              Suspend Account
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
+              <DropdownMenuItem onClick={() => onEditDetails(row.original.id)}>
+                Edit Details
+              </DropdownMenuItem>
+              {onEditProfileInfo && (
+                <DropdownMenuItem onClick={() => onEditProfileInfo(row.original.id)}>
+                  Edit Profile Info
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={() => onViewListings(row.original.id)}>
+                View Listings
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onSendMessage(row.original.id)}>
+                Send Message
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+
+              {isSuspended ? (
+                <>
+                  <DropdownMenuItem
+                    onClick={() => onActivateAccount && onActivateAccount(row.original.id)}
+                  >
+                    Unsuspend Account
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={() => onDeleteAccount && onDeleteAccount(row.original.id)}
+                  >
+                    Delete Permanently
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={() => onSuspendAccount(row.original.id)}
+                >
+                  Suspend Account
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
     },
   ];
 

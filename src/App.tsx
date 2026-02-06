@@ -28,7 +28,12 @@ const CustomerAuth = lazy(() => import("@/pages/CustomerAuth"));
 const StaffAuth = lazy(() => import("@/pages/StaffAuth"));
 const AdminAuth = lazy(() => import("@/pages/AdminAuth"));
 const DealerLogin = lazy(() => import("@/pages/dealer/DealerLogin"));
+const DealerStaffLogin = lazy(() => import("@/pages/DealerStaffLogin"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
+// ... existing imports ...
+
+// ... inside Routes ...
+
 const DealerProfile = lazy(() => import("@/pages/DealerProfile"));
 const DealerRegistration = lazy(() => import("@/pages/DealerRegistration"));
 const SellCar = lazy(() => import("@/pages/SellCar"));
@@ -83,6 +88,7 @@ const AIInsights = lazy(() => import("@/pages/dashboard/modules/AIInsights"));
 const UserIntelligence = lazy(() => import("@/pages/dashboard/modules/UserIntelligence"));
 const TestDriveBookings = lazy(() => import("@/pages/dashboard/modules/TestDriveBookings"));
 const LoanApplications = lazy(() => import("@/pages/dashboard/modules/finance/LoanApplications"));
+const DealerStaffManager = lazy(() => import("@/components/dealer/DealerStaffManager").then(m => ({ default: m.DealerStaffManager })));
 
 // ===============================================
 
@@ -147,6 +153,7 @@ const App = () => (
 
                     {/* Dealer Login - Separate from staff login */}
                     <Route path="/dealer/login" element={<DealerLogin />} />
+                    <Route path="/dealer/staff/login" element={<DealerStaffLogin />} />
 
                     {/* Customer/User Routes - NOT in dashboard */}
                     <Route
@@ -185,7 +192,7 @@ const App = () => (
                     {/* Dashboard Routes - ONLY for staff */}
                     <Route path="/dashboard"
                       element={
-                        <ProtectedRoute allowedRoles={['powerdesk', 'website_manager', 'dealer', 'sales', 'finance', 'inspection']}>
+                        <ProtectedRoute allowedRoles={['powerdesk', 'website_manager', 'dealer', 'sales', 'finance', 'inspection', 'dealer_staff']}>
                           <DashboardLayout />
                         </ProtectedRoute>
                       }
@@ -225,6 +232,7 @@ const App = () => (
                       <Route path="analytics" element={<PlaceholderPage title="Analytics" description="Website analytics and insights" features={['Traffic analytics', 'User behavior', 'Conversion tracking']} />} />
 
                       {/* Dealer Routes */}
+                      <Route path="staff" element={<DealerStaffManager />} />
                       <Route path="inventory" element={<CarListings />} />
                       <Route path="leads" element={<Leads />} />
                       <Route path="my-listings" element={<CarListings />} />

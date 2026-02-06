@@ -1,11 +1,12 @@
-export type AppRole = 
+export type AppRole =
   | 'powerdesk'
   | 'website_manager'
   | 'dealer'
   | 'sales'
   | 'finance'
   | 'inspection'
-  | 'user';
+  | 'user'
+  | 'dealer_staff';
 
 export interface UserProfile {
   id: string;
@@ -33,7 +34,8 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   sales: 'Sales Team',
   finance: 'Finance Team',
   inspection: 'Inspection Team',
-  user: 'Customer/User'
+  user: 'Customer/User',
+  dealer_staff: 'Dealer Staff'
 };
 
 export const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
@@ -43,5 +45,6 @@ export const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
   sales: 'Handle customer leads and sales',
   finance: 'Process loan applications',
   inspection: 'Conduct vehicle inspections',
-  user: 'Browse and purchase cars'
+  user: 'Browse and purchase cars',
+  dealer_staff: 'Manage dealer inventory and leads'
 };

@@ -16,6 +16,10 @@ interface StaffSessionData {
   role: string;
   fullName: string;
   sessionId: string;
+  permissions?: {
+    manage_listings: boolean;
+    view_leads: boolean;
+  };
 }
 
 interface AuthContextType {
@@ -36,6 +40,7 @@ interface AuthContextType {
   createStaffSession: (staffId: string, username: string, role: string, fullName: string) => Promise<string>;
   validateStaffSession: () => Promise<boolean>;
   completeCustomerProfile: () => void;
+  loginDealerStaff: (data: StaffSessionData) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -175,7 +180,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return token;
   }, []);
 
+  const loginDealerStaff = useCallback(async (data: StaffSessionData): Promise<void> => {
+    // 1. Store in localStorage
+    localStorage.setItem('staff_session', JSON.stringify(data));
+
+    // 2. Create mock user
+    const mockUser = {
+      id: data.staffId,
+      email: `${data.username}@staff.dealer.pickmycar.in`,
+      user_metadata: {
+        is_staff: true,
+        is_dealer_staff: true,
+        full_name: data.fullName,
+        dealer_id: data.permissions // DealerID is not in permissions, check where it is in data
+      }
+    } as unknown as User;
+
+    // 3. Update State
+    setUser(mockUser);
+    setRoles([data.role as AppRole]);
+    setIsStaffSession(true);
+    setStaffSession({
+      ...data,
+      sessionId: 'local-session'
+    });
+    setProfile({
+      id: data.staffId,
+      username: data.username,
+      full_name: data.fullName,
+    } as any);
+
+    setLoading(false);
+  }, []);
+
   useEffect(() => {
+    // Check for dealer session (stored in localStorage by DealerLogin)
     // Check for dealer session (stored in localStorage by DealerLogin)
     const checkDealerSession = async () => {
       const dealerToken = localStorage.getItem(DEALER_TOKEN_KEY);
@@ -210,6 +249,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error('[AuthContext] Error parsing dealer info:', e);
           localStorage.removeItem(DEALER_TOKEN_KEY);
           localStorage.removeItem(DEALER_INFO_KEY);
+        }
+      }
+      return false;
+    };
+
+    // NEW: Check for Dealer STAFF session
+    const checkDealerStaffSession = () => {
+      const staffSessionStr = localStorage.getItem('staff_session');
+      if (staffSessionStr) {
+        try {
+          const session = JSON.parse(staffSessionStr);
+
+          // Create mock user for dealer staff
+          const mockUser = {
+            id: session.staffId,
+            email: `${session.username}@staff.dealer.pickmycar.in`,
+            user_metadata: {
+              is_staff: true,
+              is_dealer_staff: true,
+              full_name: session.fullName,
+              dealer_id: session.dealerId
+            }
+          } as unknown as User;
+
+          setUser(mockUser);
+          setRoles([session.role as AppRole]);
+          setIsStaffSession(true);
+          setStaffSession({
+            staffId: session.staffId,
+            username: session.username,
+            role: session.role,
+            fullName: session.fullName,
+            permissions: session.permissions,
+            sessionId: 'local-session'
+          });
+          setProfile({
+            id: session.staffId,
+            username: session.username,
+            full_name: session.fullName,
+            // role: session.role
+          } as any);
+
+          setLoading(false);
+          return true;
+
+        } catch (e) {
+          console.error('Error parsing staff session', e);
+          localStorage.removeItem('staff_session');
         }
       }
       return false;
@@ -287,9 +374,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // No Supabase session - check dealer, then customer, then staff
         const hasDealerSession = await checkDealerSession();
         if (!hasDealerSession) {
-          const hasCustomerSession = await checkCustomerSession();
-          if (!hasCustomerSession) {
-            validateStaffSession().finally(() => setLoading(false));
+          const hasStaffSession = checkDealerStaffSession(); // NEW check
+          if (!hasStaffSession) {
+            const hasCustomerSession = await checkCustomerSession();
+            if (!hasCustomerSession) {
+              validateStaffSession().finally(() => setLoading(false));
+            }
           }
         }
       }
@@ -378,6 +468,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Clear dealer session tokens
     localStorage.removeItem(DEALER_TOKEN_KEY);
     localStorage.removeItem(DEALER_INFO_KEY);
+    localStorage.removeItem('staff_session'); // NEW: Clear staff session
 
     // Clear Supabase session
     await supabase.auth.signOut();
@@ -421,6 +512,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         createStaffSession,
         validateStaffSession,
         completeCustomerProfile,
+        loginDealerStaff,
       }}
     >
       {children}

@@ -260,22 +260,68 @@ export function useSuspendDealer() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ dealerId, suspended }: { dealerId: string; suspended: boolean }) => {
-      const { error } = await supabase
-        .from('dealer_accounts')
-        .update({
-          is_active: !suspended,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', dealerId);
+    mutationFn: async ({ dealerId, reason }: { dealerId: string; reason: string }) => {
+      // Use the Secure RPC function
+      const { data, error } = await supabase.rpc('suspend_dealer', {
+        p_dealer_id: dealerId,
+        p_reason: reason
+      });
 
-      if (error) {
-        if (error.message?.includes('does not exist')) {
-          console.warn('dealer_accounts table not found');
-          return;
-        }
-        throw error;
+      if (error) throw error;
+      if (data && data.success === false) {
+        throw new Error(data.message || 'Failed to suspend dealer');
       }
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dealers'] });
+      queryClient.invalidateQueries({ queryKey: ['dealer-details'] });
+    },
+  });
+}
+
+// Activate (Unsuspend) dealer account
+export function useActivateDealer() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (dealerId: string) => {
+      // Use the Secure RPC function
+      const { data, error } = await supabase.rpc('activate_dealer', {
+        p_dealer_id: dealerId
+      });
+
+      if (error) throw error;
+      if (data && data.success === false) {
+        throw new Error(data.message || 'Failed to activate dealer');
+      }
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dealers'] });
+      queryClient.invalidateQueries({ queryKey: ['dealer-details'] });
+    },
+  });
+}
+
+// Delete dealer account (PERMANENT)
+export function useDeleteDealer() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (dealerId: string) => {
+      const { data, error } = await supabase.rpc('delete_dealer_account', {
+        p_dealer_id: dealerId
+      });
+
+      if (error) throw error;
+
+      // Check for application-level error returned as success from RPC
+      if (data && data.success === false) {
+        throw new Error(data.message || 'Failed to delete dealer');
+      }
+
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dealers'] });

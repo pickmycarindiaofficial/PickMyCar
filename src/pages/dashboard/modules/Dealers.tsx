@@ -9,7 +9,7 @@ import { DataTable } from '@/components/common/DataTable';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Search, Eye, CheckCircle, XCircle, Building2, FileText, Phone, Mail, MapPin, Plus } from 'lucide-react';
 import { useAllDealerApplications, useApproveApplication, useRejectApplication, useApplicationDetails } from '@/hooks/useDealerApplications';
-import { useDealers } from '@/hooks/useDealers';
+import { useDealers, useActivateDealer } from '@/hooks/useDealers';
 import { useSubscriptionPlans } from '@/hooks/useSubscriptionPlans';
 import { useConversations } from '@/hooks/useConversations';
 import { DealerApplication } from '@/types/dealer';
@@ -24,6 +24,7 @@ import { DealerProfileDialog } from '@/components/dealers/DealerProfileDialog';
 import { EditDealerDialog } from '@/components/dealers/EditDealerDialog';
 import { DealerListingsDialog } from '@/components/dealers/DealerListingsDialog';
 import { SuspendDealerDialog } from '@/components/dealers/SuspendDealerDialog';
+import { DeleteDealerDialog } from '@/components/dealers/DeleteDealerDialog';
 import { DealerBehaviorCards } from '@/components/dealers/DealerBehaviorCards';
 import { ResponseTimeChart } from '@/components/dealers/ResponseTimeChart';
 import { DealerLeaderboard } from '@/components/dealers/DealerLeaderboard';
@@ -42,6 +43,7 @@ export default function Dealers() {
   const [editDealerDialogOpen, setEditDealerDialogOpen] = useState(false);
   const [viewListingsDialogOpen, setViewListingsDialogOpen] = useState(false);
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedDealerId, setSelectedDealerId] = useState<string | null>(null);
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
   const [adminNotes, setAdminNotes] = useState('');
@@ -56,6 +58,7 @@ export default function Dealers() {
   const { mutate: approveApplication, isPending: isApproving } = useApproveApplication();
   const { mutate: rejectApplication, isPending: isRejecting } = useRejectApplication();
   const { createConversation } = useConversations();
+  const { mutate: activateDealer } = useActivateDealer();
   const { data: behaviorData } = useDealerBehaviorMetrics();
   const dealerMetrics = behaviorData?.metrics;
   const leaderboard = behaviorData?.leaderboard;
@@ -266,6 +269,31 @@ export default function Dealers() {
     setSuspendDialogOpen(true);
   };
 
+  const handleDeleteAccount = (dealerId: string) => {
+    setSelectedDealerId(dealerId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleActivateAccount = (dealerId: string) => {
+    if (confirm('Are you sure you want to unsuspend this dealer?')) {
+      activateDealer(dealerId, {
+        onSuccess: () => {
+          toast({
+            title: 'Dealer Activated',
+            description: 'The dealer account has been successfully reactivated.',
+          });
+        },
+        onError: (error) => {
+          toast({
+            title: 'Error',
+            description: error.message || 'Failed to activate dealer',
+            variant: 'destructive',
+          });
+        }
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -369,12 +397,14 @@ export default function Dealers() {
                 <div className="text-center py-8 text-muted-foreground">Loading dealers...</div>
               ) : (
                 <ActiveDealersTable
-                  dealers={dealers} 
+                  dealers={dealers}
                   onViewProfile={handleViewProfile}
                   onEditDetails={handleEditDetails}
                   onViewListings={handleViewListings}
                   onSendMessage={handleSendMessage}
                   onSuspendAccount={handleSuspendAccount}
+                  onActivateAccount={handleActivateAccount}
+                  onDeleteAccount={handleDeleteAccount}
                   onEditProfileInfo={(dealerId) => navigate(`/dashboard/dealer-profile-info/${dealerId}`)}
                 />
               )}
@@ -593,7 +623,7 @@ export default function Dealers() {
               </Button>
             </div>
           </div>
-          </DialogContent>
+        </DialogContent>
       </Dialog>
 
       {/* Create Dealer Dialog */}
@@ -624,6 +654,12 @@ export default function Dealers() {
       <SuspendDealerDialog
         open={suspendDialogOpen}
         onOpenChange={setSuspendDialogOpen}
+        dealerId={selectedDealerId}
+      />
+
+      <DeleteDealerDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
         dealerId={selectedDealerId}
       />
     </div>

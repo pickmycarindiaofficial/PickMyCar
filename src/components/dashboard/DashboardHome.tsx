@@ -12,6 +12,9 @@ import { useDealerDashboardStats } from '@/hooks/useDealerDashboardStats';
 import { useMemo } from 'react';
 
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useDealerProfile } from '@/hooks/useDealerProfile';
+import { useAdminDashboardStats } from '@/hooks/useAdminDashboardStats';
+
 export function DashboardHome() {
   const { profile, roles, user } = useAuth();
   const isMobile = useIsMobile();
@@ -20,24 +23,36 @@ export function DashboardHome() {
   const navigate = useNavigate();
   const primaryRole = roles[0] || 'user';
   const isDealer = primaryRole === 'dealer';
+  const isPowerDesk = primaryRole === 'powerdesk';
 
   // Get dealer ID from localStorage for dealer sessions
+  // Get dealer ID from localStorage for dealer sessions, or metadata for staff
   const dealerId = useMemo(() => {
-    if (!isDealer) return null;
-    try {
-      const dealerInfoStr = localStorage.getItem('dealer_info');
-      if (dealerInfoStr) {
-        const dealerInfo = JSON.parse(dealerInfoStr);
-        return dealerInfo.id;
-      }
-    } catch (e) {
-      console.error('Error parsing dealer info:', e);
+    if (primaryRole === 'dealer_staff') {
+      return user?.user_metadata?.dealer_id || null;
     }
-    return user?.id || null;
-  }, [isDealer, user?.id]);
+    if (primaryRole === 'dealer') {
+      try {
+        const dealerInfoStr = localStorage.getItem('dealer_info');
+        if (dealerInfoStr) {
+          const dealerInfo = JSON.parse(dealerInfoStr);
+          return dealerInfo.id;
+        }
+      } catch (e) {
+        console.error('Error parsing dealer info:', e);
+      }
+      return user?.id || null;
+    }
+    return null;
+  }, [primaryRole, user?.id, user?.user_metadata?.dealer_id]);
 
-  // Fetch real dealer dashboard stats
-  const { data: dealerStats, isLoading: isLoadingStats } = useDealerDashboardStats(dealerId);
+  // Fetch real dashboard stats
+  const { data: dealerStats, isLoading: isLoadingDealerStats } = useDealerDashboardStats(dealerId);
+  const { data: adminStats, isLoading: isLoadingAdminStats } = useAdminDashboardStats();
+  const { data: dealerProfile } = useDealerProfile(dealerId);
+
+  const isLoadingStats = (isDealer || primaryRole === 'dealer_staff') ? isLoadingDealerStats : (isPowerDesk ? isLoadingAdminStats : false);
+
 
   // Role-specific quick actions
   const quickActions = {
@@ -77,6 +92,12 @@ export function DashboardHome() {
       { label: 'Vehicle History', icon: Car, path: '/dashboard/vehicle-history' },
       { label: 'Quality Metrics', icon: BarChart3, path: '/dashboard/quality-metrics' },
     ],
+    dealer_staff: [
+      { label: 'My Listings', icon: Car, path: '/dashboard/my-listings' },
+      { label: 'Leads', icon: Users, path: '/dashboard/leads' },
+      { label: 'Test Drive Bookings', icon: Activity, path: '/dashboard/test-drive-bookings' },
+      { label: 'Messages', icon: MessageSquare, path: '/dashboard/messages' },
+    ],
     user: [
       { label: 'Browse Cars', icon: Car, path: '/' },
       { label: 'Saved Cars', icon: Car, path: '/dashboard/saved-cars' },
@@ -90,9 +111,9 @@ export function DashboardHome() {
   // Role-specific metrics
   const metrics = {
     powerdesk: [
-      { title: 'Total Users', value: '248', icon: Users, trend: { value: '+12%', isPositive: true } },
-      { title: 'Active Cars', value: '1,234', icon: Car, trend: { value: '+8%', isPositive: true } },
-      { title: 'Messages Today', value: '89', icon: MessageSquare, trend: { value: '+23%', isPositive: true } },
+      { title: 'Total Users', value: isLoadingAdminStats ? '...' : String(adminStats?.totalUsers || 0), icon: Users, trend: { value: '+12%', isPositive: true } },
+      { title: 'Active Cars', value: isLoadingAdminStats ? '...' : String(adminStats?.activeCars || 0), icon: Car, trend: { value: '+8%', isPositive: true } },
+      { title: 'Messages Today', value: isLoadingAdminStats ? '...' : String(adminStats?.messagesToday || 0), icon: MessageSquare, trend: { value: '+23%', isPositive: true } },
       { title: 'System Health', value: '98%', icon: Activity, trend: { value: '+2%', isPositive: true } },
     ],
     website_manager: [
@@ -102,6 +123,12 @@ export function DashboardHome() {
       { title: 'Conversion Rate', value: '3.2%', icon: DollarSign, trend: { value: '+0.4%', isPositive: true } },
     ],
     dealer: [
+      { title: 'My Cars', value: isLoadingStats ? '...' : String(dealerStats?.myCars ?? 0), icon: Car, trend: { value: '+5', isPositive: true } },
+      { title: 'Active Leads', value: isLoadingStats ? '...' : String(dealerStats?.activeLeads ?? 0), icon: Users, trend: { value: '+8', isPositive: true } },
+      { title: 'This Month Sales', value: isLoadingStats ? '...' : String(dealerStats?.thisMonthSales ?? 0), icon: DollarSign, trend: { value: '+4', isPositive: true } },
+      { title: 'Pending Inspections', value: isLoadingStats ? '...' : String(dealerStats?.pendingInspections ?? 0), icon: Activity, trend: { value: '+2', isPositive: true } },
+    ],
+    dealer_staff: [
       { title: 'My Cars', value: isLoadingStats ? '...' : String(dealerStats?.myCars ?? 0), icon: Car, trend: { value: '+5', isPositive: true } },
       { title: 'Active Leads', value: isLoadingStats ? '...' : String(dealerStats?.activeLeads ?? 0), icon: Users, trend: { value: '+8', isPositive: true } },
       { title: 'This Month Sales', value: isLoadingStats ? '...' : String(dealerStats?.thisMonthSales ?? 0), icon: DollarSign, trend: { value: '+4', isPositive: true } },
@@ -143,7 +170,12 @@ export function DashboardHome() {
           {isDealer ? 'Dashboard Reports' : `Welcome back, ${profile?.full_name}`}
         </h1>
         <p className={isDealer ? "text-sm font-medium" : "text-muted-foreground text-lg"} style={isDealer ? { color: 'hsl(var(--dealer-text-secondary))' } : undefined}>
-          {isDealer ? 'Dashboard Overview' : `Here's what's happening with your ${ROLE_LABELS[primaryRole]} account`}
+          {isDealer
+            ? 'Dashboard Overview'
+            : primaryRole === 'dealer_staff' && dealerProfile?.dealership_name
+              ? `Dealer Staff at ${dealerProfile.dealership_name}`
+              : `Here's what's happening with your ${ROLE_LABELS[primaryRole]} account`
+          }
         </p>
       </div>
 
@@ -195,7 +227,7 @@ export function DashboardHome() {
       )}
 
       {/* Quick Actions - Responsive Grid */}
-      {isDealer ? (
+      {(isDealer || primaryRole === 'dealer_staff') ? (
         <div className="bg-white rounded-xl shadow-sm p-6" style={{ border: '1px solid hsl(var(--dealer-border-light))' }}>
           <h2 className="text-lg font-semibold mb-4" style={{ color: 'hsl(var(--dealer-text-primary))' }}>
             Quick Actions
@@ -276,7 +308,7 @@ export function DashboardHome() {
       {/* Recent Activity */}
       <Card
         className="shadow-sm"
-        style={isDealer ? {
+        style={(isDealer || primaryRole === 'dealer_staff') ? {
           borderRadius: '12px',
           border: '1px solid hsl(var(--dealer-border-light))'
         } : {}}
@@ -288,11 +320,11 @@ export function DashboardHome() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {isDealer && isLoadingStats ? (
+            {(isDealer || primaryRole === 'dealer_staff') && isLoadingStats ? (
               <div className="flex items-center justify-center py-4">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
-            ) : isDealer && dealerStats?.recentActivity && dealerStats.recentActivity.length > 0 ? (
+            ) : (isDealer || primaryRole === 'dealer_staff') && dealerStats?.recentActivity && dealerStats.recentActivity.length > 0 ? (
               dealerStats.recentActivity.map((activity, index) => (
                 <div key={activity.id} className="flex items-center gap-3 pb-3 border-b last:border-b-0" style={isDealer ? { borderColor: 'hsl(var(--dealer-border-light))' } : undefined}>
                   <div

@@ -122,13 +122,13 @@ export function BannerManager() {
                         banners.map((banner) => (
                             <div
                                 key={banner.id}
-                                className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors group"
+                                className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors group relative"
                             >
-                                <div className="cursor-grab text-muted-foreground hover:text-foreground">
+                                <div className="hidden md:block cursor-grab text-muted-foreground hover:text-foreground">
                                     <GripVertical className="h-5 w-5" />
                                 </div>
 
-                                <div className="h-16 w-32 relative rounded-md overflow-hidden bg-muted flex-shrink-0 border">
+                                <div className="h-40 w-full md:h-16 md:w-32 relative rounded-md overflow-hidden bg-muted flex-shrink-0 border">
                                     <img
                                         src={banner.image_url}
                                         alt={banner.title}
@@ -139,28 +139,30 @@ export function BannerManager() {
                                     />
                                 </div>
 
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <h4 className="font-semibold truncate">{banner.title}</h4>
-                                        <Badge variant={banner.is_active ? 'default' : 'secondary'}>
-                                            {banner.is_active ? 'Active' : 'Inactive'}
-                                        </Badge>
+                                <div className="flex-1 min-w-0 w-full">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="font-semibold truncate">{banner.title}</h4>
+                                            <Badge variant={banner.is_active ? 'default' : 'secondary'}>
+                                                {banner.is_active ? 'Active' : 'Inactive'}
+                                            </Badge>
+                                        </div>
                                     </div>
-                                    <div className="text-xs text-muted-foreground flex gap-4">
+                                    <div className="grid grid-cols-2 md:flex md:gap-4 text-xs text-muted-foreground">
                                         <span>Order: {banner.display_order}</span>
                                         {banner.link_url && (
-                                            <span className="truncate max-w-[200px]" title={banner.link_url}>
+                                            <span className="truncate max-w-[200px] col-span-2 md:col-span-1" title={banner.link_url}>
                                                 Link: {banner.link_url}
                                             </span>
                                         )}
-                                        <span>
+                                        <span className="col-span-2 md:col-span-1">
                                             {new Date(banner.start_date).toLocaleDateString()}
                                             {banner.end_date ? ` - ${new Date(banner.end_date).toLocaleDateString()}` : ' - Forever'}
                                         </span>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center gap-2 w-full md:w-auto mt-2 md:mt-0 justify-end md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                     <Button variant="ghost" size="icon" onClick={() => handleEdit(banner)}>
                                         <Edit className="h-4 w-4" />
                                     </Button>

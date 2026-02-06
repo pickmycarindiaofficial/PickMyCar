@@ -25,15 +25,15 @@ export function MasterSetup() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-8">
-            <TabsTrigger value="staff">Staff</TabsTrigger>
-            <TabsTrigger value="cities">Cities</TabsTrigger>
-            <TabsTrigger value="categories">Categories</TabsTrigger>
-            <TabsTrigger value="brands">Brands</TabsTrigger>
-            <TabsTrigger value="features">Features</TabsTrigger>
-            <TabsTrigger value="types">Types</TabsTrigger>
-            <TabsTrigger value="status">Status</TabsTrigger>
-            <TabsTrigger value="banners">Banners</TabsTrigger>
+          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap bg-transparent p-0 mb-6 gap-2 h-auto no-scrollbar">
+            <TabsTrigger className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full border px-4 py-2" value="staff">Staff</TabsTrigger>
+            <TabsTrigger className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full border px-4 py-2" value="cities">Cities</TabsTrigger>
+            <TabsTrigger className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full border px-4 py-2" value="categories">Categories</TabsTrigger>
+            <TabsTrigger className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full border px-4 py-2" value="brands">Brands</TabsTrigger>
+            <TabsTrigger className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full border px-4 py-2" value="features">Features</TabsTrigger>
+            <TabsTrigger className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full border px-4 py-2" value="types">Types</TabsTrigger>
+            <TabsTrigger className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full border px-4 py-2" value="status">Status</TabsTrigger>
+            <TabsTrigger className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full border px-4 py-2" value="banners">Banners</TabsTrigger>
           </TabsList>
 
           <TabsContent value="staff" className="space-y-4">

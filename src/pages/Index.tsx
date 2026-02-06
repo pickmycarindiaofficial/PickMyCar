@@ -134,7 +134,7 @@ const Index = () => {
   // Fetch live car listings from database - Reduced initial fetch for faster TTI
   const { data: carListingsData, isLoading } = useCarListings({
     status: 'live',
-    pageSize: 12 // Optimized to 12 for mobile performance (95+ target)
+    pageSize: 1000 // Fetch all for client-side filtering and infinite scroll
   });
 
   const { data: allBrands = [] } = useBrands();

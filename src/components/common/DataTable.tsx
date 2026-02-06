@@ -73,7 +73,7 @@ export function DataTable<TData, TValue>({
         </div>
       )}
 
-      <div className="rounded-md border overflow-hidden">
+      <div className="rounded-md border overflow-hidden hidden md:block">
         <div className="overflow-auto max-h-[600px]">
           <Table>
             <TableHeader className="sticky top-0 bg-background z-10 shadow-sm">
@@ -84,9 +84,9 @@ export function DataTable<TData, TValue>({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -128,6 +128,61 @@ export function DataTable<TData, TValue>({
             </TableBody>
           </Table>
         </div>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-4">
+        {table.getRowModel().rows?.length ? (
+          table.getRowModel().rows.map((row) => (
+            <div
+              key={row.id}
+              className={`
+                bg-white rounded-lg border p-4 shadow-sm flex flex-col gap-3
+                ${onRowClick ? 'active:bg-muted cursor-pointer' : ''}
+              `}
+              onClick={() => onRowClick?.(row.original)}
+            >
+              {/* Header: Usually the first column */}
+              <div className="flex justify-between items-start">
+                <div className="font-semibold text-lg">
+                  {flexRender(row.getVisibleCells()[0].column.columnDef.cell, row.getVisibleCells()[0].getContext())}
+                </div>
+                {/* Actions: Usually the last column, if it is 'actions' */}
+                {row.getVisibleCells().find(c => c.column.id === 'actions') && (
+                  <div className="-mr-2 -mt-2">
+                    {flexRender(
+                      row.getVisibleCells().find(c => c.column.id === 'actions')?.column.columnDef.cell,
+                      row.getVisibleCells().find(c => c.column.id === 'actions')?.getContext()!
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Body: Rest of the columns */}
+              <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-sm mt-1">
+                {row.getVisibleCells().slice(1).map((cell) => {
+                  if (cell.column.id === 'actions') return null; // Skip actions here
+                  return (
+                    <div key={cell.id} className="flex flex-col gap-1">
+                      <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                        {typeof cell.column.columnDef.header === 'string'
+                          ? cell.column.columnDef.header
+                          : ''}
+                      </span>
+                      <div className="text-foreground">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-10 text-muted-foreground bg-muted/20 rounded-lg border border-dashed">
+            No results found.
+          </div>
+        )}
       </div>
 
       <div className="flex items-center justify-between">

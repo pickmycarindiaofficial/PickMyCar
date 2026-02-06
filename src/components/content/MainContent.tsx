@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Car, SortOption } from '@/types';
 import { CarCard } from './CarCard';
 import { CarCardSkeleton } from './CarCardSkeleton';
 import { CityContent } from './CityContent';
-import { Pagination } from './Pagination';
 import { FAQSection } from './FAQSection';
 import { LoanOffersBanner } from '@/components/finance/LoanOffersBanner';
+import { InlineLoader } from '@/components/common/PageLoader';
 
 interface MainContentProps {
   cars: Car[];
@@ -26,7 +26,8 @@ interface MainContentProps {
   segment?: 'all' | 'premium';
 }
 
-const CARS_PER_PAGE = 12;
+const INITIAL_VISIBLE_COUNT = 12;
+const LOAD_MORE_INCREMENT = 12;
 
 export const MainContent = ({
   cars,
@@ -45,30 +46,78 @@ export const MainContent = ({
   averageCarPrice = 500000,
   segment = 'all',
 }: MainContentProps) => {
-  const [currentPage, setCurrentPage] = useState(1);
+  // Infinite Scroll State
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // Reset visible count when filters/cars change
+  useEffect(() => {
+    setVisibleCount(INITIAL_VISIBLE_COUNT);
+  }, [cars.length, city, segment]);
 
   // Sort cars
-  const sortedCars = [...cars].sort((a, b) => {
-    switch (sortOption) {
-      case 'price-low':
-        return a.price - b.price;
-      case 'price-high':
-        return b.price - a.price;
-      case 'year-new':
-        return b.year - a.year;
-      case 'year-old':
-        return a.year - b.year;
-      case 'kms-low':
-        return a.kmsDriven - b.kmsDriven;
-      default:
-        return b.isFeatured ? 1 : -1;
-    }
-  });
+  const sortedCars = useMemo(() => {
+    let result = [...cars];
 
-  // Pagination
-  const totalPages = Math.ceil(sortedCars.length / CARS_PER_PAGE);
-  const startIndex = (currentPage - 1) * CARS_PER_PAGE;
-  const paginatedCars = sortedCars.slice(startIndex, startIndex + CARS_PER_PAGE);
+    // Default Sort (Relevance) -> Strategic Randomization
+    if (sortOption === 'relevance') {
+      const featured = result.filter(c => c.isFeatured);
+      const regular = result.filter(c => !c.isFeatured);
+
+      // Stable seeded shuffle for "Fair Dealer Visibility"
+      // We use a simple random sort here, but in a real app you might use a daily seed
+      // Fisher-Yates Shuffle for regular listings
+      for (let i = regular.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [regular[i], regular[j]] = [regular[j], regular[i]];
+      }
+
+      return [...featured, ...regular];
+    }
+
+    // Other sort options
+    return result.sort((a, b) => {
+      switch (sortOption) {
+        case 'price-low':
+          return a.price - b.price;
+        case 'price-high':
+          return b.price - a.price;
+        case 'year-new':
+          return b.year - a.year;
+        case 'year-old':
+          return a.year - b.year;
+        case 'kms-low':
+          return a.kmsDriven - b.kmsDriven;
+        default:
+          return 0;
+      }
+    });
+  }, [cars, sortOption]);
+
+  // Derived visible cars
+  const visibleCars = sortedCars.slice(0, visibleCount);
+  const hasMore = visibleCount < sortedCars.length;
+
+  // Infinite Scroll Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          // Add small delay for better UX
+          setTimeout(() => {
+            setVisibleCount((prev) => prev + LOAD_MORE_INCREMENT);
+          }, 300);
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, visibleCount]);
 
   const showCityContent = city !== 'All Cities';
 
@@ -109,7 +158,7 @@ export const MainContent = ({
               <CarCardSkeleton key={i} />
             ))}
           </div>
-        ) : paginatedCars.length === 0 ? (
+        ) : sortedCars.length === 0 ? (
           <div className="col-span-full flex flex-col items-center justify-center py-20 text-center">
             <div className="text-6xl mb-4">🔍</div>
             <h3 className="text-2xl font-bold mb-2">No Cars Found</h3>
@@ -126,7 +175,7 @@ export const MainContent = ({
           <>
             {/* First 3 Cars */}
             <div className="grid gap-4 sm:grid-cols-2 md:gap-5 lg:grid-cols-2 lg:gap-6 xl:grid-cols-3">
-              {paginatedCars.slice(0, 3).map((car, index) => (
+              {visibleCars.slice(0, 3).map((car, index) => (
                 <CarCard
                   key={car.id}
                   car={car}
@@ -142,7 +191,7 @@ export const MainContent = ({
             </div>
 
             {/* Loan Banner - FULL WIDTH, BETWEEN ROWS */}
-            {currentPage === 1 && paginatedCars.length >= 3 && onApplyLoan && onOpenEMICalculator && (
+            {visibleCars.length >= 3 && onApplyLoan && onOpenEMICalculator && (
               <LoanOffersBanner
                 onCheckLoanOffers={onApplyLoan}
                 onOpenEMICalculator={onOpenEMICalculator}
@@ -151,9 +200,9 @@ export const MainContent = ({
             )}
 
             {/* Remaining Cars (4 onwards) */}
-            {paginatedCars.length > 3 && (
+            {visibleCars.length > 3 && (
               <div className="grid gap-4 sm:grid-cols-2 md:gap-5 lg:grid-cols-2 lg:gap-6 xl:grid-cols-3">
-                {paginatedCars.slice(3).map((car) => (
+                {visibleCars.slice(3).map((car) => (
                   <CarCard
                     key={car.id}
                     car={car}
@@ -167,18 +216,18 @@ export const MainContent = ({
                 ))}
               </div>
             )}
-          </>
-        )}
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-8">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          </div>
+            {/* Infinite Scroll Loader / Trigger */}
+            <div ref={loadMoreRef} className="col-span-full flex justify-center py-8 h-20">
+              {hasMore ? (
+                <div className="flex items-center gap-2 text-muted-foreground animate-pulse">
+                  <InlineLoader /> Loading more cars...
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">You've reached the end of the list</p>
+              )}
+            </div>
+          </>
         )}
 
         {/* FAQ Section */}

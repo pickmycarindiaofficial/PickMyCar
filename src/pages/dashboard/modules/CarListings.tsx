@@ -53,10 +53,13 @@ export default function CarListings() {
     }
 
     // CRITICAL: For dealers, ALWAYS filter by their own user ID
+    // CRITICAL: For dealers and staff, ALWAYS filter by their own dealer ID
     if (!isPowerDesk) {
       filters.seller_type = 'dealer';
-      // Get current dealer ID (handles both Supabase Auth and OTP)
-      let currentDealerId = user?.id;
+
+      // Get dealer ID from metadata (for staff) or local storage (for dealer) or user ID fallback
+      let currentDealerId = user?.user_metadata?.dealer_id; // Check staff metadata first
+
       if (!currentDealerId) {
         try {
           const dealerInfoStr = localStorage.getItem('dealer_info');
@@ -67,6 +70,11 @@ export default function CarListings() {
         } catch (e) {
           console.error('Error parsing dealer info:', e);
         }
+      }
+
+      // Fallback to user ID if no dealer ID found (for direct dealer login)
+      if (!currentDealerId) {
+        currentDealerId = user?.id;
       }
 
       if (currentDealerId) {
@@ -102,9 +110,12 @@ export default function CarListings() {
     const filters: any = {};
 
     // CRITICAL: For dealers, ALWAYS filter by their own user ID
+    // CRITICAL: For dealers, ALWAYS filter by their own user ID
     if (!isPowerDesk) {
       filters.seller_type = 'dealer';
-      let currentDealerId = user?.id;
+
+      let currentDealerId = user?.user_metadata?.dealer_id; // Check staff metadata first
+
       if (!currentDealerId) {
         try {
           const dealerInfoStr = localStorage.getItem('dealer_info');
@@ -115,6 +126,10 @@ export default function CarListings() {
         } catch (e) {
           console.error('Error parsing dealer info:', e);
         }
+      }
+
+      if (!currentDealerId) {
+        currentDealerId = user?.id;
       }
 
       if (currentDealerId) {
@@ -191,7 +206,7 @@ export default function CarListings() {
   };
 
   return (
-    <PermissionGate roles={['powerdesk', 'dealer']}>
+    <PermissionGate roles={['powerdesk', 'dealer', 'dealer_staff']}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

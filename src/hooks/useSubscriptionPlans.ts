@@ -27,7 +27,7 @@ export function useSubscriptionPlans() {
         .select('*')
         .eq('is_active', true)
         .order('sort_order');
-      
+
       if (error) throw error;
       return data as SubscriptionPlan[];
     },
@@ -42,7 +42,7 @@ export function useAllSubscriptionPlans() {
         .from('subscription_plans')
         .select('*')
         .order('sort_order');
-      
+
       if (error) throw error;
       return data as SubscriptionPlan[];
     },
@@ -51,17 +51,15 @@ export function useAllSubscriptionPlans() {
 
 export function useCreateSubscriptionPlan() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (plan: Omit<SubscriptionPlan, 'id' | 'created_at' | 'updated_at'>) => {
       const { data: { user } } = await supabase.auth.getUser();
-      
-      const { data, error } = await (supabase as any)
-        .from('subscription_plans')
-        .insert([{ ...plan, created_by: user?.id }])
-        .select()
-        .single();
-      
+
+      const { data, error } = await supabase.rpc('create_subscription_plan', {
+        p_plan: { ...plan, created_by: user?.id }
+      });
+
       if (error) throw error;
       return data;
     },
@@ -78,17 +76,16 @@ export function useCreateSubscriptionPlan() {
 
 export function useUpdateSubscriptionPlan() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<SubscriptionPlan> & { id: string }) => {
-      const { data, error } = await (supabase as any)
-        .from('subscription_plans')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-      
+      const { data, error } = await supabase.rpc('update_subscription_plan', {
+        p_id: id,
+        p_updates: updates
+      });
+
       if (error) throw error;
+      if (data && data.error) throw new Error(data.error);
       return data;
     },
     onSuccess: () => {
@@ -104,18 +101,17 @@ export function useUpdateSubscriptionPlan() {
 
 export function useDeleteSubscriptionPlan() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (planId: string) => {
-      // Soft delete by setting is_active = false
-      const { data, error } = await (supabase as any)
-        .from('subscription_plans')
-        .update({ is_active: false })
-        .eq('id', planId)
-        .select()
-        .single();
-      
+      // Soft delete via toggle function
+      const { data, error } = await supabase.rpc('toggle_plan_status', {
+        p_id: planId,
+        p_is_active: false
+      });
+
       if (error) throw error;
+      if (data && data.error) throw new Error(data.error);
       return data;
     },
     onSuccess: () => {
@@ -131,17 +127,16 @@ export function useDeleteSubscriptionPlan() {
 
 export function useTogglePlanStatus() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { data, error } = await (supabase as any)
-        .from('subscription_plans')
-        .update({ is_active })
-        .eq('id', id)
-        .select()
-        .single();
-      
+      const { data, error } = await supabase.rpc('toggle_plan_status', {
+        p_id: id,
+        p_is_active: is_active
+      });
+
       if (error) throw error;
+      if (data && data.error) throw new Error(data.error);
       return data;
     },
     onSuccess: (_, variables) => {

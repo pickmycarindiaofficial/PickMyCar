@@ -3,7 +3,7 @@ import {
   FileText, Globe, Database, Tag, BarChart3, Car, UserCircle,
   ClipboardList, TrendingUp, DollarSign, Calculator, FolderOpen,
   CheckCircle, FileCheck, Heart, Send, Package, Wrench, Building2, Store, Printer, TrendingDown,
-  Brain, Lightbulb, LineChart, Target, Gauge, Sparkles, User, CalendarClock, Image
+  Brain, Lightbulb, LineChart, Target, Gauge, Sparkles, User, CalendarClock, Image, Shield
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import logoImage from '@/assets/logo.png';
@@ -43,6 +43,7 @@ const ROLE_COLORS: Record<AppRole, string> = {
   finance: 'hsl(var(--role-finance))',
   inspection: 'hsl(var(--role-inspection))',
   user: 'hsl(var(--role-user))',
+  dealer_staff: 'hsl(var(--role-sales))',
 };
 
 // Icon colors for dealer dashboard
@@ -114,7 +115,7 @@ const navigationItems: NavItem[] = [
 
 export function DashboardSidebar() {
   const { state } = useSidebar();
-  const { roles } = useAuth();
+  const { roles, staffSession } = useAuth();
   const location = useLocation();
   const { unreadMessages } = useUnreadCounts();
   const { data: pendingDealersCount } = usePendingApplicationsCount();
@@ -122,11 +123,11 @@ export function DashboardSidebar() {
   const primaryRole = roles[0] || 'user';
   const roleColor = ROLE_COLORS[primaryRole];
 
-  // Build navigation items dynamically with badges
+
   const navItems: NavItem[] = [
     // Common Routes (All Roles)
-    { title: 'Home', url: '/dashboard/home', icon: LayoutDashboard, roles: ['powerdesk', 'website_manager', 'dealer', 'sales', 'finance', 'inspection', 'user'] },
-    { title: 'Messages', url: '/dashboard/messages', icon: MessageSquare, roles: ['powerdesk', 'website_manager', 'dealer', 'sales', 'finance', 'inspection', 'user'], badge: unreadMessages },
+    { title: 'Home', url: '/dashboard/home', icon: LayoutDashboard, roles: ['powerdesk', 'website_manager', 'dealer', 'sales', 'finance', 'inspection', 'user', 'dealer_staff'] },
+    { title: 'Messages', url: '/dashboard/messages', icon: MessageSquare, roles: ['powerdesk', 'website_manager', 'dealer', 'sales', 'finance', 'inspection', 'user', 'dealer_staff'], badge: unreadMessages },
 
     // PowerDesk Routes
     { title: 'Master Setup', url: '/dashboard/master-setup', icon: Database, roles: ['powerdesk'] },
@@ -159,13 +160,13 @@ export function DashboardSidebar() {
 
     // Dealer Routes
     { title: 'My Profile', url: '/dashboard/dealer-profile-info', icon: Building2, roles: ['dealer'] },
-    // My Inventory removed as requested
-    { title: 'My Listings', url: '/dashboard/my-listings', icon: Package, roles: ['dealer'] },
+    { title: 'Team Management', url: '/dashboard/staff', icon: Shield, roles: ['dealer'] },
+    { title: 'My Listings', url: '/dashboard/my-listings', icon: Package, roles: ['dealer', 'dealer_staff'] },
     { title: 'Print Stock List', url: '/dashboard/print-stock-list', icon: Printer, roles: ['powerdesk', 'dealer'] },
     { title: 'Plans', url: '/dashboard/plans', icon: DollarSign, roles: ['dealer'] },
     { title: 'Demand Gaps', url: '/dashboard/demand-gaps', icon: TrendingDown, roles: ['dealer'] },
-    { title: 'Test Drive Bookings', url: '/dashboard/test-drive-bookings', icon: CalendarClock, roles: ['powerdesk', 'dealer'] },
-    { title: 'Leads', url: '/dashboard/leads', icon: UserCircle, roles: ['dealer'] },
+    { title: 'Test Drive Bookings', url: '/dashboard/test-drive-bookings', icon: CalendarClock, roles: ['powerdesk', 'dealer', 'dealer_staff'] },
+    { title: 'Leads', url: '/dashboard/leads', icon: UserCircle, roles: ['dealer', 'dealer_staff'] },
     { title: 'Sales Pipeline', url: '/dashboard/sales-pipeline', icon: TrendingUp, roles: ['dealer'] },
     { title: 'Finance Requests', url: '/dashboard/finance-requests', icon: DollarSign, roles: ['dealer'] },
     { title: 'Inspections', url: '/dashboard/inspections', icon: CheckCircle, roles: ['dealer'] },
@@ -192,10 +193,25 @@ export function DashboardSidebar() {
 
   ];
 
-  // Filter navigation items based on user's roles
-  const filteredItems = navItems.filter(item =>
-    item.roles.some(role => roles.includes(role))
-  );
+  const filteredItems = navItems.filter(item => {
+    // 1. Check if the item is allowed for the user's primary role
+    if (!item.roles.includes(primaryRole as any)) {
+      return false;
+    }
+
+    // 2. Dealer Staff - Granular Permission Checks
+    if (roles.includes('dealer_staff') && staffSession?.permissions) {
+      if ((item.url === '/dashboard/my-listings' || item.url === '/dashboard/inventory') && !staffSession.permissions.manage_listings) {
+        return false;
+      }
+      if (item.url === '/dashboard/leads' && !staffSession.permissions.view_leads) {
+        return false;
+      }
+      // Hide other dealer sections not explicitly allowed (optional, or just rely on roles)
+    }
+
+    return true;
+  });
 
   // Remove duplicates (like Overview, Messages which appear for multiple roles)
   const uniqueItems = filteredItems.reduce((acc, item) => {
@@ -205,7 +221,7 @@ export function DashboardSidebar() {
     return acc;
   }, [] as NavItem[]);
 
-  const isDealer = primaryRole === 'dealer';
+  const isDealer = primaryRole === 'dealer' || primaryRole === 'dealer_staff';
   const iconColor = (url: string) => ICON_COLORS[url] || roleColor;
 
   return (

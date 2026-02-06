@@ -8,7 +8,12 @@ export interface StaffAccount {
     full_name: string;
     email: string | null;
     phone_number: string;
-    role: 'powerdesk' | 'dealer' | 'sales' | 'finance' | 'inspection' | 'website_manager';
+    role: 'powerdesk' | 'dealer' | 'sales' | 'finance' | 'inspection' | 'website_manager' | 'dealer_staff';
+    dealer_id?: string | null;
+    permissions?: {
+        manage_listings: boolean;
+        view_leads: boolean;
+    };
     is_active: boolean;
     is_locked: boolean;
     failed_login_attempts: number;
@@ -20,12 +25,14 @@ export interface StaffAccount {
 
 export interface CreateStaffInput {
     username: string;
-    password: string;
+    password: string; // Used as initial password or fallback
     full_name: string;
     phone_number: string;
     role: StaffAccount['role'];
     email?: string;
     created_by?: string;
+    dealer_id?: string;
+    permissions?: StaffAccount['permissions'];
 }
 
 export interface UpdateStaffInput {
@@ -36,6 +43,7 @@ export interface UpdateStaffInput {
     role?: StaffAccount['role'];
     is_active?: boolean;
     is_locked?: boolean;
+    permissions?: StaffAccount['permissions'];
 }
 
 export interface VerifyPasswordResult {
@@ -80,6 +88,23 @@ export function useStaffByRole(role: StaffAccount['role']) {
     });
 }
 
+// Fetch staff for a specific dealer
+export function useDealerStaff(dealerId: string | null) {
+    return useQuery({
+        queryKey: ['dealer-staff', dealerId],
+        queryFn: async () => {
+            if (!dealerId) return [];
+            const { data, error } = await supabase.rpc('get_dealer_staff', {
+                p_dealer_id: dealerId
+            });
+
+            if (error) throw error;
+            return data as StaffAccount[];
+        },
+        enabled: !!dealerId
+    });
+}
+
 // Create staff account
 export function useCreateStaffAccount() {
     const queryClient = useQueryClient();
@@ -94,6 +119,8 @@ export function useCreateStaffAccount() {
                 p_role: input.role,
                 p_email: input.email || null,
                 p_created_by: input.created_by || null,
+                p_dealer_id: input.dealer_id || null,
+                p_permissions: input.permissions || null
             });
 
             if (error) throw error;
@@ -101,6 +128,7 @@ export function useCreateStaffAccount() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['staff-accounts'] });
+            queryClient.invalidateQueries({ queryKey: ['dealer-staff'] });
             toast.success('Staff account created successfully');
         },
         onError: (error: any) => {
@@ -111,6 +139,28 @@ export function useCreateStaffAccount() {
                 toast.error(error.message || 'Failed to create staff account');
             }
         },
+    });
+}
+
+// Update staff permissions
+export function useUpdateStaffPermissions() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ staffId, permissions }: { staffId: string; permissions: any }) => {
+            const { error } = await supabase.rpc('update_staff_permissions', {
+                p_staff_id: staffId,
+                p_permissions: permissions
+            });
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['dealer-staff'] });
+            toast.success('Permissions updated');
+        },
+        onError: (error: any) => {
+            toast.error(error.message || 'Failed to update permissions');
+        }
     });
 }
 
@@ -133,6 +183,7 @@ export function useUpdateStaffAccount() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['staff-accounts'] });
+            queryClient.invalidateQueries({ queryKey: ['dealer-staff'] });
             toast.success('Staff account updated');
         },
         onError: (error: any) => {
@@ -222,6 +273,16 @@ export async function checkStaffUsernameExists(username: string): Promise<boolea
 // Get staff by username
 export async function getStaffByUsername(username: string) {
     const { data, error } = await supabase.rpc('get_staff_by_username', {
+        p_username: username,
+    });
+
+    if (error) throw error;
+    return Array.isArray(data) ? data[0] : data;
+}
+
+// Get staff login info (including phone for OTP)
+export async function getStaffLoginInfo(username: string) {
+    const { data, error } = await supabase.rpc('get_staff_login_info', {
         p_username: username,
     });
 

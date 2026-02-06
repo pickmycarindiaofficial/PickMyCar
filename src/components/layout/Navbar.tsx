@@ -25,7 +25,7 @@ export const Navbar = ({ onSearch, onNavigate }: NavbarProps) => {
   const navigate = useNavigate();
 
   const isStaffUser = roles.some(role =>
-    ['powerdesk', 'website_manager', 'dealer', 'sales', 'finance', 'inspection'].includes(role)
+    ['powerdesk', 'website_manager', 'dealer', 'sales', 'finance', 'inspection', 'dealer_staff'].includes(role)
   );
 
   const handleSearch = (e: React.FormEvent) => {

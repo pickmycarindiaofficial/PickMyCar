@@ -20,9 +20,30 @@ export default function Leads() {
   const [selectedEnquiryId, setSelectedEnquiryId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  const { data: enquiries, isLoading } = useDealerEnquiries(
-    hasRole('powerdesk') || hasRole('sales') ? undefined : user?.id
-  );
+  // Determine the correct dealer ID to fetch enquiries for
+  let targetDealerId: string | undefined = undefined;
+
+  if (hasRole('dealer')) {
+    // Try to get from localStorage (for dealer login) or fallback to user id
+    try {
+      const dealerInfoStr = localStorage.getItem('dealer_info');
+      if (dealerInfoStr) {
+        const dealerInfo = JSON.parse(dealerInfoStr);
+        targetDealerId = dealerInfo.id;
+      }
+    } catch (e) {
+      console.error('Error parsing dealer info:', e);
+    }
+    if (!targetDealerId) targetDealerId = user?.id;
+  } else if (hasRole('dealer_staff')) {
+    targetDealerId = user?.user_metadata?.dealer_id;
+  } else if (hasRole('powerdesk') || hasRole('sales')) {
+    targetDealerId = undefined; // Fetch all for powerdesk/sales (filtered by query probably)
+  } else {
+    targetDealerId = user?.id; // Fallback for regular users? unread-leads uses this hook?
+  }
+
+  const { data: enquiries, isLoading } = useDealerEnquiries(targetDealerId);
 
   const { data: leadIntelligence, isLoading: loadingLeadStats } = useLeadIntelligence();
   const leadStats = leadIntelligence?.stats;
@@ -120,8 +141,8 @@ export default function Leads() {
             row.original.priority === 'urgent'
               ? 'destructive'
               : row.original.priority === 'high'
-              ? 'default'
-              : 'outline'
+                ? 'default'
+                : 'outline'
           }
         >
           {row.original.priority}
@@ -142,8 +163,8 @@ export default function Leads() {
     },
   ];
 
-  const filteredEnquiries = statusFilter === 'all' 
-    ? enquiries 
+  const filteredEnquiries = statusFilter === 'all'
+    ? enquiries
     : enquiries?.filter((e: any) => e.status === statusFilter);
 
   return (
