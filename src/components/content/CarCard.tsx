@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useEventTracking } from '@/hooks/useEventTracking';
 import { getOptimizedImageUrl } from '@/lib/photoUtils';
+import { ProgressiveImage } from '@/components/common/ProgressiveImage';
 
 interface CarCardProps {
   car: Car;
@@ -81,12 +82,12 @@ export const CarCard = ({ car, onCallDealer, onChat, onToggleShortlist, isShortl
     >
       {/* Image Section */}
       <div className="relative aspect-[16/9] overflow-hidden bg-gray-100">
-        <img
+        <ProgressiveImage
           src={getOptimizedImageUrl(car.imageUrl, { width: 400, quality: 80 })}
+          placeholder={(car as any).thumbnailUrl} // This will be passed from Index.tsx
           alt={`${car.year} ${car.brand} ${car.model}`}
-          loading={priority ? "eager" : "lazy"}
-          decoding="async"
-          className="h-full w-full object-contain transition-transform duration-700"
+          priority={priority}
+          className="h-full w-full"
         />
 
         {/* Overlay Gradient - Bottom only for text contrast if needed */}

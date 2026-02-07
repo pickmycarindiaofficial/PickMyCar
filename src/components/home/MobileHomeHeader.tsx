@@ -2,6 +2,7 @@ import { memo, useState, useCallback } from 'react';
 import { Search, SlidersHorizontal, ArrowUpDown, Bell, MapPin, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Sparkles, Grid } from 'lucide-react';
 import { useCities } from '@/hooks/useCities';
 import logoImage from '@/assets/logo.png';
 import {
@@ -36,6 +37,8 @@ interface MobileHomeHeaderProps {
         seats?: string[];
         transmissions?: string[];
     };
+    useRecommended?: boolean;
+    onToggleRecommended?: (value: boolean) => void;
 }
 
 export const MobileHomeHeader = memo(({
@@ -48,6 +51,8 @@ export const MobileHomeHeader = memo(({
     onQuickFilterChange,
     onClearFilters,
     activeFilters,
+    useRecommended,
+    onToggleRecommended,
 }: MobileHomeHeaderProps) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [citySheetOpen, setCitySheetOpen] = useState(false);
@@ -190,6 +195,29 @@ export const MobileHomeHeader = memo(({
                 {/* Quick Filter Pills - Horizontally scrollable */}
                 <div className="px-4 pb-2.5 overflow-x-auto hide-scrollbar">
                     <div className="flex gap-2 w-max">
+                        {/* Smart/Classic Toggle - Only show if props are provided */}
+                        {onToggleRecommended && (
+                            <button
+                                onClick={() => onToggleRecommended(!useRecommended)}
+                                className={`px-3.5 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all touch-manipulation flex items-center gap-1.5 border ${useRecommended
+                                    ? 'bg-primary text-primary-foreground border-transparent shadow-sm'
+                                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                                    }`}
+                            >
+                                {useRecommended ? (
+                                    <>
+                                        <Sparkles className="w-3.5 h-3.5" />
+                                        Smart View
+                                    </>
+                                ) : (
+                                    <>
+                                        <Grid className="w-3.5 h-3.5" />
+                                        Classic View
+                                    </>
+                                )}
+                            </button>
+                        )}
+
                         {quickFilters.map((filter) => {
                             const isActive = isFilterActive(filter);
 

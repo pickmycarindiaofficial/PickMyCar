@@ -45,7 +45,7 @@ export default function UserIntelligence() {
   const apiFilters = Object.fromEntries(
     Object.entries(filters).filter(([_, value]) => value !== '' && value !== 'all')
   );
-  
+
   const { data, isLoading } = useUserIntelligence(apiFilters);
 
   const handleFilterChange = (key: string, value: string) => {
@@ -73,7 +73,7 @@ export default function UserIntelligence() {
   }
 
   const users = data?.users || [];
-  const stats = data?.stats || { total: 0, hot: 0, warm: 0, cold: 0, new: 0 };
+  const stats = data?.stats || { total: 0, hot: 0, warm: 0, cold: 0, new: 0, today: 0 };
 
   return (
     <div className="space-y-6">
@@ -123,8 +123,8 @@ export default function UserIntelligence() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.new}</div>
-            <p className="text-xs text-muted-foreground">Last 7 days</p>
+            <div className="text-2xl font-bold">{stats.today}</div>
+            <p className="text-xs text-muted-foreground">Joined Today ({stats.new} in last 7 days)</p>
           </CardContent>
         </Card>
       </div>

@@ -167,6 +167,75 @@ export default function Leads() {
     ? enquiries
     : enquiries?.filter((e: any) => e.status === statusFilter);
 
+  const renderMobileLead = (row: any) => {
+    const lead = row.original;
+    const car = lead.car_listing;
+    const customer = lead.user;
+    const guest = lead.guest_name;
+    const customerName = customer?.full_name || guest || 'Guest';
+    const customerPhone = customer?.phone_number || lead.guest_phone;
+
+    return (
+      <div className="bg-card border rounded-xl p-3 shadow-sm space-y-3">
+        <div className="flex justify-between items-start gap-3">
+          <div className="flex gap-3 flex-1 min-w-0">
+            <img
+              src={car?.photos?.[0]?.thumbnail_url || '/placeholder.svg'}
+              alt="Car"
+              className="h-16 w-16 rounded-md object-cover flex-shrink-0"
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-sm truncate pr-2">
+                  {car?.brand?.name} {car?.model?.name}
+                </h4>
+                {getStatusBadge(lead.status)}
+              </div>
+              <p className="text-xs text-muted-foreground truncate">
+                {car?.variant} • {car?.year_of_make}
+              </p>
+
+              <div className="flex items-center gap-2 mt-2">
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 font-normal flex gap-1 items-center bg-muted/50">
+                  {getEnquiryTypeIcon(lead.enquiry_type)}
+                  <span className="capitalize">{lead.enquiry_type}</span>
+                </Badge>
+                {lead.priority !== 'normal' && (
+                  <Badge
+                    variant={lead.priority === 'urgent' ? 'destructive' : 'default'}
+                    className="text-[10px] px-1.5 py-0 h-5"
+                  >
+                    {lead.priority}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between border-t pt-3 mt-2">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+              {customerName.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <p className="text-sm font-medium leading-none">{customerName}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{customerPhone}</p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 text-primary hover:text-primary/80 hover:bg-primary/5"
+            onClick={() => setSelectedEnquiryId(lead.id)}
+          >
+            View Details
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -197,25 +266,26 @@ export default function Leads() {
         </Card>
       )}
 
-      <Card>
-        <CardHeader>
+      <Card className="bg-transparent border-0 shadow-none sm:bg-card sm:border sm:shadow-sm">
+        <CardHeader className="px-0 sm:px-6">
           <CardTitle>All Leads</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0 sm:px-6">
           <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-            <TabsList>
+            <TabsList className="w-full justify-start overflow-x-auto flex-nowrap mb-4">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="new">New</TabsTrigger>
               <TabsTrigger value="contacted">Contacted</TabsTrigger>
               <TabsTrigger value="qualified">Qualified</TabsTrigger>
-              <TabsTrigger value="negotiating">Negotiating</TabsTrigger>
+              <TabsTrigger value="negotiating">Negotiation</TabsTrigger>
               <TabsTrigger value="converted">Converted</TabsTrigger>
             </TabsList>
 
-            <TabsContent value={statusFilter}>
+            <TabsContent value={statusFilter} className="mt-0">
               <DataTable
                 columns={columns}
                 data={filteredEnquiries || []}
+                renderMobileItem={renderMobileLead}
               />
             </TabsContent>
           </Tabs>

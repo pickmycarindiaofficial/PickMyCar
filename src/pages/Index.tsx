@@ -174,7 +174,9 @@ const Index = () => {
         model: listing.model?.name || '',
         variant: listing.variant,
         price: carPrice,
-        imageUrl: mainPhoto?.url || mainPhoto?.thumbnail_url || '/placeholder.svg',
+        // Optimization: Prefer medium_url for listing cards (faster load) -> fallback to url -> thumbnail
+        imageUrl: mainPhoto?.medium_url || mainPhoto?.url || mainPhoto?.thumbnail_url || '/placeholder.svg',
+        thumbnailUrl: mainPhoto?.thumbnail_url || null,
         kmsDriven: listing.kms_driven,
         fuelType: listing.fuel_type?.name as any || 'Petrol',
         transmission: listing.transmission?.name as any || 'Manual',
@@ -735,6 +737,8 @@ const Index = () => {
           seats: filters.seats,
           transmissions: filters.transmissions,
         }}
+        useRecommended={useRecommended}
+        onToggleRecommended={user ? handleHomepageToggle : undefined}
       />
 
       {/* Mobile Filter Drawer - Full Screen */}
@@ -845,6 +849,32 @@ const Index = () => {
                     isLoading={isLoading}
                   />
                 </Suspense>
+
+                {/* All Cars Section */}
+                <div className="pt-8 border-t border-border mt-8">
+                  <div className="flex items-center gap-2 mb-6">
+                    <h2 className="text-xl font-bold">Explore All Cars</h2>
+                    <span className="text-sm text-muted-foreground">({filteredCars.length})</span>
+                  </div>
+
+                  <MainContent
+                    cars={filteredCars}
+                    city={filters.city}
+                    onCallDealer={handleCallDealer}
+                    onChat={handleChat}
+                    onToggleShortlist={handleToggleShortlist}
+                    shortlistedIds={shortlistedIds}
+                    onCarClick={handleCarClick}
+                    onShare={handleShare}
+                    onClearFilters={handleClearAll}
+                    sortOption={sortOption}
+                    isLoading={isLoading}
+                    onApplyLoan={() => handleApplyForLoan()}
+                    onOpenEMICalculator={handleOpenEMICalculator}
+                    averageCarPrice={averageCarPrice}
+                    segment={filters.segment}
+                  />
+                </div>
               </>
             )
           ) : (

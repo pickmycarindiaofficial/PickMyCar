@@ -8,6 +8,7 @@ import {
   SortingState,
   ColumnFiltersState,
   useReactTable,
+  Row,
 } from '@tanstack/react-table';
 import { useState } from 'react';
 import {
@@ -28,6 +29,7 @@ interface DataTableProps<TData, TValue> {
   searchKey?: string;
   searchPlaceholder?: string;
   onRowClick?: (row: TData) => void;
+  renderMobileItem?: (row: Row<TData>) => React.ReactNode;
 }
 
 export function DataTable<TData, TValue>({
@@ -36,6 +38,7 @@ export function DataTable<TData, TValue>({
   searchKey,
   searchPlaceholder = 'Search...',
   onRowClick,
+  renderMobileItem,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -134,49 +137,55 @@ export function DataTable<TData, TValue>({
       <div className="md:hidden space-y-4">
         {table.getRowModel().rows?.length ? (
           table.getRowModel().rows.map((row) => (
-            <div
-              key={row.id}
-              className={`
-                bg-white rounded-lg border p-4 shadow-sm flex flex-col gap-3
-                ${onRowClick ? 'active:bg-muted cursor-pointer' : ''}
-              `}
-              onClick={() => onRowClick?.(row.original)}
-            >
-              {/* Header: Usually the first column */}
-              <div className="flex justify-between items-start">
-                <div className="font-semibold text-lg">
-                  {flexRender(row.getVisibleCells()[0].column.columnDef.cell, row.getVisibleCells()[0].getContext())}
-                </div>
-                {/* Actions: Usually the last column, if it is 'actions' */}
-                {row.getVisibleCells().find(c => c.column.id === 'actions') && (
-                  <div className="-mr-2 -mt-2">
-                    {flexRender(
-                      row.getVisibleCells().find(c => c.column.id === 'actions')?.column.columnDef.cell,
-                      row.getVisibleCells().find(c => c.column.id === 'actions')?.getContext()!
-                    )}
+            renderMobileItem ? (
+              <div key={row.id} onClick={() => onRowClick?.(row.original)}>
+                {renderMobileItem(row)}
+              </div>
+            ) : (
+              <div
+                key={row.id}
+                className={`
+                  bg-white rounded-lg border p-4 shadow-sm flex flex-col gap-3
+                  ${onRowClick ? 'active:bg-muted cursor-pointer' : ''}
+                `}
+                onClick={() => onRowClick?.(row.original)}
+              >
+                {/* Header: Usually the first column */}
+                <div className="flex justify-between items-start">
+                  <div className="font-semibold text-lg">
+                    {flexRender(row.getVisibleCells()[0].column.columnDef.cell, row.getVisibleCells()[0].getContext())}
                   </div>
-                )}
-              </div>
-
-              {/* Body: Rest of the columns */}
-              <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-sm mt-1">
-                {row.getVisibleCells().slice(1).map((cell) => {
-                  if (cell.column.id === 'actions') return null; // Skip actions here
-                  return (
-                    <div key={cell.id} className="flex flex-col gap-1">
-                      <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                        {typeof cell.column.columnDef.header === 'string'
-                          ? cell.column.columnDef.header
-                          : ''}
-                      </span>
-                      <div className="text-foreground">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </div>
+                  {/* Actions: Usually the last column, if it is 'actions' */}
+                  {row.getVisibleCells().find(c => c.column.id === 'actions') && (
+                    <div className="-mr-2 -mt-2">
+                      {flexRender(
+                        row.getVisibleCells().find(c => c.column.id === 'actions')?.column.columnDef.cell,
+                        row.getVisibleCells().find(c => c.column.id === 'actions')?.getContext()!
+                      )}
                     </div>
-                  );
-                })}
+                  )}
+                </div>
+
+                {/* Body: Rest of the columns */}
+                <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-sm mt-1">
+                  {row.getVisibleCells().slice(1).map((cell) => {
+                    if (cell.column.id === 'actions') return null; // Skip actions here
+                    return (
+                      <div key={cell.id} className="flex flex-col gap-1">
+                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                          {typeof cell.column.columnDef.header === 'string'
+                            ? cell.column.columnDef.header
+                            : ''}
+                        </span>
+                        <div className="text-foreground">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )
           ))
         ) : (
           <div className="text-center py-10 text-muted-foreground bg-muted/20 rounded-lg border border-dashed">

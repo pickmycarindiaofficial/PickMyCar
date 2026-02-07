@@ -62,17 +62,24 @@ export const MainContent = ({
     // Default Sort (Relevance) -> Strategic Randomization
     if (sortOption === 'relevance') {
       const featured = result.filter(c => c.isFeatured);
-      const regular = result.filter(c => !c.isFeatured);
+      const regularWithoutFeatured = result.filter(c => !c.isFeatured);
+
+      // Limit top featured to 6
+      const topFeatured = featured.slice(0, 6);
+      const remainingFeatured = featured.slice(6);
+
+      // Merge remaining featured with regular cars for the shuffle pool
+      const poolToShuffle = [...remainingFeatured, ...regularWithoutFeatured];
 
       // Stable seeded shuffle for "Fair Dealer Visibility"
       // We use a simple random sort here, but in a real app you might use a daily seed
-      // Fisher-Yates Shuffle for regular listings
-      for (let i = regular.length - 1; i > 0; i--) {
+      // Fisher-Yates Shuffle
+      for (let i = poolToShuffle.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [regular[i], regular[j]] = [regular[j], regular[i]];
+        [poolToShuffle[i], poolToShuffle[j]] = [poolToShuffle[j], poolToShuffle[i]];
       }
 
-      return [...featured, ...regular];
+      return [...topFeatured, ...poolToShuffle];
     }
 
     // Other sort options
