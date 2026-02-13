@@ -250,14 +250,7 @@ export default function DealerLogin() {
                                     >
                                         ← Back to Customer Login
                                     </Button>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        className="w-full text-sm text-muted-foreground"
-                                        onClick={() => navigate('/staff-login')}
-                                    >
-                                        Staff Login (Sales, Finance, etc.)
-                                    </Button>
+
                                 </div>
                             </form>
                         ) : (

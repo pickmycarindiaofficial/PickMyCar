@@ -43,7 +43,7 @@ serve(async (req) => {
         .limit(10);
 
       if (savedCars && savedCars.length > 0) {
-        contextInfo += `\n\nUser's Saved Cars:\n${savedCars.map((sc: any) => 
+        contextInfo += `\n\nUser's Saved Cars:\n${savedCars.map((sc: any) =>
           `- ${sc.car_listings?.brands?.name} ${sc.car_listings?.models?.name} (${sc.car_listings?.year_of_make}) - ₹${sc.car_listings?.expected_price?.toLocaleString()}`
         ).join('\n')}`;
       }
@@ -53,42 +53,69 @@ serve(async (req) => {
       }
     }
 
-    // Get available inventory summary
+    // Get available inventory detailed summary
+    // 1. Get brand counts
+    const { data: brandCounts } = await supabase
+      .from('car_listings')
+      .select('brand_id, brands(name)')
+      .eq('status', 'live');
+
+    // Process brand counts
+    const brandMap = new Map();
+    if (brandCounts) {
+      brandCounts.forEach((item: any) => {
+        const name = item.brands?.name;
+        if (name) {
+          brandMap.set(name, (brandMap.get(name) || 0) + 1);
+        }
+      });
+    }
+
+    // Top 10 brands string
+    const topBrands = Array.from(brandMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([name, count]) => `${name} (${count})`)
+      .join(', ');
+
+    // 2. Get specific model counts for popular brands (optional, but good for context)
+    // For now, we'll stick to brand counts to keep context size manageable, 
+    // but we can add a "check database" tool in the future.
+
     const { count: totalCars } = await supabase
       .from('car_listings')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'live');
 
-    const systemPrompt = `You are an expert car shopping assistant for India's leading used car marketplace. Your goal is to help buyers find their perfect car and connect them with trusted dealers.
+    const systemPrompt = `You are the AI Assistant for PickMyCar, India's trusted used car marketplace.
+    
+Your Goal: Help users find their ideal car efficiently and politely.
 
-Your capabilities:
-- Search and recommend cars based on budget, brand, model, city, fuel type, body type
-- Calculate EMI and explain financing options
-- Compare cars and explain pros/cons
-- Provide market insights and fair pricing information
-- Schedule test drives and connect buyers to dealers
-- Answer questions about car features, maintenance, and ownership
+**Core Inventory Status:**
+- Total Cars Available: ${totalCars || 'Many'} verified cars.
+- Top Brands in Stock: ${topBrands}
+- We have cars across all major cities in India.
 
-Current marketplace inventory: ${totalCars || 'Many'} verified used cars available across India.
+**Response Guidelines:**
+1.  **Tone:** Be helpful, professional, and concise. Talk like a knowledgeable human consultant.
+    -   ❌ Avoid: "Excellent choice!", "That's a great question!", "I'm happy to help you with that." (Filler phrase)
+    -   ✅ Do: "We have 3 BMW 3-Series available via our dealers." or "The Honda City is known for reliability..."
+2.  **Links:** When a user asks for a car we likely have, provide a Direct Search Link using this format:
+    -   [View {Car Name}s](/search?q={Brand}+{Model})
+    -   Example: "We have several options. [View Hyundai Cretas](/search?q=Hyundai+Creta)"
+3.  **Inventory Awareness:** Use the "Top Brands" list above to know what we definitely have. If a user asks for a brand not in the top list, say "I can check our full inventory for {Brand}..." and give a search link.
+4.  **Pricing:** All prices are in Indian Rupees (₹). 1 Lakh = 100,000. 1 Crore = 10,000,000.
+5.  **Safety:** Emphasize that all cars are inspected and dealers are verified.
+
 ${contextInfo}
 
-Guidelines:
-- Be conversational, friendly, and helpful
-- Ask clarifying questions to understand user needs
-- Provide specific recommendations with reasoning
-- Always end responses with a clear call-to-action (view cars, contact dealer, calculate EMI)
-- Use Indian Rupees (₹) for all prices
-- Mention that all cars are verified and dealers are trusted
-- For specific car recommendations, guide users to filter or search the listings
+**If the user asks to see cars:**
+- Don't just list specs. Give them a link to see the actual cars.
+- Ask 1-2 clarifying questions only if necessary (Budget, Fuel Type).
 
-When users ask about specific cars or want to search:
-- Ask about their budget range
-- Ask about preferred city/location
-- Ask about car type preference (Sedan, SUV, Hatchback, etc.)
-- Ask about must-have features
-- Then guide them to use the search/filter on the platform
-
-Remember: You're here to assist and guide, not to make the final decision for them.`;
+**If the user asks "What do you have?":**
+- Mention the top brands we have in stock.
+- Ask for their preference (Sedan/SUV/Hatchback).`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -109,14 +136,14 @@ Remember: You're here to assist and guide, not to make the final decision for th
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Lovable AI error:', response.status, errorText);
-      
+
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }),
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      
+
       if (response.status === 402) {
         return new Response(
           JSON.stringify({ error: 'AI service requires payment. Please contact support.' }),

@@ -1,3 +1,48 @@
+-- Create user_interactions table if it doesn't exist
+CREATE TABLE IF NOT EXISTS user_interactions (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID NOT NULL, -- Logical reference to profiles.id or customer_profiles.id
+    interaction_type TEXT NOT NULL,
+    car_listing_id UUID REFERENCES car_listings(id),
+    metadata JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Index for faster queries
+CREATE INDEX IF NOT EXISTS idx_user_interactions_user_id ON user_interactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_interactions_created_at ON user_interactions(created_at);
+
+-- Create lead_scores table if it doesn't exist
+CREATE TABLE IF NOT EXISTS lead_scores (
+    user_id UUID PRIMARY KEY, -- Logical reference
+    score INTEGER DEFAULT 0,
+    lead_quality TEXT DEFAULT 'cold',
+    factors JSONB DEFAULT '{}'::jsonb,
+    last_updated TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS on these tables (optional, but good practice)
+ALTER TABLE user_interactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lead_scores ENABLE ROW LEVEL SECURITY;
+
+-- Allow public access for now (or restrict as needed)
+-- Allow public access for now (or restrict as needed)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE tablename = 'user_interactions' AND policyname = 'Allow read access to authenticated users'
+    ) THEN
+        CREATE POLICY "Allow read access to authenticated users" ON user_interactions FOR SELECT TO authenticated USING (true);
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE tablename = 'user_interactions' AND policyname = 'Allow insert access to authenticated users'
+    ) THEN
+        CREATE POLICY "Allow insert access to authenticated users" ON user_interactions FOR INSERT TO authenticated WITH CHECK (true);
+    END IF;
+END
+$$;
+
 -- Drop existing view and function to rebuild
 DROP FUNCTION IF EXISTS get_user_intelligence();
 DROP VIEW IF EXISTS user_intelligence_view CASCADE;
@@ -17,9 +62,15 @@ WITH auth_users AS (
         up.intent,
         up.budget_band,
         up.buying_mode,
-        up.preferred_brands,
-        up.body_type_affinity,
-        up.brand_affinity,
+        
+        -- Final Type Fix based on error logs:
+        -- preferred_brands is TEXT[] (Error 42804: text[] vs jsonb)
+        -- body_type_affinity is JSONB (Error 42846: jsonb to text[] cast fail)
+        
+        COALESCE(up.preferred_brands, ARRAY[]::text[]) as preferred_brands,
+        COALESCE(up.body_type_affinity, '[]'::jsonb) as body_type_affinity,
+        COALESCE(up.brand_affinity, '{}'::jsonb) as brand_affinity,
+        
         up.intent_score,
         up.last_seen,
         
@@ -31,16 +82,16 @@ WITH auth_users AS (
         up.country,
         up.location_updated_at,
 
-        -- Behavioral metrics (from user_events)
-        ue.car_id,
-        ue.event,
-        ue.session_id,
+        -- Behavioral metrics (from user_interactions)
+        ue.car_listing_id AS car_id,
+        ue.interaction_type AS event,
+        COALESCE(ue.metadata->>'sessionId', 'unknown') AS session_id,
         ue.created_at as event_created_at
     FROM profiles p
-    INNER JOIN user_roles ur ON ur.user_id = p.id
+    LEFT JOIN user_roles ur ON ur.user_id = p.id
     LEFT JOIN user_profile up ON up.user_id = p.id
-    LEFT JOIN user_events ue ON ue.user_id = p.id
-    WHERE ur.role = 'user'
+    LEFT JOIN user_interactions ue ON ue.user_id = p.id
+    -- Removed restrictive role filter to include all authenticated users
 ),
 customer_users AS (
     SELECT 
@@ -52,12 +103,15 @@ customer_users AS (
         true as is_active,
 
         -- Default Profile data for customers
-        'cold' as intent, -- Default to cold
+        'cold' as intent,
         NULL as budget_band,
-        'exploring' as buying_mode, -- Default to exploring
-        NULL::text[] as preferred_brands,
-        NULL::text[] as body_type_affinity,
-        NULL::jsonb as brand_affinity,
+        'exploring' as buying_mode,
+        
+        -- Match exact types from auth_users:
+        ARRAY[]::text[] as preferred_brands,     -- matches text[]
+        '[]'::jsonb as body_type_affinity,       -- matches jsonb
+        '{}'::jsonb as brand_affinity,           -- matches jsonb
+        
         0 as intent_score,
         cp.updated_at as last_seen,
         
@@ -69,12 +123,13 @@ customer_users AS (
         'India' as country,
         cp.updated_at as location_updated_at,
 
-        -- No event data for now (unless we link cookie sessions)
-        NULL as car_id,
-        NULL as event,
-        NULL as session_id,
-        NULL as event_created_at
+        -- Behavioral metrics (from user_interactions for customers too)
+        ue.car_listing_id AS car_id,
+        ue.interaction_type AS event,
+        COALESCE(ue.metadata->>'sessionId', 'unknown') AS session_id,
+        ue.created_at as event_created_at
     FROM customer_profiles cp
+    LEFT JOIN user_interactions ue ON ue.user_id = cp.id
     -- Anti-join to avoid duplicates if they exist in both (by phone)
     WHERE NOT EXISTS (SELECT 1 FROM profiles p WHERE p.phone_number = cp.phone_number)
 ),
@@ -95,9 +150,13 @@ SELECT
     MAX(intent) as intent,
     MAX(budget_band) as budget_band,
     MAX(buying_mode) as buying_mode,
+    
+    -- JSONB aggregations (MAX picks non-null or lexicographically last)
+    -- We cast to text because MAX(jsonb) does not exist in Postgres
     MAX(preferred_brands) as preferred_brands,
-    MAX(body_type_affinity) as body_type_affinity,
-    MAX(brand_affinity) as brand_affinity,
+    MAX(body_type_affinity::text)::jsonb as body_type_affinity,
+    MAX(brand_affinity::text)::jsonb as brand_affinity,
+    
     MAX(intent_score) as intent_score,
     MAX(last_seen) as last_seen,
   
@@ -111,17 +170,17 @@ SELECT
 
     -- Aggregated Metrics
     COUNT(DISTINCT CASE WHEN event = 'view' THEN car_id END) AS cars_viewed,
-    COUNT(DISTINCT CASE WHEN event = 'wishlist_add' THEN car_id END) AS cars_shortlisted,
+    COUNT(DISTINCT CASE WHEN event = 'save' OR event = 'wishlist_add' THEN car_id END) AS cars_shortlisted,
     COUNT(DISTINCT CASE WHEN event = 'compare' THEN car_id END) AS cars_compared,
-    COUNT(CASE WHEN event = 'contact_click' THEN 1 END) AS dealer_contacts,
+    COUNT(CASE WHEN event = 'contact_click' OR event = 'call_click' OR event = 'whatsapp_click' THEN 1 END) AS dealer_contacts,
     COUNT(CASE WHEN event = 'test_drive_request' THEN 1 END) AS test_drives_requested,
-    COUNT(CASE WHEN event = 'loan_attempt' THEN 1 END) AS loan_checks,
+    COUNT(CASE WHEN event = 'emi_calculation' OR event = 'loan_attempt' THEN 1 END) AS loan_checks,
     COUNT(CASE WHEN event = 'search' THEN 1 END) AS searches_performed,
     COUNT(DISTINCT session_id) AS total_sessions,
     MIN(event_created_at) AS first_activity,
     MAX(event_created_at) AS last_activity,
 
-    -- Unmet demand (Placeholder for customers)
+    -- Unmet demand
     NULL as unmet_demand_note,
     NULL as unmet_demand_specs,
     NULL as unmet_demand_urgency,
@@ -136,9 +195,10 @@ SELECT
         END * (
         COALESCE(MAX(intent_score), 0)
         + COUNT(DISTINCT CASE WHEN event = 'test_drive_request' THEN 1 END) * 20
-        + COUNT(DISTINCT CASE WHEN event = 'loan_attempt' THEN 1 END) * 15
-        + COUNT(DISTINCT CASE WHEN event = 'contact_click' THEN 1 END) * 10
-        + COUNT(DISTINCT CASE WHEN event = 'wishlist_add' THEN 1 END) * 5
+        + COUNT(DISTINCT CASE WHEN event = 'emi_calculation' THEN 1 END) * 15
+        + COUNT(DISTINCT CASE WHEN event = 'contact_click' OR event = 'call_click' THEN 1 END) * 10
+        + COUNT(DISTINCT CASE WHEN event = 'save' THEN 1 END) * 5
+        + COUNT(DISTINCT session_id) * 2
         )
     ) AS engagement_score,
 
@@ -147,8 +207,15 @@ SELECT
 FROM combined_users
 GROUP BY user_id;
 
--- Recreate RPC function
-CREATE OR REPLACE FUNCTION get_user_intelligence()
+-- Recreate RPC function with filters
+CREATE OR REPLACE FUNCTION get_user_intelligence(
+    search_text text DEFAULT NULL,
+    filter_intent text DEFAULT NULL,
+    filter_budget text DEFAULT NULL,
+    filter_buying_mode text DEFAULT NULL,
+    filter_engagement text DEFAULT NULL,
+    filter_location text DEFAULT NULL
+)
 RETURNS SETOF user_intelligence_view
 LANGUAGE sql
 SECURITY DEFINER
@@ -156,15 +223,42 @@ SET search_path = public
 AS $$
   SELECT *
   FROM user_intelligence_view
-  -- Removed the restrictive role check to allow Dealers/Staff to see data if needed
-  -- Or keep it but ensure the user has access. 
-  -- For now, let's keep it permissive for authenticated users who can access the dashboard.
-  WHERE EXISTS (
-    SELECT 1
-    FROM user_roles
-    WHERE user_roles.user_id = auth.uid()
-      AND user_roles.role IN ('powerdesk', 'dealer', 'admin', 'website_manager') 
-  );
+  WHERE 
+    (search_text IS NULL OR 
+     full_name ILIKE '%' || search_text || '%' OR 
+     phone_number ILIKE '%' || search_text || '%' OR
+     username ILIKE '%' || search_text || '%')
+    AND (filter_intent IS NULL OR filter_intent = 'all' OR intent = filter_intent)
+    AND (filter_budget IS NULL OR filter_budget = 'all' OR budget_band = filter_budget)
+    AND (filter_buying_mode IS NULL OR filter_buying_mode = 'all' OR buying_mode = filter_buying_mode)
+    AND (filter_location IS NULL OR filter_location = 'all' OR city_name = filter_location)
+    AND (
+        filter_engagement IS NULL OR filter_engagement = 'all' OR
+        (filter_engagement = 'high' AND engagement_score >= 70) OR
+        (filter_engagement = 'medium' AND engagement_score >= 40 AND engagement_score < 70) OR
+        (filter_engagement = 'low' AND engagement_score < 40)
+    );
 $$;
 
-GRANT EXECUTE ON FUNCTION get_user_intelligence() TO authenticated;
+GRANT EXECUTE ON FUNCTION get_user_intelligence(text, text, text, text, text, text) TO authenticated;
+
+-- DEBUG: Check if the view actually has data
+SELECT 'Total Rows in View' as check_name, COUNT(*) as count FROM user_intelligence_view;
+SELECT 'Total Profiles' as check_name, COUNT(*) as count FROM profiles;
+SELECT 'Total Customer Profiles' as check_name, COUNT(*) as count FROM customer_profiles;
+
+-- DEBUG: Find specific user (7305004047)
+SELECT * FROM profiles WHERE phone_number LIKE '%7305004047%';
+-- Check customer_profiles (Constraint check below will tell us if phone isn't unique)
+SELECT * FROM customer_profiles WHERE phone_number LIKE '%7305004047%';
+SELECT * FROM auth.users WHERE phone LIKE '%7305004047%';
+
+-- DEBUG: Check Table Constraints
+SELECT conname, pg_get_constraintdef(c.oid)
+FROM pg_constraint c 
+JOIN pg_namespace n ON n.oid = c.connamespace 
+WHERE conrelid = 'customer_profiles'::regclass;
+
+-- DEBUG: Check Filter Values (Corrected table: user_profile)
+SELECT DISTINCT budget_band FROM user_profile;
+SELECT DISTINCT buying_mode FROM user_profile;

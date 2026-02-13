@@ -1415,8 +1415,8 @@ export type Database = {
           ai_score: number | null
           behavioral_signals: Json | null
           budget_confidence:
-            | Database["public"]["Enums"]["confidence_level"]
-            | null
+          | Database["public"]["Enums"]["confidence_level"]
+          | null
           buying_timeline: Database["public"]["Enums"]["buying_timeline"] | null
           car_listing_id: string | null
           competitor_activity: Json | null
@@ -1444,11 +1444,11 @@ export type Database = {
           ai_score?: number | null
           behavioral_signals?: Json | null
           budget_confidence?:
-            | Database["public"]["Enums"]["confidence_level"]
-            | null
+          | Database["public"]["Enums"]["confidence_level"]
+          | null
           buying_timeline?:
-            | Database["public"]["Enums"]["buying_timeline"]
-            | null
+          | Database["public"]["Enums"]["buying_timeline"]
+          | null
           car_listing_id?: string | null
           competitor_activity?: Json | null
           conversion_probability?: number | null
@@ -1475,11 +1475,11 @@ export type Database = {
           ai_score?: number | null
           behavioral_signals?: Json | null
           budget_confidence?:
-            | Database["public"]["Enums"]["confidence_level"]
-            | null
+          | Database["public"]["Enums"]["confidence_level"]
+          | null
           buying_timeline?:
-            | Database["public"]["Enums"]["buying_timeline"]
-            | null
+          | Database["public"]["Enums"]["buying_timeline"]
+          | null
           car_listing_id?: string | null
           competitor_activity?: Json | null
           conversion_probability?: number | null
@@ -1714,8 +1714,8 @@ export type Database = {
           signal_type: Database["public"]["Enums"]["signal_type"]
           time_period?: string | null
           trend_direction?:
-            | Database["public"]["Enums"]["trend_direction"]
-            | null
+          | Database["public"]["Enums"]["trend_direction"]
+          | null
         }
         Update: {
           affected_dealers?: string[] | null
@@ -1735,8 +1735,8 @@ export type Database = {
           signal_type?: Database["public"]["Enums"]["signal_type"]
           time_period?: string | null
           trend_direction?:
-            | Database["public"]["Enums"]["trend_direction"]
-            | null
+          | Database["public"]["Enums"]["trend_direction"]
+          | null
         }
         Relationships: []
       }
@@ -3109,74 +3109,74 @@ export type Database = {
     }
     Enums: {
       app_role:
-        | "powerdesk"
-        | "website_manager"
-        | "dealer"
-        | "sales"
-        | "finance"
-        | "inspection"
-        | "user"
-        | "admin"
+      | "powerdesk"
+      | "website_manager"
+      | "dealer"
+      | "sales"
+      | "finance"
+      | "inspection"
+      | "user"
+      | "admin"
       buying_timeline:
-        | "immediate"
-        | "1-2_weeks"
-        | "1_month"
-        | "3_months"
-        | "exploring"
+      | "immediate"
+      | "1-2_weeks"
+      | "1_month"
+      | "3_months"
+      | "exploring"
       car_condition: "excellent" | "good" | "fair" | "needs_work"
       confidence_level: "high" | "medium" | "low"
       funnel_stage:
-        | "view"
-        | "engage"
-        | "favorite"
-        | "emi_calculation"
-        | "share"
-        | "contact_reveal"
-        | "call_click"
-        | "whatsapp_click"
-        | "test_drive_request"
-        | "negotiation"
-        | "documentation"
-        | "closed_won"
-        | "closed_lost"
+      | "view"
+      | "engage"
+      | "favorite"
+      | "emi_calculation"
+      | "share"
+      | "contact_reveal"
+      | "call_click"
+      | "whatsapp_click"
+      | "test_drive_request"
+      | "negotiation"
+      | "documentation"
+      | "closed_won"
+      | "closed_lost"
       intent_level: "hot" | "warm" | "cold" | "frozen"
       listing_status:
-        | "pending_verification"
-        | "verified"
-        | "live"
-        | "rejected"
-        | "sold"
-        | "expired"
+      | "pending_verification"
+      | "verified"
+      | "live"
+      | "rejected"
+      | "sold"
+      | "expired"
       payment_status: "pending" | "paid" | "failed"
       price_type: "fixed" | "negotiable"
       seller_type: "individual" | "dealer"
       signal_type:
-        | "trending_brand"
-        | "trending_model"
-        | "hot_location"
-        | "demand_spike"
-        | "price_opportunity"
-        | "inventory_gap"
-        | "seasonal_trend"
-        | "competitor_activity"
-        | "user_behavior_shift"
+      | "trending_brand"
+      | "trending_model"
+      | "hot_location"
+      | "demand_spike"
+      | "price_opportunity"
+      | "inventory_gap"
+      | "seasonal_trend"
+      | "competitor_activity"
+      | "user_behavior_shift"
       suggestion_priority: "critical" | "high" | "medium" | "low"
       suggestion_status:
-        | "pending"
-        | "acted"
-        | "dismissed"
-        | "expired"
-        | "auto_resolved"
+      | "pending"
+      | "acted"
+      | "dismissed"
+      | "expired"
+      | "auto_resolved"
       suggestion_type:
-        | "follow_up_lead"
-        | "price_adjustment"
-        | "inventory_opportunity"
-        | "competitor_alert"
-        | "engagement_strategy"
-        | "timing_optimization"
-        | "cross_sell"
-        | "retention_risk"
-        | "quick_win"
+      | "follow_up_lead"
+      | "price_adjustment"
+      | "inventory_opportunity"
+      | "competitor_alert"
+      | "engagement_strategy"
+      | "timing_optimization"
+      | "cross_sell"
+      | "retention_risk"
+      | "quick_win"
       trend_direction: "up" | "down" | "stable" | "volatile"
     }
     CompositeTypes: {
@@ -3191,116 +3191,116 @@ type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+  | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+  ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
-    ? R
-    : never
+  ? R
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
+    DefaultSchema["Views"])
+  ? (DefaultSchema["Tables"] &
+    DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+      Row: infer R
+    }
+  ? R
+  : never
+  : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["Tables"]
+  | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
+    Insert: infer I
+  }
+  ? I
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+    Insert: infer I
+  }
+  ? I
+  : never
+  : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["Tables"]
+  | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
+    Update: infer U
+  }
+  ? U
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+    Update: infer U
+  }
+  ? U
+  : never
+  : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["Enums"]
+  | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+  : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
+  | keyof DefaultSchema["CompositeTypes"]
+  | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+  ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+  : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never
 
 export const Constants = {
   public: {
