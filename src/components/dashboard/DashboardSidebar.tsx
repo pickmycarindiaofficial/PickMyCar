@@ -239,7 +239,7 @@ export function DashboardSidebar() {
           <img
             src={logoImage}
             alt="PickMyCar"
-            className="h-20 w-auto"
+            className="h-18 w-auto"
           />
         </div>
       )}

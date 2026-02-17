@@ -49,7 +49,30 @@ DROP VIEW IF EXISTS user_intelligence_view CASCADE;
 
 -- Recreate view to include both Auth Users (existing) and Customer Profiles (OTP users)
 CREATE OR REPLACE VIEW user_intelligence_view AS
-WITH auth_users AS (
+-- Create a unified activity CTE to combine different event sources
+WITH unified_activity AS (
+    -- From user_events (Main tracking source)
+    SELECT 
+        user_id,
+        event,
+        car_id,
+        session_id,
+        at as created_at
+    FROM user_events
+    WHERE user_id IS NOT NULL
+    
+    UNION ALL
+    
+    -- From user_interactions (Fallback source)
+    SELECT 
+        user_id,
+        interaction_type as event,
+        car_listing_id as car_id,
+        metadata->>'sessionId' as session_id,
+        created_at
+    FROM user_interactions
+),
+auth_users AS (
     SELECT 
         p.id AS user_id,
         p.full_name,
@@ -62,10 +85,6 @@ WITH auth_users AS (
         up.intent,
         up.budget_band,
         up.buying_mode,
-        
-        -- Final Type Fix based on error logs:
-        -- preferred_brands is TEXT[] (Error 42804: text[] vs jsonb)
-        -- body_type_affinity is JSONB (Error 42846: jsonb to text[] cast fail)
         
         COALESCE(up.preferred_brands, ARRAY[]::text[]) as preferred_brands,
         COALESCE(up.body_type_affinity, '[]'::jsonb) as body_type_affinity,
@@ -82,16 +101,14 @@ WITH auth_users AS (
         up.country,
         up.location_updated_at,
 
-        -- Behavioral metrics (from user_interactions)
-        ue.car_listing_id AS car_id,
-        ue.interaction_type AS event,
-        COALESCE(ue.metadata->>'sessionId', 'unknown') AS session_id,
+        -- Behavioral metrics (from unified source)
+        ue.car_id,
+        ue.event,
+        ue.session_id,
         ue.created_at as event_created_at
     FROM profiles p
-    LEFT JOIN user_roles ur ON ur.user_id = p.id
     LEFT JOIN user_profile up ON up.user_id = p.id
-    LEFT JOIN user_interactions ue ON ue.user_id = p.id
-    -- Removed restrictive role filter to include all authenticated users
+    LEFT JOIN unified_activity ue ON ue.user_id = p.id
 ),
 customer_users AS (
     SELECT 
@@ -107,10 +124,9 @@ customer_users AS (
         NULL as budget_band,
         'exploring' as buying_mode,
         
-        -- Match exact types from auth_users:
-        ARRAY[]::text[] as preferred_brands,     -- matches text[]
-        '[]'::jsonb as body_type_affinity,       -- matches jsonb
-        '{}'::jsonb as brand_affinity,           -- matches jsonb
+        ARRAY[]::text[] as preferred_brands,
+        '[]'::jsonb as body_type_affinity,
+        '{}'::jsonb as brand_affinity,
         
         0 as intent_score,
         cp.updated_at as last_seen,
@@ -123,13 +139,13 @@ customer_users AS (
         'India' as country,
         cp.updated_at as location_updated_at,
 
-        -- Behavioral metrics (from user_interactions for customers too)
-        ue.car_listing_id AS car_id,
-        ue.interaction_type AS event,
-        COALESCE(ue.metadata->>'sessionId', 'unknown') AS session_id,
+        -- Behavioral metrics (from unified source)
+        ue.car_id,
+        ue.event,
+        ue.session_id,
         ue.created_at as event_created_at
     FROM customer_profiles cp
-    LEFT JOIN user_interactions ue ON ue.user_id = cp.id
+    LEFT JOIN unified_activity ue ON ue.user_id = cp.id
     -- Anti-join to avoid duplicates if they exist in both (by phone)
     WHERE NOT EXISTS (SELECT 1 FROM profiles p WHERE p.phone_number = cp.phone_number)
 ),
@@ -151,8 +167,6 @@ SELECT
     MAX(budget_band) as budget_band,
     MAX(buying_mode) as buying_mode,
     
-    -- JSONB aggregations (MAX picks non-null or lexicographically last)
-    -- We cast to text because MAX(jsonb) does not exist in Postgres
     MAX(preferred_brands) as preferred_brands,
     MAX(body_type_affinity::text)::jsonb as body_type_affinity,
     MAX(brand_affinity::text)::jsonb as brand_affinity,
@@ -169,12 +183,12 @@ SELECT
     MAX(location_updated_at) as location_updated_at,
 
     -- Aggregated Metrics
-    COUNT(DISTINCT CASE WHEN event = 'view' THEN car_id END) AS cars_viewed,
-    COUNT(DISTINCT CASE WHEN event = 'save' OR event = 'wishlist_add' THEN car_id END) AS cars_shortlisted,
+    COUNT(DISTINCT CASE WHEN event IN ('view', 'car_view') THEN car_id END) AS cars_viewed,
+    COUNT(DISTINCT CASE WHEN event IN ('save', 'wishlist_add') THEN car_id END) AS cars_shortlisted,
     COUNT(DISTINCT CASE WHEN event = 'compare' THEN car_id END) AS cars_compared,
-    COUNT(CASE WHEN event = 'contact_click' OR event = 'call_click' OR event = 'whatsapp_click' THEN 1 END) AS dealer_contacts,
+    COUNT(CASE WHEN event IN ('contact_click', 'call_click', 'whatsapp_click', 'dealer_contact') THEN 1 END) AS dealer_contacts,
     COUNT(CASE WHEN event = 'test_drive_request' THEN 1 END) AS test_drives_requested,
-    COUNT(CASE WHEN event = 'emi_calculation' OR event = 'loan_attempt' THEN 1 END) AS loan_checks,
+    COUNT(CASE WHEN event IN ('emi_calculation', 'loan_attempt') THEN 1 END) AS loan_checks,
     COUNT(CASE WHEN event = 'search' THEN 1 END) AS searches_performed,
     COUNT(DISTINCT session_id) AS total_sessions,
     MIN(event_created_at) AS first_activity,
@@ -195,9 +209,9 @@ SELECT
         END * (
         COALESCE(MAX(intent_score), 0)
         + COUNT(DISTINCT CASE WHEN event = 'test_drive_request' THEN 1 END) * 20
-        + COUNT(DISTINCT CASE WHEN event = 'emi_calculation' THEN 1 END) * 15
-        + COUNT(DISTINCT CASE WHEN event = 'contact_click' OR event = 'call_click' THEN 1 END) * 10
-        + COUNT(DISTINCT CASE WHEN event = 'save' THEN 1 END) * 5
+        + COUNT(DISTINCT CASE WHEN event IN ('emi_calculation', 'loan_attempt') THEN 1 END) * 15
+        + COUNT(DISTINCT CASE WHEN event IN ('contact_click', 'call_click', 'whatsapp_click', 'dealer_contact') THEN 1 END) * 10
+        + COUNT(DISTINCT CASE WHEN event IN ('save', 'wishlist_add') THEN 1 END) * 5
         + COUNT(DISTINCT session_id) * 2
         )
     ) AS engagement_score,

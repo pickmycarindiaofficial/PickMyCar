@@ -129,7 +129,7 @@ export default function DealerLogin() {
                 {/* Content */}
                 <div className="relative z-10 flex flex-col justify-center px-16 py-12">
                     <div className="mb-12">
-                        <img src={logoImage} alt="PickMyCar" className="h-20" />
+                        <img src={logoImage} alt="PickMyCar" className="h-24" />
                     </div>
 
                     <h1 className="text-4xl font-bold text-white mb-4">
@@ -177,7 +177,7 @@ export default function DealerLogin() {
                 <div className="w-full max-w-md">
                     {/* Mobile Logo */}
                     <div className="lg:hidden text-center mb-8">
-                        <img src={logoImage} alt="PickMyCar" className="h-20 mx-auto mb-4" />
+                        <img src={logoImage} alt="PickMyCar" className="h-26 mx-auto mb-4" />
                     </div>
 
                     {/* Welcome Text */}

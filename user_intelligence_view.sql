@@ -5,7 +5,29 @@
 DROP VIEW IF EXISTS user_intelligence_view;
 
 -- Create comprehensive user intelligence view with CORRECTED column names
-CREATE OR REPLACE VIEW user_intelligence_view AS
+-- Create a unified activity CTE to combine different event sources
+WITH unified_activity AS (
+    -- From user_events (Main tracking source)
+    SELECT 
+        user_id,
+        event,
+        car_id,
+        session_id,
+        at as created_at
+    FROM user_events
+    WHERE user_id IS NOT NULL
+    
+    UNION ALL
+    
+    -- From user_interactions (Fallback source)
+    SELECT 
+        user_id,
+        interaction_type as event,
+        car_listing_id as car_id,
+        metadata->>'sessionId' as session_id,
+        created_at
+    FROM user_interactions
+)
 SELECT 
   p.id as user_id,
   p.full_name,
@@ -24,22 +46,21 @@ SELECT
   up.intent_score,
   up.last_seen,
   
-  -- Behavioral metrics (aggregated from user_events)
-  -- NOTE: user_events uses 'at' not 'created_at'
-  COUNT(DISTINCT CASE WHEN ue.event = 'view' THEN ue.car_id END) as cars_viewed,
-  COUNT(DISTINCT CASE WHEN ue.event = 'wishlist_add' THEN ue.car_id END) as cars_shortlisted,
+  -- Behavioral metrics (aggregated from unified source)
+  COUNT(DISTINCT CASE WHEN ue.event IN ('view', 'car_view') THEN ue.car_id END) as cars_viewed,
+  COUNT(DISTINCT CASE WHEN ue.event IN ('save', 'wishlist_add') THEN ue.car_id END) as cars_shortlisted,
   COUNT(DISTINCT CASE WHEN ue.event = 'compare' THEN ue.car_id END) as cars_compared,
-  COUNT(CASE WHEN ue.event = 'contact_click' THEN 1 END) as dealer_contacts,
+  COUNT(CASE WHEN ue.event IN ('contact_click', 'call_click', 'whatsapp_click', 'dealer_contact') THEN 1 END) as dealer_contacts,
   COUNT(CASE WHEN ue.event = 'test_drive_request' THEN 1 END) as test_drives_requested,
-  COUNT(CASE WHEN ue.event = 'loan_attempt' THEN 1 END) as loan_checks,
+  COUNT(CASE WHEN ue.event IN ('emi_calculation', 'loan_attempt') THEN 1 END) as loan_checks,
   COUNT(CASE WHEN ue.event = 'search' THEN 1 END) as searches_performed,
   
-  -- Session metrics (using 'at' instead of 'created_at')
+  -- Session metrics
   COUNT(DISTINCT ue.session_id) as total_sessions,
-  MIN(ue.at) as first_activity,
-  MAX(ue.at) as last_activity,
+  MIN(ue.created_at) as first_activity,
+  MAX(ue.created_at) as last_activity,
   
-  -- Unmet demand (from unmet_expectations) - get most recent
+  -- Unmet demand
   (SELECT note FROM unmet_expectations WHERE user_id = p.id ORDER BY created_at DESC LIMIT 1) as unmet_demand_note,
   (SELECT must_haves FROM unmet_expectations WHERE user_id = p.id ORDER BY created_at DESC LIMIT 1) as unmet_demand_specs,
   (SELECT urgency FROM unmet_expectations WHERE user_id = p.id ORDER BY created_at DESC LIMIT 1) as unmet_demand_urgency,
@@ -54,9 +75,10 @@ SELECT
     END * (
       COALESCE(up.intent_score, 0) + 
       COUNT(DISTINCT CASE WHEN ue.event = 'test_drive_request' THEN 1 END) * 20 +
-      COUNT(DISTINCT CASE WHEN ue.event = 'loan_attempt' THEN 1 END) * 15 +
-      COUNT(DISTINCT CASE WHEN ue.event = 'contact_click' THEN 1 END) * 10 +
-      COUNT(DISTINCT CASE WHEN ue.event = 'wishlist_add' THEN 1 END) * 5
+      COUNT(DISTINCT CASE WHEN ue.event IN ('emi_calculation', 'loan_attempt') THEN 1 END) * 15 +
+      COUNT(DISTINCT CASE WHEN ue.event IN ('contact_click', 'call_click', 'whatsapp_click', 'dealer_contact') THEN 1 END) * 10 +
+      COUNT(DISTINCT CASE WHEN ue.event IN ('save', 'wishlist_add') THEN 1 END) * 5 +
+      COUNT(DISTINCT ue.session_id) * 2
     )
   ) as engagement_score,
   
@@ -64,9 +86,9 @@ SELECT
   CASE WHEN up.intent IS NOT NULL THEN true ELSE false END as quiz_completed
   
 FROM profiles p
-INNER JOIN user_roles ur ON ur.user_id = p.id
+JOIN user_roles ur ON ur.user_id = p.id
 LEFT JOIN user_profile up ON up.user_id = p.id
-LEFT JOIN user_events ue ON ue.user_id = p.id
+LEFT JOIN unified_activity ue ON ue.user_id = p.id
 
 WHERE ur.role = 'user'  -- Only customers, not dealers/admins
 

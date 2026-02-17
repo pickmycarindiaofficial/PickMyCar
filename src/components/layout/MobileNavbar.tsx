@@ -110,7 +110,7 @@ export const MobileNavbar = memo(({
                     </Button>
                 ) : (
                     <button onClick={() => navigate('/')} className="touch-manipulation">
-                        <img src={logoImage} alt="PickMyCar" className="h-10 w-auto" />
+                        <img src={logoImage} alt="PickMyCar" className="h-14 w-auto" />
                     </button>
                 )}
 

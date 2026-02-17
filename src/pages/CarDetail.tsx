@@ -107,7 +107,7 @@ export const CarDetailPage = ({
   return (
     <div className="min-h-screen bg-background pb-16 md:pb-0">
       {/* Desktop Navbar */}
-      <div className="hidden md:block">
+      <div className="hidden md:block sticky top-0 z-50">
         <Navbar
           onNavigate={onNavigate}
           onSearch={onSearchSubmit}
@@ -121,12 +121,14 @@ export const CarDetailPage = ({
       </div>
 
       {/* Mobile Navbar */}
-      <MobileNavbar
-        onSearch={onSearchSubmit}
-        onBack={onBack}
-        showBackButton
-        title={car ? `${car.brand} ${car.model}` : 'Car Details'}
-      />
+      <div className="md:hidden sticky top-0 z-50">
+        <MobileNavbar
+          onSearch={onSearchSubmit}
+          onBack={onBack}
+          showBackButton
+          title={car ? `${car.brand} ${car.model}` : 'Car Details'}
+        />
+      </div>
 
       <div className="max-w-7xl mx-auto w-full px-4 py-6">
         <Breadcrumbs car={car} onBack={onBack} />

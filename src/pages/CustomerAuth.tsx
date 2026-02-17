@@ -150,7 +150,7 @@ const CustomerAuth = () => {
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-center px-16 py-12">
           <div className="mb-12">
-            <img src={logoImage} alt="PickMyCar" className="h-20 brightness-0 invert" />
+            <img src={logoImage} alt="PickMyCar" className="h-24 brightness-0 invert" />
           </div>
 
           <h1 className="text-4xl font-bold text-white mb-4">
@@ -198,7 +198,7 @@ const CustomerAuth = () => {
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-10">
-            <img src={logoImage} alt="PickMyCar" className="h-16 w-auto mx-auto drop-shadow-sm" />
+            <img src={logoImage} alt="PickMyCar" className="h-24 w-auto mx-auto drop-shadow-sm" />
           </div>
 
           {/* Welcome Text */}

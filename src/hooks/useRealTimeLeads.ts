@@ -69,7 +69,7 @@ export function useRealTimeLeads(filters?: {
       defaultStart.setDate(defaultStart.getDate() - 7);
       const startDate = filters?.dateRange?.[0] || defaultStart;
       const endDate = filters?.dateRange?.[1] || new Date();
-      
+
       query = query
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString());
@@ -91,19 +91,30 @@ export function useRealTimeLeads(filters?: {
         competitionMap.set(item.user_id, count + 1);
       });
 
-      // Check for active users (activity in last 30 minutes)
+      // Check for active users (activity in last 30 minutes in either table)
       const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
-      const { data: activeUsers } = await (supabase as any)
-        .from('user_interactions')
-        .select('user_id')
-        .gte('created_at', thirtyMinsAgo)
-        .in('user_id', (enquiries || []).map(e => e.user_id).filter(Boolean));
 
-      const activeUserIds = new Set((activeUsers || []).map((u: any) => u.user_id));
+      const [interactionsResult, eventsResult] = await Promise.all([
+        (supabase as any)
+          .from('user_interactions')
+          .select('user_id')
+          .gte('created_at', thirtyMinsAgo)
+          .in('user_id', (enquiries || []).map(e => e.user_id).filter(Boolean)),
+        (supabase as any)
+          .from('user_events')
+          .select('user_id')
+          .gte('at', thirtyMinsAgo)
+          .in('user_id', (enquiries || []).map(e => e.user_id).filter(Boolean))
+      ]);
+
+      const activeUserIds = new Set([
+        ...(interactionsResult.data || []).map((u: any) => u.user_id),
+        ...(eventsResult.data || []).map((u: any) => u.user_id)
+      ]);
 
       const leads: RealTimeLead[] = (enquiries || []).map((e: any) => {
         const enrichment = Array.isArray(e.lead_enrichment) ? e.lead_enrichment[0] : e.lead_enrichment;
-        const carName = e.car_listings 
+        const carName = e.car_listings
           ? `${e.car_listings.brand?.name} ${e.car_listings.model?.name}`
           : 'Unknown Car';
 
@@ -131,22 +142,22 @@ export function useRealTimeLeads(filters?: {
       let filteredLeads = leads;
 
       if (filters?.city) {
-        filteredLeads = filteredLeads.filter(l => 
-          (enquiries || []).find((e: any) => 
+        filteredLeads = filteredLeads.filter(l =>
+          (enquiries || []).find((e: any) =>
             e.id === l.id && e.car_listings?.city?.name === filters.city
           )
         );
       }
 
       if (filters?.brand) {
-        filteredLeads = filteredLeads.filter(l => 
+        filteredLeads = filteredLeads.filter(l =>
           l.car_name.toLowerCase().includes(filters.brand!.toLowerCase())
         );
       }
 
       if (filters?.search) {
         const searchLower = filters.search.toLowerCase();
-        filteredLeads = filteredLeads.filter(l => 
+        filteredLeads = filteredLeads.filter(l =>
           l.user_name.toLowerCase().includes(searchLower) ||
           l.user_phone.includes(searchLower) ||
           l.car_name.toLowerCase().includes(searchLower)

@@ -200,7 +200,7 @@ const AdminAuth = () => {
           <img
             src={logoImage}
             alt="PickMyCar"
-            className="h-40 w-auto mx-auto mb-4"
+            className="h-34 w-auto mx-auto mb-4"
           />
           <h1 className="text-2xl font-bold text-foreground flex items-center justify-center gap-2">
             <Shield className="h-6 w-6 text-primary" />

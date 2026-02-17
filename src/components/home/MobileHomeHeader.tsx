@@ -110,11 +110,11 @@ export const MobileHomeHeader = memo(({
 
     return (
         <>
-            {/* Non-Sticky Header - Logo, Location, Search */}
-            <div className="bg-background lg:hidden">
+            {/* Sticky Top Header - Logo, Location, Search */}
+            <div className="sticky top-0 z-50 bg-background lg:hidden border-b border-border/50">
                 {/* Top Bar - Logo, Location, Notifications */}
-                <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/50">
-                    <img src={logoImage} alt="PickMyCar" className="h-7" />
+                <div className="flex items-center justify-between px-4 py-2.5">
+                    <img src={logoImage} alt="PickMyCar" className="h-12" />
 
                     <div className="flex items-center gap-2">
                         {/* City Selector */}
@@ -136,7 +136,7 @@ export const MobileHomeHeader = memo(({
                     </div>
                 </div>
 
-                {/* Search Bar - Not Sticky */}
+                {/* Search Bar */}
                 <div className="px-4 py-2">
                     <form onSubmit={handleSearchSubmit} className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -160,8 +160,8 @@ export const MobileHomeHeader = memo(({
                 </div>
             </div>
 
-            {/* Sticky Filter Bar - Sticks below main navbar */}
-            <div className="sticky top-16 z-40 bg-background lg:hidden shadow-sm border-b border-border/50">
+            {/* Sticky Filter Bar - Sticks below main top header */}
+            <div className="sticky top-[124px] z-40 bg-background lg:hidden shadow-sm border-b border-border/50">
                 {/* Car Count + Sort/Filter Bar */}
                 <div className="flex items-center justify-between px-4 py-2">
                     <p className="text-sm">

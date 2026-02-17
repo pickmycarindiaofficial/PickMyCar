@@ -39,17 +39,17 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img 
-            src={logoImage} 
-            alt="PickMyCar" 
-            className="h-40 w-auto mx-auto mb-4"
+          <img
+            src={logoImage}
+            alt="PickMyCar"
+            className="h-34 w-auto mx-auto mb-4"
           />
           <h1 className="text-2xl font-bold text-foreground">
             Welcome to PickMyCar
           </h1>
           <p className="text-muted-foreground mt-2">Your journey, your choice.</p>
         </div>
-        
+
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Login</TabsTrigger>

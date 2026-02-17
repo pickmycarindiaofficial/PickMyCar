@@ -176,7 +176,7 @@ const StaffAuth = () => {
           <img
             src={logoImage}
             alt="PickMyCar"
-            className="h-40 w-auto mx-auto mb-4"
+            className="h-34 w-auto mx-auto mb-4"
           />
           <h1 className="text-2xl font-bold text-foreground">
             Staff Portal

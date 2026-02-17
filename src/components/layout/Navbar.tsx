@@ -45,7 +45,7 @@ export const Navbar = ({ onSearch, onNavigate }: NavbarProps) => {
             <img
               src={logoImage}
               alt="PickMyCar"
-              className="h-24 w-auto"
+              className="h-14 md:h-16 lg:h-15 w-auto"
             />
           </button>
 

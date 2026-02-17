@@ -46,7 +46,7 @@ import { useBrands } from '@/hooks/useBrands';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 // Mobile Components
-import { MobileNavbar } from '@/components/layout/MobileNavbar';
+
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { MobileHomeHeader } from '@/components/home/MobileHomeHeader';
 import { MobileFilterSheet } from '@/components/filters/MobileFilterSheet';
@@ -672,11 +672,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar
-        onSearch={handleSearch}
-        onNavigate={handleNavigate}
-        onAuthAction={handleAuthAction}
-      />
+      <div className="hidden lg:block sticky top-0 z-50">
+        <Navbar
+          onSearch={handleSearch}
+          onNavigate={handleNavigate}
+          onAuthAction={handleAuthAction}
+        />
+      </div>
 
       {/* Location Permission Banner */}
       {!geolocation.latitude && geolocation.permission !== 'denied' && (
