@@ -123,7 +123,6 @@ export const CarDetailPage = ({
       {/* Mobile Navbar */}
       <div className="md:hidden">
         <MobileNavbar
-          onSearch={onSearchSubmit}
           onBack={onBack}
           showBackButton
           title={car ? `${car.brand} ${car.model}` : 'Car Details'}

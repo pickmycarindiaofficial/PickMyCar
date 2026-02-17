@@ -1,136 +1,128 @@
 import { memo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, X, ArrowLeft } from 'lucide-react';
+import { MapPin, Bell, ChevronDown, ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useCities } from '@/hooks/useCities';
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
 import logoImage from '@/assets/logo.png';
 
 interface MobileNavbarProps {
-    onSearch: (term: string) => void;
+    cityName?: string;
+    onCityChange?: (city: string) => void;
     onBack?: () => void;
     showBackButton?: boolean;
     title?: string;
 }
 
 export const MobileNavbar = memo(({
-    onSearch,
+    cityName = 'All Cities',
+    onCityChange,
     onBack,
     showBackButton = false,
     title,
 }: MobileNavbarProps) => {
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [citySheetOpen, setCitySheetOpen] = useState(false);
     const navigate = useNavigate();
 
-    const handleSearchSubmit = useCallback((e: React.FormEvent) => {
-        e.preventDefault();
-        if (searchTerm.trim()) {
-            onSearch(searchTerm.trim());
-            setIsSearchOpen(false);
+    // Load cities from database
+    const { data: cities = [], isLoading: citiesLoading } = useCities();
+    const activeCities = cities.filter((c: any) => c.is_active !== false);
+
+    const handleCitySelect = useCallback((city: string) => {
+        if (onCityChange) {
+            onCityChange(city);
         }
-    }, [searchTerm, onSearch]);
-
-    const handleCloseSearch = useCallback(() => {
-        setIsSearchOpen(false);
-        setSearchTerm('');
-    }, []);
-
-    // Full-screen search overlay
-    if (isSearchOpen) {
-        return (
-            <div className="fixed inset-0 z-50 bg-background md:hidden">
-                <div className="flex items-center gap-2 p-3 border-b border-border">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleCloseSearch}
-                        className="touch-manipulation"
-                    >
-                        <ArrowLeft className="h-5 w-5" />
-                    </Button>
-                    <form onSubmit={handleSearchSubmit} className="flex-1">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                autoFocus
-                                type="text"
-                                placeholder="Search cars by make, model..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-10 h-11 text-base"
-                            />
-                        </div>
-                    </form>
-                    {searchTerm && (
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setSearchTerm('')}
-                            className="touch-manipulation"
-                        >
-                            <X className="h-4 w-4" />
-                        </Button>
-                    )}
-                </div>
-
-                {/* Recent Searches / Suggestions could go here */}
-                <div className="p-4">
-                    <p className="text-sm text-muted-foreground mb-3">Popular Searches</p>
-                    <div className="flex flex-wrap gap-2">
-                        {['Maruti Swift', 'Hyundai i20', 'Honda City', 'Tata Nexon'].map((term) => (
-                            <button
-                                key={term}
-                                onClick={() => {
-                                    setSearchTerm(term);
-                                    onSearch(term);
-                                    setIsSearchOpen(false);
-                                }}
-                                className="px-3 py-2 bg-secondary rounded-full text-sm font-medium touch-manipulation"
-                            >
-                                {term}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        );
-    }
+        setCitySheetOpen(false);
+    }, [onCityChange]);
 
     return (
-        <header className="sticky top-0 z-40 bg-card border-b border-border md:hidden safe-area-top">
-            <div className="flex items-center justify-between h-14 px-3">
-                {showBackButton ? (
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={onBack}
-                        className="touch-manipulation"
-                    >
-                        <ArrowLeft className="h-5 w-5" />
-                    </Button>
-                ) : (
-                    <button onClick={() => navigate('/')} className="touch-manipulation">
-                        <img src={logoImage} alt="PickMyCar" className="h-14 w-auto" />
-                    </button>
-                )}
+        <>
+            <header className="bg-card border-b border-border md:hidden safe-area-top">
+                <div className="flex items-center justify-between px-4 py-2.5">
+                    <div className="flex items-center gap-3">
+                        {showBackButton && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={onBack}
+                                className="h-8 w-8 -ml-2 touch-manipulation"
+                            >
+                                <ArrowLeft className="h-5 w-5" />
+                            </Button>
+                        )}
+                        <button onClick={() => navigate('/')} className="touch-manipulation">
+                            <img src={logoImage} alt="PickMyCar" className="h-12 w-auto" />
+                        </button>
+                    </div>
 
-                {title && (
-                    <h1 className="text-base font-semibold truncate flex-1 text-center">
-                        {title}
-                    </h1>
-                )}
+                    <div className="flex items-center gap-2">
+                        {/* City Selector */}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCitySheetOpen(true)}
+                            className="h-8 px-3 rounded-full text-xs font-medium gap-1"
+                        >
+                            <MapPin className="h-3.5 w-3.5" />
+                            <span className="max-w-[80px] truncate">{cityName}</span>
+                            <ChevronDown className="h-3 w-3" />
+                        </Button>
 
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setIsSearchOpen(true)}
-                    className="touch-manipulation"
-                    aria-label="Search"
-                >
-                    <Search className="h-5 w-5" />
-                </Button>
-            </div>
-        </header>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 relative">
+                            <Bell className="h-5 w-5" />
+                            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-red-500 rounded-full" />
+                        </Button>
+                    </div>
+                </div>
+
+                {title && !showBackButton && (
+                    <div className="px-4 pb-2">
+                        <h1 className="text-sm font-semibold truncate text-center text-muted-foreground">
+                            {title}
+                        </h1>
+                    </div>
+                )}
+            </header>
+
+            {/* City Selection Sheet */}
+            <Sheet open={citySheetOpen} onOpenChange={setCitySheetOpen}>
+                <SheetContent side="bottom" className="h-[70vh] rounded-t-xl">
+                    <SheetHeader>
+                        <SheetTitle>Select City</SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-4 space-y-1 overflow-y-auto max-h-[calc(70vh-80px)]">
+                        <button
+                            onClick={() => handleCitySelect('All Cities')}
+                            className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${cityName === 'All Cities' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted'
+                                }`}
+                        >
+                            All Cities
+                        </button>
+                        {citiesLoading ? (
+                            <div className="px-4 py-3 text-muted-foreground">Loading cities...</div>
+                        ) : (
+                            activeCities.map((city: any) => (
+                                <button
+                                    key={city.id}
+                                    onClick={() => handleCitySelect(city.name)}
+                                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${cityName === city.name ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted'
+                                        }`}
+                                >
+                                    {city.name}
+                                    {city.state && <span className="text-muted-foreground ml-1 text-sm">({city.state})</span>}
+                                </button>
+                            ))
+                        )}
+                    </div>
+                </SheetContent>
+            </Sheet>
+        </>
     );
 });
 
