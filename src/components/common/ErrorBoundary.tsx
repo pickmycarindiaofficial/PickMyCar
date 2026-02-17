@@ -77,13 +77,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                             </p>
                         </div>
 
-                        {/* Error Details (development only) */}
-                        {import.meta.env.DEV && this.state.error && (
-                            <details className="text-left bg-muted/50 rounded-lg p-4 text-sm">
+                        {/* Error Details (Shown for debugging APK) */}
+                        {this.state.error && (
+                            <details className="text-left bg-muted/50 rounded-lg p-4 text-sm w-full">
                                 <summary className="cursor-pointer font-medium text-muted-foreground">
-                                    Error Details
+                                    Technical Error Details (Please show this to support)
                                 </summary>
-                                <pre className="mt-2 overflow-auto text-xs text-destructive">
+                                <pre className="mt-2 overflow-auto text-xs text-destructive whitespace-pre-wrap break-all">
                                     {this.state.error.toString()}
                                     {this.state.errorInfo?.componentStack}
                                 </pre>
