@@ -110,8 +110,8 @@ export const MobileHomeHeader = memo(({
 
     return (
         <>
-            {/* Sticky Top Header - Logo, Location, Search */}
-            <div className="sticky top-0 z-50 bg-background lg:hidden border-b border-border/50">
+            {/* Fixed Top Header (Non-sticky on scroll) */}
+            <div className="bg-background lg:hidden border-b border-border/50">
                 {/* Top Bar - Logo, Location, Notifications */}
                 <div className="flex items-center justify-between px-4 py-2.5">
                     <img src={logoImage} alt="PickMyCar" className="h-12" />
@@ -160,8 +160,8 @@ export const MobileHomeHeader = memo(({
                 </div>
             </div>
 
-            {/* Sticky Filter Bar - Sticks below main top header */}
-            <div className="sticky top-[124px] z-40 bg-background lg:hidden shadow-sm border-b border-border/50">
+            {/* Filter Bar (Non-sticky on scroll) */}
+            <div className="bg-background lg:hidden shadow-sm border-b border-border/50">
                 {/* Car Count + Sort/Filter Bar */}
                 <div className="flex items-center justify-between px-4 py-2">
                     <p className="text-sm">

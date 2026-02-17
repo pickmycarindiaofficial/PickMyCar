@@ -121,7 +121,7 @@ export const CarDetailPage = ({
       </div>
 
       {/* Mobile Navbar */}
-      <div className="md:hidden sticky top-0 z-50">
+      <div className="md:hidden">
         <MobileNavbar
           onSearch={onSearchSubmit}
           onBack={onBack}
