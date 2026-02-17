@@ -139,7 +139,7 @@ export const AIChatWidget = () => {
         <Button
           onClick={() => setIsOpen(true)}
           size="lg"
-          className="fixed bottom-6 right-6 rounded-full h-14 w-14 shadow-lg hover:scale-110 transition-transform z-50"
+          className="fixed bottom-[80px] md:bottom-6 right-6 rounded-full h-14 w-14 shadow-lg hover:scale-110 transition-transform z-50"
         >
           <MessageCircle className="h-6 w-6" />
         </Button>
@@ -147,7 +147,7 @@ export const AIChatWidget = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-card border rounded-lg shadow-2xl flex flex-col z-50">
+        <div className="fixed bottom-[80px] md:bottom-6 right-6 w-[calc(100%-3rem)] md:w-96 h-[500px] md:h-[600px] bg-card border rounded-lg shadow-2xl flex flex-col z-50">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b bg-primary text-primary-foreground rounded-t-lg">
             <div className="flex items-center gap-2">
