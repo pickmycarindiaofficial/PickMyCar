@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageCircle, X, Send, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { cn } from '@/lib/utils';
+import { cn, generateUUID } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 
 interface Message {
@@ -24,7 +24,7 @@ export const AIChatWidget = () => {
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
-  const sessionId = useRef(crypto.randomUUID());
+  const sessionId = useRef(generateUUID());
 
   useEffect(() => {
     if (scrollRef.current) {

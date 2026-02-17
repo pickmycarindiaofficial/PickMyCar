@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Flame, Calendar, Eye, Wallet, CreditCard, Building2, HelpCircle, Car } from 'lucide-react';
 import { useGeolocation } from '@/hooks/useGeolocation';
+import { generateUUID } from '@/lib/utils';
 
 interface OnboardingQuizProps {
   open: boolean;
@@ -156,7 +157,7 @@ export const OnboardingQuiz = ({ open, onOpenChange, onComplete }: OnboardingQui
       }
 
       // Track quiz completion event (non-blocking)
-      const sessionId = localStorage.getItem('session_id') || crypto.randomUUID();
+      const sessionId = localStorage.getItem('session_id') || generateUUID();
       if (!localStorage.getItem('session_id')) {
         localStorage.setItem('session_id', sessionId);
       }

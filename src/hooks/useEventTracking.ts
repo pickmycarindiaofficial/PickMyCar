@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
+import { generateUUID } from '@/lib/utils';
 
 type FunnelStage = 'view' | 'interest' | 'engage' | 'intent' | 'convert';
 
@@ -24,7 +25,7 @@ export function useEventTracking() {
   const trackEvent = useMutation({
     mutationFn: async ({ event, car_id, dealer_id, meta = {} }: TrackEventParams) => {
       // Always track, even for anonymous users
-      const sessionId = localStorage.getItem('session_id') || crypto.randomUUID();
+      const sessionId = localStorage.getItem('session_id') || generateUUID();
       if (!localStorage.getItem('session_id')) {
         localStorage.setItem('session_id', sessionId);
       }
@@ -59,9 +60,9 @@ export function useEventTracking() {
       // Update user profile intent score for logged-in users
       if (user?.id && ['test_drive_request', 'loan_attempt', 'contact_click'].includes(event)) {
         // @ts-ignore - user_profile table and RPC not in generated types yet
-        await (supabase as any).rpc('increment_intent_score', { 
+        await (supabase as any).rpc('increment_intent_score', {
           p_user_id: user.id,
-          p_event: event 
+          p_event: event
         });
       }
 
@@ -71,7 +72,7 @@ export function useEventTracking() {
 
   const trackFunnel = useMutation({
     mutationFn: async ({ stage, car_id, dealer_id, meta = {} }: TrackFunnelParams) => {
-      const sessionId = localStorage.getItem('session_id') || crypto.randomUUID();
+      const sessionId = localStorage.getItem('session_id') || generateUUID();
       if (!localStorage.getItem('session_id')) {
         localStorage.setItem('session_id', sessionId);
       }
