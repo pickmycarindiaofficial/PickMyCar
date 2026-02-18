@@ -1,4 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { safeLocalStorage } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,7 +34,7 @@ export function DashboardHome() {
     }
     if (primaryRole === 'dealer') {
       try {
-        const dealerInfoStr = localStorage.getItem('dealer_info');
+        const dealerInfoStr = safeLocalStorage.getItem('dealer_info');
         if (dealerInfoStr) {
           const dealerInfo = JSON.parse(dealerInfoStr);
           return dealerInfo.id;

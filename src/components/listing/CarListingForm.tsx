@@ -40,7 +40,8 @@ import type { z } from 'zod';
 import { supabase } from '@/lib/supabase-client';
 import { numberToWords, formatPriceWithWords } from '@/lib/numberToWords';
 import { MockAIService } from '@/lib/mock-ai';
-import { cn } from "@/lib/utils";
+import { ActionTooltip } from '@/components/ui/action-tooltip';
+import { cn, safeLocalStorage } from "@/lib/utils";
 import { ResponsiveSelect } from '@/components/ui/responsive-select';
 import { MobileRadioCard } from '@/components/ui/mobile-radio-card';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -89,7 +90,7 @@ export function CarListingForm({
   let currentDealerId = isDealer && user?.id ? user.id : null;
   if (!currentDealerId && isDealer) {
     try {
-      const dealerInfoStr = localStorage.getItem('dealer_info');
+      const dealerInfoStr = safeLocalStorage.getItem('dealer_info');
       if (dealerInfoStr) {
         const dealerInfo = JSON.parse(dealerInfoStr);
         currentDealerId = dealerInfo.id;

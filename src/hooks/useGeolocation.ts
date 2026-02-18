@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { safeLocalStorage } from '@/lib/utils';
 
 interface GeolocationState {
   latitude: number | null;
@@ -35,7 +36,7 @@ export function useGeolocation() {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
-          
+
           // Call edge function to reverse geocode and save
           try {
             const { data: locationData, error: geocodeError } = await supabase.functions.invoke(
@@ -60,8 +61,8 @@ export function useGeolocation() {
               permission: 'granted',
             });
 
-            // Store in localStorage for anonymous users
-            localStorage.setItem('user_location', JSON.stringify({
+            // Store in safeLocalStorage for anonymous users
+            safeLocalStorage.setItem('user_location', JSON.stringify({
               latitude,
               longitude,
               city: locationData.location.city,
@@ -78,7 +79,7 @@ export function useGeolocation() {
               error: null,
               permission: 'granted',
             });
-            localStorage.setItem('user_location', JSON.stringify({ latitude, longitude }));
+            safeLocalStorage.setItem('user_location', JSON.stringify({ latitude, longitude }));
           }
         },
         (error) => {
@@ -106,7 +107,7 @@ export function useGeolocation() {
 
   // Check for saved location on mount
   useEffect(() => {
-    const saved = localStorage.getItem('user_location');
+    const saved = safeLocalStorage.getItem('user_location');
     if (saved) {
       try {
         const { latitude, longitude } = JSON.parse(saved);
@@ -121,7 +122,7 @@ export function useGeolocation() {
     ...state,
     requestLocation,
     clearLocation: () => {
-      localStorage.removeItem('user_location');
+      safeLocalStorage.removeItem('user_location');
       setState({
         latitude: null,
         longitude: null,

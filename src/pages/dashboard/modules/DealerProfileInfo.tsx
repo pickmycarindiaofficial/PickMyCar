@@ -21,6 +21,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase-client';
 import { optimizeCarImage } from '@/lib/imageCompression';
+import { safeLocalStorage } from '@/lib/utils';
 
 const SPECIALIZATIONS = [
   'Luxury Cars', 'SUVs', 'Sedans', 'Hatchbacks', 'Electric Vehicles',
@@ -39,10 +40,10 @@ export default function DealerProfileInfo() {
   // For dealers: check localStorage first (OTP login), then user.id (Supabase auth)
   let dealerId = roles?.includes('powerdesk') ? paramDealerId : user?.id;
 
-  // For dealer OTP sessions, get ID from localStorage
+  // For dealer OTP sessions, get ID from safeLocalStorage
   if (!dealerId && roles?.includes('dealer')) {
     try {
-      const dealerInfoStr = localStorage.getItem('dealer_info');
+      const dealerInfoStr = safeLocalStorage.getItem('dealer_info');
       if (dealerInfoStr) {
         const dealerInfo = JSON.parse(dealerInfoStr);
         dealerId = dealerInfo.id;

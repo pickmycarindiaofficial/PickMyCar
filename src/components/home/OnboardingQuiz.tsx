@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Flame, Calendar, Eye, Wallet, CreditCard, Building2, HelpCircle, Car } from 'lucide-react';
 import { useGeolocation } from '@/hooks/useGeolocation';
-import { generateUUID } from '@/lib/utils';
+import { generateUUID, safeLocalStorage } from '@/lib/utils';
 
 interface OnboardingQuizProps {
   open: boolean;
@@ -127,8 +127,8 @@ export const OnboardingQuiz = ({ open, onOpenChange, onComplete }: OnboardingQui
           preferred_brands: selectedBrands.length > 0 ? selectedBrands : null,
           saved_at: new Date().toISOString(),
         };
-        localStorage.setItem('user_preferences', JSON.stringify(localPrefs));
-        localStorage.setItem('onboarding_complete', 'true');
+        safeLocalStorage.setItem('user_preferences', JSON.stringify(localPrefs));
+        safeLocalStorage.setItem('onboarding_complete', 'true');
 
         toast.success('Preferences saved! Sign in to sync across devices.');
         onComplete();
@@ -157,9 +157,9 @@ export const OnboardingQuiz = ({ open, onOpenChange, onComplete }: OnboardingQui
       }
 
       // Track quiz completion event (non-blocking)
-      const sessionId = localStorage.getItem('session_id') || generateUUID();
-      if (!localStorage.getItem('session_id')) {
-        localStorage.setItem('session_id', sessionId);
+      const sessionId = safeLocalStorage.getItem('session_id') || generateUUID();
+      if (!safeLocalStorage.getItem('session_id')) {
+        safeLocalStorage.setItem('session_id', sessionId);
       }
 
       // Fire and forget - don't block on event tracking
@@ -181,7 +181,7 @@ export const OnboardingQuiz = ({ open, onOpenChange, onComplete }: OnboardingQui
         });
 
       // Mark onboarding as complete
-      localStorage.setItem('onboarding_complete', 'true');
+      safeLocalStorage.setItem('onboarding_complete', 'true');
 
       // Request location permission after quiz (non-blocking)
       requestLocation().catch(() => {
@@ -274,7 +274,7 @@ export const OnboardingQuiz = ({ open, onOpenChange, onComplete }: OnboardingQui
                     }`}
                   onClick={() => {
                     if (option.value === 'cold') {
-                      localStorage.setItem('onboarding_complete', 'true');
+                      safeLocalStorage.setItem('onboarding_complete', 'true');
                       toast.info('Enjoy exploring! Filter cars anytime.');
                       onOpenChange(false);
                     } else {
@@ -466,7 +466,7 @@ export const OnboardingQuiz = ({ open, onOpenChange, onComplete }: OnboardingQui
         <button
           className="text-sm text-muted-foreground hover:text-foreground transition-colors text-center w-full mt-2"
           onClick={() => {
-            localStorage.setItem('onboarding_complete', 'true');
+            safeLocalStorage.setItem('onboarding_complete', 'true');
             toast.info('You can always set preferences from your profile');
             onOpenChange(false);
           }}

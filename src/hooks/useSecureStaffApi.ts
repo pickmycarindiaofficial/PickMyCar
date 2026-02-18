@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { safeSessionStorage } from '@/lib/utils';
 
 // Session token storage key
 const SESSION_TOKEN_KEY = 'pmc_staff_token';
@@ -20,7 +21,7 @@ interface SecureApiResponse<T = any> {
  */
 export function useSecureStaffApi() {
     const getToken = useCallback((): string | null => {
-        return sessionStorage.getItem(SESSION_TOKEN_KEY);
+        return safeSessionStorage.getItem(SESSION_TOKEN_KEY);
     }, []);
 
     const secureRequest = useCallback(async <T = any>(

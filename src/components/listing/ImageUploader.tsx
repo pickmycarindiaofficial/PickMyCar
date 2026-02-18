@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import { Upload, X, Image as ImageIcon, Loader2, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
+import { cn, safeLocalStorage } from '@/lib/utils';
 import { uploadCarImages } from '@/lib/imageUpload';
 import { supabase } from '@/lib/supabase-client';
 import { toast } from 'sonner';
@@ -194,8 +194,8 @@ export function ImageUploader({
         const { data: { user } } = await supabase.auth.getUser();
 
         // Also check for dealer token (dealers use custom auth)
-        const dealerToken = localStorage.getItem('dealer_token');
-        const dealerInfoStr = localStorage.getItem('dealer_info');
+        const dealerToken = safeLocalStorage.getItem('dealer_token');
+        const dealerInfoStr = safeLocalStorage.getItem('dealer_info');
 
         // Determine user ID for upload
         let uploadUserId: string;

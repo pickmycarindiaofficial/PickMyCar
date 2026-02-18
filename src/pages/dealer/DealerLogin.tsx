@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, ArrowLeft, ArrowRight, Shield, Car, TrendingUp, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { safeLocalStorage } from '@/lib/utils';
 import logoImage from '@/assets/logo.png';
 
 type LoginStep = 'username' | 'otp';
@@ -90,8 +91,8 @@ export default function DealerLogin() {
             if (data.error) throw new Error(data.error);
 
             // Store session token
-            localStorage.setItem('dealer_token', data.token);
-            localStorage.setItem('dealer_info', JSON.stringify(data.dealer));
+            safeLocalStorage.setItem('dealer_token', data.token);
+            safeLocalStorage.setItem('dealer_info', JSON.stringify(data.dealer));
 
             toast({ title: 'Welcome!', description: `Logged in as ${data.dealer.dealership_name}` });
 

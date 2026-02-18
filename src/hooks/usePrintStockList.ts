@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { useAuth } from "@/contexts/AuthContext";
+import { safeLocalStorage } from "@/lib/utils";
 
 export interface PrintStockFilters {
   dealerId?: string;
@@ -24,7 +25,7 @@ export function usePrintStockList(filters: PrintStockFilters = {}) {
   let currentDealerId = user?.id;
   if (!currentDealerId) {
     try {
-      const dealerInfoStr = localStorage.getItem('dealer_info');
+      const dealerInfoStr = safeLocalStorage.getItem('dealer_info');
       if (dealerInfoStr) {
         const dealerInfo = JSON.parse(dealerInfoStr);
         currentDealerId = dealerInfo.id;

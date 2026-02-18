@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useEventTracking } from '@/hooks/useEventTracking';
 import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
+import { safeLocalStorage } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface ExitRescueModalProps {
@@ -70,7 +71,7 @@ export const ExitRescueModal = ({ open, onOpenChange, onSubmitted }: ExitRescueM
       });
 
       // Mark as submitted
-      localStorage.setItem('exit_modal_submitted', 'true');
+      safeLocalStorage.setItem('exit_modal_submitted', 'true');
       onSubmitted?.();
 
       onOpenChange(false);

@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Briefcase, Eye, EyeOff, UserPlus } from 'lucide-react';
 import { AppRole, ROLE_LABELS } from '@/types/auth';
+import { safeLocalStorage } from '@/lib/utils';
 import logoImage from '@/assets/logo.png';
 import {
   verifyStaffPassword,
@@ -89,7 +90,7 @@ const StaffAuth = () => {
         phoneNumber: staff.phone_number,
         loginAt: new Date().toISOString(),
       };
-      localStorage.setItem('staff_session', JSON.stringify(staffSession));
+      safeLocalStorage.setItem('staff_session', JSON.stringify(staffSession));
 
       toast({
         title: 'Login Successful',

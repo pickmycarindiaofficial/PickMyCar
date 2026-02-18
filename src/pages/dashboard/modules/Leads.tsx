@@ -8,6 +8,7 @@ import { useDealerEnquiries } from '@/hooks/useEnquiries';
 import { useAuth } from '@/contexts/AuthContext';
 import { Phone, MessageSquare, Calendar, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
+import { safeLocalStorage } from '@/lib/utils';
 import { LeadDetailsDialog } from '@/components/leads/LeadDetailsDialog';
 import { LeadStatsCards } from '@/components/leads/LeadStatsCards';
 import { LeadScoringOverview } from '@/components/leads/LeadScoringOverview';
@@ -24,9 +25,9 @@ export default function Leads() {
   let targetDealerId: string | undefined = undefined;
 
   if (hasRole('dealer')) {
-    // Try to get from localStorage (for dealer login) or fallback to user id
+    // Try to get from safeLocalStorage (for dealer login) or fallback to user id
     try {
-      const dealerInfoStr = localStorage.getItem('dealer_info');
+      const dealerInfoStr = safeLocalStorage.getItem('dealer_info');
       if (dealerInfoStr) {
         const dealerInfo = JSON.parse(dealerInfoStr);
         targetDealerId = dealerInfo.id;

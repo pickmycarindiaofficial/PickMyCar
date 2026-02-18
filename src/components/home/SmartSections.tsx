@@ -1,4 +1,5 @@
 import { Car } from '@/types';
+import { safeLocalStorage } from '@/lib/utils';
 import { CarCard } from '@/components/content/CarCard';
 import { CarCardSkeleton } from '@/components/content/CarCardSkeleton';
 import { TrendingDown, MapPin, Eye, TrendingUp } from 'lucide-react';
@@ -61,7 +62,7 @@ export const SmartSections = ({
   const nearYouCars = cars.slice(0, 6);
 
   // Recently viewed from localStorage
-  const recentlyViewedIds = JSON.parse(localStorage.getItem('recently_viewed') || '[]');
+  const recentlyViewedIds = JSON.parse(safeLocalStorage.getItem('recently_viewed') || '[]');
   const recentlyViewedCars = cars
     .filter(car => recentlyViewedIds.includes(car.id))
     .slice(0, 6);
@@ -71,16 +72,16 @@ export const SmartSections = ({
     .filter(car => car.isFeatured)
     .slice(0, 6);
 
-  const Section = ({ 
-    title, 
-    icon: Icon, 
-    cars: sectionCars, 
+  const Section = ({
+    title,
+    icon: Icon,
+    cars: sectionCars,
     color,
     showLoading = false
-  }: { 
-    title: string; 
-    icon: any; 
-    cars: Car[]; 
+  }: {
+    title: string;
+    icon: any;
+    cars: Car[];
     color: string;
     showLoading?: boolean;
   }) => {
@@ -130,18 +131,18 @@ export const SmartSections = ({
 
   return (
     <div className="space-y-12">
-      <Section 
-        title="Deals for You" 
-        icon={TrendingDown} 
+      <Section
+        title="Deals for You"
+        icon={TrendingDown}
         cars={priceDropCars}
         color="text-green-600"
         showLoading={isLoading}
       />
-      
+
       {userLocation && (
-        <Section 
-          title="Near You" 
-          icon={MapPin} 
+        <Section
+          title="Near You"
+          icon={MapPin}
           cars={nearYouCars}
           color="text-blue-600"
           showLoading={isLoading}
@@ -149,18 +150,18 @@ export const SmartSections = ({
       )}
 
       {recentlyViewedCars.length > 0 && (
-        <Section 
-          title="Recently Viewed" 
-          icon={Eye} 
+        <Section
+          title="Recently Viewed"
+          icon={Eye}
           cars={recentlyViewedCars}
           color="text-purple-600"
           showLoading={isLoading}
         />
       )}
 
-      <Section 
-        title="Trending Now" 
-        icon={TrendingUp} 
+      <Section
+        title="Trending Now"
+        icon={TrendingUp}
         cars={trendingCars}
         color="text-orange-600"
         showLoading={isLoading}

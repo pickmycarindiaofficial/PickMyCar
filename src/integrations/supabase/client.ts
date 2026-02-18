@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { config, validateConfig } from '@/lib/config';
+import { safeLocalStorage, safeSessionStorage } from '@/lib/utils';
 
 // Validate configuration on initialization
 // This ensures that the application fails early if VITE_SUPABASE keys are missing
@@ -11,7 +12,7 @@ export const supabase = createClient<Database>(
   config.supabase.anonKey,
   {
     auth: {
-      storage: localStorage,
+      storage: safeLocalStorage,
       persistSession: true,
       autoRefreshToken: true,
     },
@@ -20,7 +21,7 @@ export const supabase = createClient<Database>(
         const headers = new Headers((options as RequestInit)?.headers);
 
         // Inject staff token if available
-        const staffToken = sessionStorage.getItem('pmc_staff_token');
+        const staffToken = safeSessionStorage.getItem('pmc_staff_token');
         if (staffToken) {
           // Dynamic import to avoid circular dependencies if any, 
           // though safe here as utils shouldn't depend on client

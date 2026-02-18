@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase-client';
 import { toast } from 'sonner';
+import { safeLocalStorage } from '@/lib/utils';
 import { CarListing, CarListingInput, CarListingWithRelations, ListingStatus, SellerType } from '@/types/car-listing';
 
 export interface ListingFilters {
@@ -150,7 +150,7 @@ export function useCreateCarListing() {
 
       if (!sellerId) {
         try {
-          const dealerInfoStr = localStorage.getItem('dealer_info');
+          const dealerInfoStr = safeLocalStorage.getItem('dealer_info');
           if (dealerInfoStr) {
             const dealerInfo = JSON.parse(dealerInfoStr);
             sellerId = dealerInfo.id;

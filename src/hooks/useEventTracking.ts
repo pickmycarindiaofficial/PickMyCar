@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
-import { generateUUID } from '@/lib/utils';
+import { generateUUID, safeLocalStorage } from '@/lib/utils';
 
 type FunnelStage = 'view' | 'interest' | 'engage' | 'intent' | 'convert';
 
@@ -25,9 +25,9 @@ export function useEventTracking() {
   const trackEvent = useMutation({
     mutationFn: async ({ event, car_id, dealer_id, meta = {} }: TrackEventParams) => {
       // Always track, even for anonymous users
-      const sessionId = localStorage.getItem('session_id') || generateUUID();
-      if (!localStorage.getItem('session_id')) {
-        localStorage.setItem('session_id', sessionId);
+      const sessionId = safeLocalStorage.getItem('session_id') || generateUUID();
+      if (!safeLocalStorage.getItem('session_id')) {
+        safeLocalStorage.setItem('session_id', sessionId);
       }
 
       const eventData = {
@@ -72,9 +72,9 @@ export function useEventTracking() {
 
   const trackFunnel = useMutation({
     mutationFn: async ({ stage, car_id, dealer_id, meta = {} }: TrackFunnelParams) => {
-      const sessionId = localStorage.getItem('session_id') || generateUUID();
-      if (!localStorage.getItem('session_id')) {
-        localStorage.setItem('session_id', sessionId);
+      const sessionId = safeLocalStorage.getItem('session_id') || generateUUID();
+      if (!safeLocalStorage.getItem('session_id')) {
+        safeLocalStorage.setItem('session_id', sessionId);
       }
 
       const funnelData = {

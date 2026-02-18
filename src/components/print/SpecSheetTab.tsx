@@ -1,4 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
+import { safeLocalStorage } from "@/lib/utils";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -43,11 +44,11 @@ export default function SpecSheetTab() {
   // Determine dealerId (handle both AuthContext user and localStorage fallback for OTP)
   let dealerId = user?.id; // Default to authenticated user ID
 
-  // If no user ID but has dealer role (OTP session), try getting from localStorage
+  // If no user ID but has dealer role (OTP session), try getting from safeLocalStorage
   if (!dealerId) {
     try {
-      // Check for dealer_info in localStorage (set by DealerLogin)
-      const dealerInfoStr = localStorage.getItem('dealer_info');
+      // Check for dealer_info in safeLocalStorage (set by DealerLogin)
+      const dealerInfoStr = safeLocalStorage.getItem('dealer_info');
       if (dealerInfoStr) {
         const dealerInfo = JSON.parse(dealerInfoStr);
         if (dealerInfo?.id) {

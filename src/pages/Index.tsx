@@ -41,6 +41,7 @@ import { ShareDialog } from '@/components/common/ShareDialog';
 import { useSavedCars, useAddSavedCar, useRemoveSavedCar } from '@/hooks/useSavedCars';
 import { TestDriveBookingDialog } from '@/components/detail/TestDriveBookingDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { safeLocalStorage } from '@/lib/utils';
 
 import { useBrands } from '@/hooks/useBrands';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -84,11 +85,11 @@ const Index = () => {
   const [carToShare, setCarToShare] = useState<Car | null>(null);
   const [showExitModal, setShowExitModal] = useState(false);
   const [exitModalSubmitted, setExitModalSubmitted] = useState(
-    localStorage.getItem('exit_modal_submitted') === 'true'
+    safeLocalStorage.getItem('exit_modal_submitted') === 'true'
   );
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [useRecommended, setUseRecommended] = useState(
-    localStorage.getItem('homepage_mode') !== 'classic'
+    safeLocalStorage.getItem('homepage_mode') !== 'classic'
   );
   const [sortOption, setSortOption] = useState<SortOption>('relevance');
   const [testDriveDialogOpen, setTestDriveDialogOpen] = useState(false);
@@ -550,9 +551,9 @@ const Index = () => {
     trackEvent.mutate({ event: 'view', car_id: car.id });
 
     // Store in recently viewed
-    const recentlyViewed = JSON.parse(localStorage.getItem('recently_viewed') || '[]');
+    const recentlyViewed = JSON.parse(safeLocalStorage.getItem('recently_viewed') || '[]');
     const updated = [car.id, ...recentlyViewed.filter((id: string) => id !== car.id)].slice(0, 10);
-    localStorage.setItem('recently_viewed', JSON.stringify(updated));
+    safeLocalStorage.setItem('recently_viewed', JSON.stringify(updated));
   };
 
   const handleBackToList = () => {
@@ -567,7 +568,7 @@ const Index = () => {
 
   const handleHomepageToggle = (recommended: boolean) => {
     setUseRecommended(recommended);
-    localStorage.setItem('homepage_mode', recommended ? 'recommended' : 'classic');
+    safeLocalStorage.setItem('homepage_mode', recommended ? 'recommended' : 'classic');
     toast.success(recommended ? 'Switched to Smart View' : 'Switched to Classic View');
   };
 
@@ -603,7 +604,7 @@ const Index = () => {
     const dashboardRoles = ['powerdesk', 'website_manager', 'dealer', 'sales', 'finance', 'inspection'];
     const hasDashboardAccess = roles.some(role => dashboardRoles.includes(role));
 
-    if (user && !hasDashboardAccess && !localStorage.getItem('onboarding_complete')) {
+    if (user && !hasDashboardAccess && !safeLocalStorage.getItem('onboarding_complete')) {
       const timer = setTimeout(() => {
         setShowOnboarding(true);
       }, 1500);
@@ -984,7 +985,7 @@ const Index = () => {
             onOpenChange={setShowOnboarding}
             onComplete={() => {
               setShowOnboarding(false);
-              localStorage.setItem('onboarding_complete', 'true');
+              safeLocalStorage.setItem('onboarding_complete', 'true');
               toast.success('Welcome! Your personalized feed is ready 🎉', {
                 description: 'We will show you cars that match your style'
               });

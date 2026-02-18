@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useGeolocation } from './useGeolocation';
 import { useAuth } from '@/contexts/AuthContext';
+import { safeLocalStorage } from '@/lib/utils';
 
 export function useLocationTracking() {
   const { user } = useAuth();
@@ -11,7 +12,7 @@ export function useLocationTracking() {
     if (!user) return;
 
     // Check if location is already captured
-    const lastUpdate = localStorage.getItem('location_last_update');
+    const lastUpdate = safeLocalStorage.getItem('location_last_update');
     const now = Date.now();
     const ONE_DAY = 24 * 60 * 60 * 1000;
 
@@ -19,7 +20,7 @@ export function useLocationTracking() {
     if (!lastUpdate || now - parseInt(lastUpdate) > ONE_DAY) {
       if (permission === 'granted' || !latitude) {
         requestLocation();
-        localStorage.setItem('location_last_update', now.toString());
+        safeLocalStorage.setItem('location_last_update', now.toString());
       }
     }
   }, [user, permission, latitude, requestLocation]);

@@ -15,6 +15,7 @@ import { useCarListings, useCarListingStats } from '@/hooks/useCarListings';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Pagination } from '@/components/content/Pagination';
 import { toast } from 'sonner';
+import { safeLocalStorage } from '@/lib/utils';
 
 export default function CarListings() {
   const [activeTab, setActiveTab] = useState('all');
@@ -62,7 +63,7 @@ export default function CarListings() {
 
       if (!currentDealerId) {
         try {
-          const dealerInfoStr = localStorage.getItem('dealer_info');
+          const dealerInfoStr = safeLocalStorage.getItem('dealer_info');
           if (dealerInfoStr) {
             const dealerInfo = JSON.parse(dealerInfoStr);
             currentDealerId = dealerInfo.id;
@@ -118,7 +119,7 @@ export default function CarListings() {
 
       if (!currentDealerId) {
         try {
-          const dealerInfoStr = localStorage.getItem('dealer_info');
+          const dealerInfoStr = safeLocalStorage.getItem('dealer_info');
           if (dealerInfoStr) {
             const dealerInfo = JSON.parse(dealerInfoStr);
             currentDealerId = dealerInfo.id;

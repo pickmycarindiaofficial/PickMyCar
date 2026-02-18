@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { AppRole, UserProfile } from '@/types/auth';
+import { safeLocalStorage, safeSessionStorage, generateUUID } from '@/lib/utils';
 
 // Session token storage keys
 const SESSION_TOKEN_KEY = 'pmc_staff_token';
@@ -59,9 +60,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [customerPhone, setCustomerPhone] = useState<string | null>(null);
   const [isProfileComplete, setIsProfileComplete] = useState(true); // Default true, false only for incomplete customers
 
-  // Get token from sessionStorage
+  // Get token from safeSessionStorage
   const getSessionToken = useCallback((): string | null => {
-    return sessionStorage.getItem(SESSION_TOKEN_KEY);
+    return safeSessionStorage.getItem(SESSION_TOKEN_KEY);
   }, []);
 
   // Validate staff session with server
@@ -114,14 +115,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return true;
       } else {
         // Invalid session - clear token
-        sessionStorage.removeItem(SESSION_TOKEN_KEY);
+        safeSessionStorage.removeItem(SESSION_TOKEN_KEY);
         setStaffSession(null);
         setIsStaffSession(false);
         return false;
       }
     } catch (error) {
       console.error('Staff session validation error:', error);
-      sessionStorage.removeItem(SESSION_TOKEN_KEY);
+      safeSessionStorage.removeItem(SESSION_TOKEN_KEY);
       setStaffSession(null);
       setIsStaffSession(false);
       return false;
@@ -148,8 +149,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (error) throw error;
 
-    // Store token in sessionStorage (NOT localStorage)
-    sessionStorage.setItem(SESSION_TOKEN_KEY, token);
+    // Store token in safeSessionStorage (NOT safeLocalStorage)
+    safeSessionStorage.setItem(SESSION_TOKEN_KEY, token);
 
     const staffData: StaffSessionData = {
       staffId,
@@ -181,8 +182,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const loginDealerStaff = useCallback(async (data: StaffSessionData): Promise<void> => {
-    // 1. Store in localStorage
-    localStorage.setItem('staff_session', JSON.stringify(data));
+    // 1. Store in safeLocalStorage
+    safeLocalStorage.setItem('staff_session', JSON.stringify(data));
 
     // 2. Create mock user
     const mockUser = {
@@ -217,8 +218,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check for dealer session (stored in localStorage by DealerLogin)
     // Check for dealer session (stored in localStorage by DealerLogin)
     const checkDealerSession = async () => {
-      const dealerToken = localStorage.getItem(DEALER_TOKEN_KEY);
-      const dealerInfoStr = localStorage.getItem(DEALER_INFO_KEY);
+      const dealerToken = safeLocalStorage.getItem(DEALER_TOKEN_KEY);
+      const dealerInfoStr = safeLocalStorage.getItem(DEALER_INFO_KEY);
 
       if (dealerToken && dealerInfoStr) {
         try {
@@ -247,8 +248,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return true;
         } catch (e) {
           console.error('[AuthContext] Error parsing dealer info:', e);
-          localStorage.removeItem(DEALER_TOKEN_KEY);
-          localStorage.removeItem(DEALER_INFO_KEY);
+          safeLocalStorage.removeItem(DEALER_TOKEN_KEY);
+          safeLocalStorage.removeItem(DEALER_INFO_KEY);
         }
       }
       return false;
@@ -256,7 +257,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // NEW: Check for Dealer STAFF session
     const checkDealerStaffSession = () => {
-      const staffSessionStr = localStorage.getItem('staff_session');
+      const staffSessionStr = safeLocalStorage.getItem('staff_session');
       if (staffSessionStr) {
         try {
           const session = JSON.parse(staffSessionStr);
@@ -296,7 +297,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         } catch (e) {
           console.error('Error parsing staff session', e);
-          localStorage.removeItem('staff_session');
+          safeLocalStorage.removeItem('staff_session');
         }
       }
       return false;
@@ -304,8 +305,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Check for customer session token first
     const checkCustomerSession = async () => {
-      const customerToken = sessionStorage.getItem(CUSTOMER_TOKEN_KEY);
-      const phone = sessionStorage.getItem(CUSTOMER_PHONE_KEY);
+      const customerToken = safeSessionStorage.getItem(CUSTOMER_TOKEN_KEY);
+      const phone = safeSessionStorage.getItem(CUSTOMER_PHONE_KEY);
 
       if (customerToken && phone) {
         // Check if profile exists and is complete
@@ -458,17 +459,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (error) {
         console.error('Error revoking staff session:', error);
       }
-      sessionStorage.removeItem(SESSION_TOKEN_KEY);
+      safeSessionStorage.removeItem(SESSION_TOKEN_KEY);
     }
 
     // Clear customer session tokens
-    sessionStorage.removeItem(CUSTOMER_TOKEN_KEY);
-    sessionStorage.removeItem(CUSTOMER_PHONE_KEY);
+    safeSessionStorage.removeItem(CUSTOMER_TOKEN_KEY);
+    safeSessionStorage.removeItem(CUSTOMER_PHONE_KEY);
 
     // Clear dealer session tokens
-    localStorage.removeItem(DEALER_TOKEN_KEY);
-    localStorage.removeItem(DEALER_INFO_KEY);
-    localStorage.removeItem('staff_session'); // NEW: Clear staff session
+    safeLocalStorage.removeItem(DEALER_TOKEN_KEY);
+    safeLocalStorage.removeItem(DEALER_INFO_KEY);
+    safeLocalStorage.removeItem('staff_session'); // NEW: Clear staff session
 
     // Clear Supabase session
     await supabase.auth.signOut();

@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { safeLocalStorage } from '@/lib/utils';
 
 // Dealer type for backwards compatibility with existing components
 export interface Dealer {
@@ -136,8 +136,8 @@ export function useCreateDealer() {
 
   return useMutation({
     mutationFn: async (data: CreateDealerData) => {
-      // Get staff session from localStorage (can be staff_session or admin)
-      const staffSessionStr = localStorage.getItem('staff_session');
+      // Get staff session from safeLocalStorage (can be staff_session or admin)
+      const staffSessionStr = safeLocalStorage.getItem('staff_session');
       let staffId: string | null = null;
 
       if (staffSessionStr) {

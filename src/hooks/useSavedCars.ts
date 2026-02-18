@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase-client';
 import { toast } from 'sonner';
+import { safeSessionStorage } from '@/lib/utils';
 
 // Helper to get current user ID (supports both Supabase auth and customer session)
 const getCurrentUserId = async (): Promise<string | null> => {
@@ -11,8 +12,8 @@ const getCurrentUserId = async (): Promise<string | null> => {
   }
 
   // Check for customer session
-  const customerPhone = sessionStorage.getItem('pmc_customer_phone');
-  const customerToken = sessionStorage.getItem('pmc_customer_token');
+  const customerPhone = safeSessionStorage.getItem('pmc_customer_phone');
+  const customerToken = safeSessionStorage.getItem('pmc_customer_token');
 
   if (customerPhone && customerToken) {
     // Get customer profile ID from database

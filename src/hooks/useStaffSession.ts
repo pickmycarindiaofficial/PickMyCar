@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { safeSessionStorage } from '@/lib/utils';
 
 interface StaffSession {
     staffId: string;
@@ -43,9 +44,9 @@ export function useStaffSession(): UseStaffSessionReturn {
     const [session, setSession] = useState<StaffSession | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Get token from sessionStorage (secure - cleared on browser close)
+    // Get token from safeSessionStorage (secure - cleared on browser close)
     const getSessionToken = useCallback((): string | null => {
-        return sessionStorage.getItem(SESSION_TOKEN_KEY);
+        return safeSessionStorage.getItem(SESSION_TOKEN_KEY);
     }, []);
 
     // Create a new session after successful OTP verification
@@ -68,8 +69,8 @@ export function useStaffSession(): UseStaffSessionReturn {
 
         if (error) throw error;
 
-        // Store token in sessionStorage (NOT localStorage)
-        sessionStorage.setItem(SESSION_TOKEN_KEY, token);
+        // Store token in safeSessionStorage (NOT localStorage)
+        safeSessionStorage.setItem(SESSION_TOKEN_KEY, token);
 
         const newSession: StaffSession = {
             staffId,
@@ -116,14 +117,14 @@ export function useStaffSession(): UseStaffSessionReturn {
                 return true;
             } else {
                 // Invalid session - clear token
-                sessionStorage.removeItem(SESSION_TOKEN_KEY);
+                safeSessionStorage.removeItem(SESSION_TOKEN_KEY);
                 setSession(null);
                 setIsLoading(false);
                 return false;
             }
         } catch (error) {
             console.error('Session validation error:', error);
-            sessionStorage.removeItem(SESSION_TOKEN_KEY);
+            safeSessionStorage.removeItem(SESSION_TOKEN_KEY);
             setSession(null);
             setIsLoading(false);
             return false;
@@ -143,7 +144,7 @@ export function useStaffSession(): UseStaffSessionReturn {
                 console.error('Error revoking session:', error);
             }
         }
-        sessionStorage.removeItem(SESSION_TOKEN_KEY);
+        safeSessionStorage.removeItem(SESSION_TOKEN_KEY);
         setSession(null);
     }, [getSessionToken]);
 

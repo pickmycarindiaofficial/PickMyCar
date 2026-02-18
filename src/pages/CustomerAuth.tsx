@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { safeSessionStorage } from '@/lib/utils';
 import { Loader2, ArrowLeft, Smartphone, Shield, Car, CheckCircle2 } from 'lucide-react';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import logoImage from '@/assets/logo.png';
@@ -100,8 +101,8 @@ const CustomerAuth = () => {
 
       if (data.success) {
         if (data.customerToken) {
-          sessionStorage.setItem('pmc_customer_token', data.customerToken);
-          sessionStorage.setItem('pmc_customer_phone', phoneNumber);
+          safeSessionStorage.setItem('pmc_customer_token', data.customerToken);
+          safeSessionStorage.setItem('pmc_customer_phone', phoneNumber);
 
           toast({
             title: 'Welcome!',
