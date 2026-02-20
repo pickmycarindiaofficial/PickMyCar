@@ -190,16 +190,28 @@ export function CarListingForm({
 
   // Auto-load city from dealer profile
   useEffect(() => {
+    // Wait for the cities list to be fully loaded so the dropdown has options
+    // before we strictly assign the UUID.
+    if (!cities || cities.length === 0) return;
+
     // For regular dealers: use their own profile
     if (isDealer && !isPowerDesk && currentDealerProfile?.city_id) {
-      form.setValue('city_id', currentDealerProfile.city_id);
+      form.setValue('city_id', currentDealerProfile.city_id, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true
+      });
     }
 
     // For PowerDesk: use selected dealer's profile
     if (isPowerDesk && selectedDealerProfile?.city_id) {
-      form.setValue('city_id', selectedDealerProfile.city_id);
+      form.setValue('city_id', selectedDealerProfile.city_id, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true
+      });
     }
-  }, [isDealer, isPowerDesk, currentDealerProfile, selectedDealerProfile, form]);
+  }, [isDealer, isPowerDesk, currentDealerProfile, selectedDealerProfile, form, cities]);
 
   const onSubmit = async (data: CarListingFormData) => {
     try {
