@@ -11,6 +11,7 @@ import { useTestDriveBooking } from '@/hooks/useTestDriveBooking';
 import { useUpdateTestDriveBooking } from '@/hooks/useUpdateTestDriveBooking';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase-client';
+import { useEventTracking } from '@/hooks/useEventTracking';
 
 // 1-hour time slots from 10:00 AM to 5:30 PM
 const TIME_SLOTS = [
@@ -52,6 +53,7 @@ export function TestDriveBookingDialog({
 
   const { mutate: bookTestDrive, isPending: isCreating } = useTestDriveBooking();
   const { mutate: updateTestDrive, isPending: isUpdating } = useUpdateTestDriveBooking();
+  const { trackFunnel } = useEventTracking();
 
   const isPending = isCreating || isUpdating;
 
@@ -127,6 +129,18 @@ export function TestDriveBookingDialog({
         {
           onSuccess: () => {
             setBookingSuccess(true);
+
+            trackFunnel.mutate({
+              stage: 'convert',
+              car_id: carId,
+              dealer_id: dealerId,
+              meta: {
+                type: 'test_drive',
+                date: format(selectedDate, 'yyyy-MM-dd'),
+                slot: timeSlot
+              }
+            });
+
             setTimeout(() => {
               onOpenChange(false);
               setBookingSuccess(false);

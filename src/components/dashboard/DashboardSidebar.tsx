@@ -147,7 +147,7 @@ export function DashboardSidebar() {
     { title: 'Dealer Analytics', url: '/dashboard/dealer-analytics', icon: Gauge, roles: ['powerdesk', 'dealer'] },
     { title: 'Market Intelligence', url: '/dashboard/market-intelligence', icon: Target, roles: ['powerdesk', 'dealer'] },
     { title: 'User Intelligence', url: '/dashboard/user-intelligence', icon: User, roles: ['powerdesk', 'sales'] },
-    { title: 'AI Suggestions', url: '/dashboard/ai-suggestions', icon: Lightbulb, roles: ['powerdesk', 'dealer'] },
+    { title: 'Profit Intelligence', url: '/dashboard/ai-suggestions', icon: Lightbulb, roles: ['powerdesk', 'dealer'] },
     { title: 'Conversion Analytics', url: '/dashboard/conversion-analytics', icon: LineChart, roles: ['powerdesk', 'sales'] },
     { title: 'AI Insights', url: '/dashboard/ai-insights', icon: Sparkles, roles: ['powerdesk', 'dealer'] },
 

@@ -9,8 +9,13 @@ export interface ListingFilters {
   seller_type?: string;
   seller_id?: string;
   brand_id?: string;
+  model_id?: string;
   city_id?: string;
   phone_number?: string;
+  fuel_type_id?: string;
+  transmission_id?: string;
+  year_of_make?: number;
+  search_query?: string;
   page?: number;
   pageSize?: number;
 }
@@ -53,7 +58,19 @@ export function useCarListings(filters?: ListingFilters, options?: { enabled?: b
       if (filters?.seller_type) query = query.eq('seller_type', filters.seller_type as any);
       if (filters?.seller_id) query = query.eq('seller_id', filters.seller_id);
       if (filters?.brand_id) query = query.eq('brand_id', filters.brand_id);
+      if (filters?.model_id) query = query.eq('model_id', filters.model_id);
+      if (filters?.fuel_type_id) query = query.eq('fuel_type_id', filters.fuel_type_id);
+      if (filters?.transmission_id) query = query.eq('transmission_id', filters.transmission_id);
+      if (filters?.year_of_make) query = query.eq('year_of_make', filters.year_of_make);
       if (filters?.city_id) query = query.eq('city_id', filters.city_id);
+
+      // Open text search
+      if (filters?.search_query) {
+        const queryText = filters.search_query.trim();
+        if (queryText) {
+          query = query.or(`variant.ilike.%${queryText}%,registration_number.ilike.%${queryText}%,brand_name.ilike.%${queryText}%,model_name.ilike.%${queryText}%`);
+        }
+      }
 
       // Phone number search
       if (filters?.phone_number) {
@@ -477,7 +494,19 @@ export function useCarListingStats(filters?: Omit<ListingFilters, 'page' | 'page
       if (filters?.seller_type) query = query.eq('seller_type', filters.seller_type as any);
       if (filters?.seller_id) query = query.eq('seller_id', filters.seller_id);
       if (filters?.brand_id) query = query.eq('brand_id', filters.brand_id);
+      if (filters?.model_id) query = query.eq('model_id', filters.model_id);
+      if (filters?.fuel_type_id) query = query.eq('fuel_type_id', filters.fuel_type_id);
+      if (filters?.transmission_id) query = query.eq('transmission_id', filters.transmission_id);
+      if (filters?.year_of_make) query = query.eq('year_of_make', filters.year_of_make);
       if (filters?.city_id) query = query.eq('city_id', filters.city_id);
+
+      // Open text search
+      if (filters?.search_query) {
+        const queryText = filters.search_query.trim();
+        if (queryText) {
+          query = query.or(`variant.ilike.%${queryText}%,registration_number.ilike.%${queryText}%,brand_name.ilike.%${queryText}%,model_name.ilike.%${queryText}%`);
+        }
+      }
 
       // Phone number search
       if (filters?.phone_number) {

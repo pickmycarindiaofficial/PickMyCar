@@ -15,6 +15,7 @@ import { ShareDialog } from '@/components/common/ShareDialog';
 import { calculateEMI } from '@/lib/emiCalculator';
 import { TestDriveBookingDialog } from '@/components/detail/TestDriveBookingDialog';
 import { QuickLoanApplicationDialog } from '@/components/finance/QuickLoanApplicationDialog';
+import { useEventTracking } from '@/hooks/useEventTracking';
 
 export function CarDetailRoute() {
   const { carId } = useParams<{ carId: string }>();
@@ -26,6 +27,7 @@ export function CarDetailRoute() {
   const [testDriveDialogOpen, setTestDriveDialogOpen] = useState(false);
   const [loanDialogOpen, setLoanDialogOpen] = useState(false);
   const createEnquiry = useCreateEnquiry();
+  const { trackEvent, trackFunnel } = useEventTracking();
 
 
   // Fetch single car listing by ID - OPTIMIZED
@@ -110,6 +112,30 @@ export function CarDetailRoute() {
     };
   }, [dealerProfile, user]);
 
+  // Track the 'view' event once the car is loaded
+  useEffect(() => {
+    if (selectedCar && selectedCar.id) {
+      // Fire standard event tracking
+      trackEvent.mutate({
+        event: 'view',
+        car_id: selectedCar.id,
+        dealer_id: selectedCar.dealerId,
+        meta: {
+          brand: selectedCar.brand,
+          model: selectedCar.model,
+          price: selectedCar.price,
+        }
+      });
+
+      // Fire funnel tracking
+      trackFunnel.mutate({
+        stage: 'view',
+        car_id: selectedCar.id,
+        dealer_id: selectedCar.dealerId,
+      });
+    }
+  }, [selectedCar?.id]);
+
   const handleCallDealer = async (car: Car) => {
     requireAuth(async () => {
       let dealerName = car.dealerName;
@@ -174,6 +200,9 @@ export function CarDetailRoute() {
           toast.success(`Calling ${dealerName || 'Dealer'}`, {
             description: `Phone: ${dealerPhone}`,
           });
+
+          trackEvent.mutate({ event: 'contact_click', car_id: car.id, dealer_id: car.dealerId, meta: { method: 'call' } });
+          trackFunnel.mutate({ stage: 'engage', car_id: car.id, dealer_id: car.dealerId, meta: { method: 'call' } });
         },
         onError: (error) => {
           console.error('Error creating enquiry:', error);
@@ -218,6 +247,9 @@ export function CarDetailRoute() {
           toast.success('Opening WhatsApp...', {
             description: `Contacting ${dealerName || 'Dealer'}`,
           });
+
+          trackEvent.mutate({ event: 'contact_click', car_id: car.id, dealer_id: car.dealerId, meta: { method: 'whatsapp' } });
+          trackFunnel.mutate({ stage: 'engage', car_id: car.id, dealer_id: car.dealerId, meta: { method: 'whatsapp' } });
         },
         onError: (error) => {
           console.error('Error creating enquiry:', error);
@@ -234,15 +266,20 @@ export function CarDetailRoute() {
     toast.info('Opening chat...', {
       description: `Starting conversation about ${car.title}`,
     });
+    trackEvent.mutate({ event: 'contact_click', car_id: car.id, dealer_id: car.dealerId, meta: { method: 'chat' } });
+    trackFunnel.mutate({ stage: 'engage', car_id: car.id, dealer_id: car.dealerId, meta: { method: 'chat' } });
   };
 
   const handleToggleShortlist = (carId: string) => {
     setShortlistedIds((prev) => {
       if (prev.includes(carId)) {
         toast.info('Removed from shortlist');
+        trackEvent.mutate({ event: 'wishlist_remove', car_id: carId, dealer_id: selectedCar?.dealerId });
         return prev.filter((id) => id !== carId);
       } else {
         toast.success('Added to shortlist');
+        trackEvent.mutate({ event: 'wishlist_add', car_id: carId, dealer_id: selectedCar?.dealerId });
+        trackFunnel.mutate({ stage: 'interest', car_id: carId, dealer_id: selectedCar?.dealerId });
         return [...prev, carId];
       }
     });

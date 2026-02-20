@@ -117,3 +117,14 @@ export function generateUUID(): string {
     return v.toString(16);
   });
 }
+
+/**
+ * Formats a number as INR currency.
+ */
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(amount);
+}

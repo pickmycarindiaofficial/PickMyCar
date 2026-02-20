@@ -2,6 +2,8 @@ import { useDealerBehaviorMetrics } from '@/hooks/useDealerBehaviorMetrics';
 import { DealerBehaviorCards } from '@/components/dealers/DealerBehaviorCards';
 import { ResponseTimeChart } from '@/components/dealers/ResponseTimeChart';
 import { DealerLeaderboard } from '@/components/dealers/DealerLeaderboard';
+import { DealerCostSettings } from '@/components/dealer/DealerCostSettings';
+import { ProfitOverviewCards } from '@/components/dealer/ProfitOverviewCards';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -33,11 +35,18 @@ export default function DealerAnalytics() {
   const singleDealerMetrics = !Array.isArray(metrics) ? metrics : null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       <div>
         <h1 className="text-3xl font-bold">Dealer Performance Analytics</h1>
         <p className="text-muted-foreground">Track response times, conversion rates, and quality scores</p>
       </div>
+
+      {!isPowerDesk && (
+        <div className="space-y-6 mb-6">
+          <ProfitOverviewCards />
+          <DealerCostSettings />
+        </div>
+      )}
 
       {singleDealerMetrics && (
         <>

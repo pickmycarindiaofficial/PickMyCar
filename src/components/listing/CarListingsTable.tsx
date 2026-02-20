@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { MoreHorizontal, Eye, Edit, Trash, CheckCircle, Power, PowerOff, DollarSign, Phone, Calendar, Gauge, Fuel } from 'lucide-react';
+import { MoreHorizontal, Eye, Edit, Trash, CheckCircle, Power, PowerOff, DollarSign, Phone, Calendar, Gauge, Fuel, Wallet } from 'lucide-react';
 import {
   useUpdateListingStatus,
   useVerifyCarListing,
@@ -37,9 +37,10 @@ interface CarListingsTableProps {
   data: CarListingWithRelations[];
   onEdit?: (listing: CarListingWithRelations) => void;
   onViewDetails?: (listing: CarListingWithRelations) => void;
+  onEditLedger?: (listing: CarListingWithRelations) => void;
 }
 
-export function CarListingsTable({ data, onEdit, onViewDetails }: CarListingsTableProps) {
+export function CarListingsTable({ data, onEdit, onViewDetails, onEditLedger }: CarListingsTableProps) {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { roles } = useAuth();
@@ -162,8 +163,14 @@ export function CarListingsTable({ data, onEdit, onViewDetails }: CarListingsTab
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onEdit?.(listing)}>
             <Edit className="mr-2 h-4 w-4" />
-            Edit
+            Edit Profile
           </DropdownMenuItem>
+          {onEditLedger && (
+            <DropdownMenuItem onClick={() => onEditLedger(listing)}>
+              <Wallet className="mr-2 h-4 w-4 text-purple-600" />
+              Profit Ledger
+            </DropdownMenuItem>
+          )}
 
           {/* Status Management Actions */}
           {listing.status !== 'live' && listing.status !== 'sold' && (

@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { CarListingForm } from '@/components/listing/CarListingForm';
 import { CarListingsTable } from '@/components/listing/CarListingsTable';
 import { CarListingsFilters } from '@/components/listing/CarListingsFilters';
+import { CarEconomicProfileEditor } from '@/components/dealer/CarEconomicProfileEditor';
 import { useCarListings, useCarListingStats } from '@/hooks/useCarListings';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Pagination } from '@/components/content/Pagination';
@@ -22,6 +23,7 @@ export default function CarListings() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingListing, setEditingListing] = useState<any | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [ledgerListing, setLedgerListing] = useState<any | null>(null);
   const { roles, loading: authLoading, user } = useAuth();
   const navigate = useNavigate();
 
@@ -30,6 +32,11 @@ export default function CarListings() {
   const [selectedDealerId, setSelectedDealerId] = useState<string>('all');
   const [selectedCityId, setSelectedCityId] = useState<string>('all');
   const [phoneSearch, setPhoneSearch] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedBrand, setSelectedBrand] = useState<string>('all');
+  const [selectedModel, setSelectedModel] = useState<string>('all');
+  const [selectedTransmission, setSelectedTransmission] = useState<string>('all');
+  const [selectedFuelType, setSelectedFuelType] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
 
   const isPowerDesk = roles.includes('powerdesk');
@@ -103,8 +110,15 @@ export default function CarListings() {
       filters.phone_number = phoneSearch.trim();
     }
 
+    // New Filters
+    if (searchQuery.trim()) filters.search_query = searchQuery.trim();
+    if (selectedBrand && selectedBrand !== 'all') filters.brand_id = selectedBrand;
+    if (selectedModel && selectedModel !== 'all') filters.model_id = selectedModel;
+    if (selectedTransmission && selectedTransmission !== 'all') filters.transmission_id = selectedTransmission;
+    if (selectedFuelType && selectedFuelType !== 'all') filters.fuel_type_id = selectedFuelType;
+
     return filters;
-  }, [isPowerDesk, user?.id, sellerTypeFilter, selectedDealerId, selectedCityId, phoneSearch, currentPage, activeTab]);
+  }, [isPowerDesk, user?.id, sellerTypeFilter, selectedDealerId, selectedCityId, phoneSearch, searchQuery, selectedBrand, selectedModel, selectedTransmission, selectedFuelType, currentPage, activeTab]);
 
   // Build filters for stats (without pagination and status)
   const statsFilters = useMemo(() => {
@@ -154,8 +168,15 @@ export default function CarListings() {
       filters.phone_number = phoneSearch.trim();
     }
 
+    // New Filters
+    if (searchQuery.trim()) filters.search_query = searchQuery.trim();
+    if (selectedBrand && selectedBrand !== 'all') filters.brand_id = selectedBrand;
+    if (selectedModel && selectedModel !== 'all') filters.model_id = selectedModel;
+    if (selectedTransmission && selectedTransmission !== 'all') filters.transmission_id = selectedTransmission;
+    if (selectedFuelType && selectedFuelType !== 'all') filters.fuel_type_id = selectedFuelType;
+
     return filters;
-  }, [isPowerDesk, user?.id, sellerTypeFilter, selectedDealerId, selectedCityId, phoneSearch]);
+  }, [isPowerDesk, user?.id, sellerTypeFilter, selectedDealerId, selectedCityId, phoneSearch, searchQuery, selectedBrand, selectedModel, selectedTransmission, selectedFuelType]);
 
   // Fetch listings with filters - wait for auth to load
   const { data: paginatedData, isLoading: queryLoading } = useCarListings(
@@ -185,13 +206,18 @@ export default function CarListings() {
   // Reset page to 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, sellerTypeFilter, selectedDealerId, selectedCityId, phoneSearch]);
+  }, [activeTab, sellerTypeFilter, selectedDealerId, selectedCityId, phoneSearch, searchQuery, selectedBrand, selectedModel, selectedTransmission, selectedFuelType]);
 
   const handleClearFilters = () => {
     setSellerTypeFilter('all');
     setSelectedDealerId('all');
     setSelectedCityId('all');
     setPhoneSearch('');
+    setSearchQuery('');
+    setSelectedBrand('all');
+    setSelectedModel('all');
+    setSelectedTransmission('all');
+    setSelectedFuelType('all');
     setActiveTab('all');
     setCurrentPage(1);
   };
@@ -204,6 +230,10 @@ export default function CarListings() {
   const handleEditListing = (listing: any) => {
     setEditingListing(listing);
     setEditDialogOpen(true);
+  };
+
+  const handleEditLedger = (listing: any) => {
+    setLedgerListing(listing);
   };
 
   return (
@@ -237,34 +267,58 @@ export default function CarListings() {
           </Dialog>
         </div>
 
-        {/* Filters - Only show for PowerDesk */}
-        {isPowerDesk && (
-          <CarListingsFilters
-            sellerType={sellerTypeFilter}
-            onSellerTypeChange={(value) => {
-              setSellerTypeFilter(value);
-              setSelectedDealerId('all');
-              setCurrentPage(1);
-            }}
-            selectedDealer={selectedDealerId}
-            onDealerChange={(value) => {
-              setSelectedDealerId(value);
-              setCurrentPage(1);
-            }}
-            selectedCity={selectedCityId}
-            onCityChange={(value) => {
-              setSelectedCityId(value);
-              setCurrentPage(1);
-            }}
-            phoneSearch={phoneSearch}
-            onPhoneSearchChange={(value) => {
-              setPhoneSearch(value);
-              setCurrentPage(1);
-            }}
-            onClearAll={handleClearFilters}
-            isPowerDesk={isPowerDesk}
-          />
-        )}
+        {/* Filters - Now available for all */}
+        <CarListingsFilters
+          sellerType={sellerTypeFilter}
+          onSellerTypeChange={(value) => {
+            setSellerTypeFilter(value);
+            setSelectedDealerId('all');
+            setCurrentPage(1);
+          }}
+          selectedDealer={selectedDealerId}
+          onDealerChange={(value) => {
+            setSelectedDealerId(value);
+            setCurrentPage(1);
+          }}
+          selectedCity={selectedCityId}
+          onCityChange={(value) => {
+            setSelectedCityId(value);
+            setCurrentPage(1);
+          }}
+          phoneSearch={phoneSearch}
+          onPhoneSearchChange={(value) => {
+            setPhoneSearch(value);
+            setCurrentPage(1);
+          }}
+          searchQuery={searchQuery}
+          onSearchQueryChange={(value) => {
+            setSearchQuery(value);
+            setCurrentPage(1);
+          }}
+          selectedBrand={selectedBrand}
+          onBrandChange={(value) => {
+            setSelectedBrand(value);
+            setSelectedModel('all'); // Reset model when brand changes
+            setCurrentPage(1);
+          }}
+          selectedModel={selectedModel}
+          onModelChange={(value) => {
+            setSelectedModel(value);
+            setCurrentPage(1);
+          }}
+          selectedTransmission={selectedTransmission}
+          onTransmissionChange={(value) => {
+            setSelectedTransmission(value);
+            setCurrentPage(1);
+          }}
+          selectedFuelType={selectedFuelType}
+          onFuelTypeChange={(value) => {
+            setSelectedFuelType(value);
+            setCurrentPage(1);
+          }}
+          onClearAll={handleClearFilters}
+          isPowerDesk={isPowerDesk}
+        />
 
         {/* Stats */}
         {isLoading ? (
@@ -334,6 +388,7 @@ export default function CarListings() {
                 <CarListingsTable
                   data={listings}
                   onEdit={handleEditListing}
+                  onEditLedger={handleEditLedger}
                   onViewDetails={(listing) => navigate(`/car/${listing.id}`)}
                 />
                 {totalPages > 1 && (
@@ -377,6 +432,7 @@ export default function CarListings() {
                   <CarListingsTable
                     data={listings}
                     onEdit={handleEditListing}
+                    onEditLedger={handleEditLedger}
                     onViewDetails={(listing) => navigate(`/car/${listing.id}`)}
                   />
                   {totalPages > 1 && (
@@ -448,6 +504,15 @@ export default function CarListings() {
             />
           </DialogContent>
         </Dialog>
+
+        {/* Profit Ledger Modal */}
+        {ledgerListing && (
+          <CarEconomicProfileEditor
+            car={ledgerListing}
+            isOpen={!!ledgerListing}
+            onClose={() => setLedgerListing(null)}
+          />
+        )}
       </div>
     </PermissionGate>
   );
