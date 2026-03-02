@@ -16,6 +16,7 @@ import { calculateEMI } from '@/lib/emiCalculator';
 import { TestDriveBookingDialog } from '@/components/detail/TestDriveBookingDialog';
 import { QuickLoanApplicationDialog } from '@/components/finance/QuickLoanApplicationDialog';
 import { useEventTracking } from '@/hooks/useEventTracking';
+import { analytics } from '@/lib/analytics';
 
 export function CarDetailRoute() {
   const { carId } = useParams<{ carId: string }>();
@@ -132,6 +133,17 @@ export function CarDetailRoute() {
         stage: 'view',
         car_id: selectedCar.id,
         dealer_id: selectedCar.dealerId,
+      });
+
+      // Fire Meta Pixel + Google Ads ViewContent
+      analytics.viewContent({
+        id: selectedCar.id,
+        name: selectedCar.title,
+        category: selectedCar.bodyType || 'Used Car',
+        value: selectedCar.price,
+        brand: selectedCar.brand,
+        model: selectedCar.model,
+        year: selectedCar.year,
       });
     }
   }, [selectedCar?.id]);

@@ -149,6 +149,7 @@ export function DashboardSidebar() {
     { title: 'User Intelligence', url: '/dashboard/user-intelligence', icon: User, roles: ['powerdesk', 'sales'] },
     { title: 'Profit Intelligence', url: '/dashboard/ai-suggestions', icon: Lightbulb, roles: ['powerdesk', 'dealer'] },
     { title: 'Conversion Analytics', url: '/dashboard/conversion-analytics', icon: LineChart, roles: ['powerdesk', 'sales'] },
+    { title: 'Visitor Analytics', url: '/dashboard/visitor-analytics', icon: BarChart3, roles: ['powerdesk', 'website_manager'] },
     { title: 'AI Insights', url: '/dashboard/ai-insights', icon: Sparkles, roles: ['powerdesk', 'dealer'] },
 
     // Website Manager Routes

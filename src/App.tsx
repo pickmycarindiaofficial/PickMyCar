@@ -11,6 +11,7 @@ import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { PageLoader } from "@/components/common/PageLoader";
 import { SkipLink } from "@/components/common/SkipLink";
 import { useLocationTracking } from "@/hooks/useLocationTracking";
+import { useAdTracking } from "@/hooks/useAdTracking";
 const AIChatWidget = lazy(() => import("@/components/ai/AIChatWidget").then(m => ({ default: m.AIChatWidget })));
 import { CustomerOnboardingWrapper } from "@/components/customer/CustomerOnboardingWrapper";
 import { useActiveBanners } from "@/hooks/useBanners";
@@ -86,6 +87,7 @@ const AISuggestions = lazy(() => import("@/pages/dashboard/modules/AISuggestions
 const ConversionAnalytics = lazy(() => import("@/pages/dashboard/modules/ConversionAnalytics"));
 const AIInsights = lazy(() => import("@/pages/dashboard/modules/AIInsights"));
 const UserIntelligence = lazy(() => import("@/pages/dashboard/modules/UserIntelligence"));
+const VisitorAnalytics = lazy(() => import("@/pages/dashboard/modules/VisitorAnalytics"));
 const TestDriveBookings = lazy(() => import("@/pages/dashboard/modules/TestDriveBookings"));
 const LoanApplications = lazy(() => import("@/pages/dashboard/modules/finance/LoanApplications"));
 const DealerStaffManager = lazy(() => import("@/components/dealer/DealerStaffManager").then(m => ({ default: m.DealerStaffManager })));
@@ -124,6 +126,12 @@ const AppContent = () => {
   );
 };
 
+/** Initializes Meta Pixel + Google Ads tracking inside the Router */
+const AdTrackingInit = () => {
+  useAdTracking();
+  return null;
+};
+
 
 const App = () => (
   <ErrorBoundary>
@@ -136,6 +144,7 @@ const App = () => (
             <Sonner />
             <AppContent />
             <BrowserRouter>
+              <AdTrackingInit />
               <CustomerOnboardingWrapper>
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
@@ -221,6 +230,7 @@ const App = () => (
                       <Route path="user-intelligence" element={<UserIntelligence />} />
                       <Route path="ai-suggestions" element={<AISuggestions />} />
                       <Route path="conversion-analytics" element={<ConversionAnalytics />} />
+                      <Route path="visitor-analytics" element={<VisitorAnalytics />} />
                       <Route path="ai-insights" element={<AIInsights />} />
 
                       {/* Website Manager Routes */}

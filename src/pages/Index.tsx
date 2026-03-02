@@ -42,6 +42,7 @@ import { useSavedCars, useAddSavedCar, useRemoveSavedCar } from '@/hooks/useSave
 import { TestDriveBookingDialog } from '@/components/detail/TestDriveBookingDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { safeLocalStorage } from '@/lib/utils';
+import { analytics } from '@/lib/analytics';
 
 import { useBrands } from '@/hooks/useBrands';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -292,6 +293,9 @@ const Index = () => {
   const handleFilterChange = (newFilters: Partial<Filters>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
     trackEvent.mutate({ event: 'filter_change', meta: newFilters });
+
+    // Pass filter changes to ad platforms
+    analytics.search({ filters: newFilters });
   };
 
   const handleClearAll = () => {
@@ -302,11 +306,13 @@ const Index = () => {
   const handleSearch = (term: string) => {
     setFilters((prev) => ({ ...prev, searchTerm: term }));
     trackEvent.mutate({ event: 'search', meta: { term } });
+    analytics.search({ query: term });
   };
 
   const handleCallDealer = async (car: Car) => {
     requireAuth(async () => {
       trackEvent.mutate({ event: 'contact_click', car_id: car.id, meta: { type: 'call' } });
+      analytics.lead({ id: car.id, type: 'call', carName: car.title, value: car.price });
 
       let dealerName = car.dealerName;
       let dealerPhone = car.dealerPhone;
@@ -374,6 +380,7 @@ const Index = () => {
   const handleWhatsAppEnquiry = async (car: Car) => {
     requireAuth(async () => {
       trackEvent.mutate({ event: 'contact_click', car_id: car.id, meta: { type: 'whatsapp' } });
+      analytics.lead({ id: car.id, type: 'whatsapp', carName: car.title, value: car.price });
 
       let dealerPhone = car.dealerPhone;
 
@@ -408,6 +415,7 @@ const Index = () => {
 
   const handleChat = (car: Car) => {
     trackEvent.mutate({ event: 'contact_click', car_id: car.id, meta: { type: 'chat' } });
+    analytics.lead({ id: car.id, type: 'contact_click', carName: car.title, value: car.price });
     toast.info('Opening chat...');
   };
 
@@ -451,6 +459,11 @@ const Index = () => {
           from_page: car ? 'car_detail' : 'loan_card',
           average_price: averageCarPrice
         }
+      });
+      analytics.initiateCheckout({
+        id: carForLoan.id,
+        carName: carForLoan.title,
+        value: carForLoan.price
       });
     }, {
       message: 'Please login to apply for a car loan',
@@ -521,6 +534,16 @@ const Index = () => {
         setShortlistedIds((prev) => [...prev, carId]);
         addSavedCar.mutate(carId);
         trackEvent.mutate({ event: 'wishlist_add', car_id: carId });
+
+        const carDetails = allCars.find(c => c.id === carId);
+        if (carDetails) {
+          analytics.addToWishlist({
+            id: carId,
+            name: carDetails.title,
+            value: carDetails.price,
+            category: carDetails.bodyType || 'Used Car'
+          });
+        }
       }
     }, { message: 'Please login to save cars' });
   };

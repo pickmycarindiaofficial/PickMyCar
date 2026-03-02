@@ -68,6 +68,48 @@
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- META PIXEL (Facebook/Instagram Ads)                     -->
+  <!-- Pixel ID: Set VITE_META_PIXEL_ID in .env                -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <script>
+    !function (f, b, e, v, n, t, s) {
+      if (f.fbq) return; n = f.fbq = function () {
+        n.callMethod ?
+          n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+      };
+      if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+      n.queue = []; t = b.createElement(e); t.async = !0;
+      t.src = v; s = b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t, s)
+    }(window, document, 'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+    // Initialize with your Pixel ID (only if configured)
+    var _metaPixelId = '1710000553002490';
+    if (_metaPixelId) {
+      fbq('init', _metaPixelId);
+      fbq('track', 'PageView');
+    }
+  </script>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- GOOGLE ADS / GTAG.JS                                    -->
+  <!-- Conversion ID: Set VITE_GOOGLE_ADS_ID in .env            -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <script>
+    var _googleAdsId = '';
+    if (_googleAdsId) {
+      var gtagScript = document.createElement('script');
+      gtagScript.async = true;
+      gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + _googleAdsId;
+      document.head.appendChild(gtagScript);
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      gtag('js', new Date());
+      gtag('config', _googleAdsId);
+    }
+  </script>
+
   <!-- Critical CSS - Inline for instant render -->
   <style>
     /* Critical above-the-fold CSS for instant FCP */
@@ -117,6 +159,11 @@
 </head>
 
 <body>
+  <!-- Meta Pixel noscript fallback (must be in body, not head) -->
+  <noscript>
+    <img height="1" width="1" style="display:none"
+      src="https://www.facebook.com/tr?id=1710000553002490&ev=PageView&noscript=1" />
+  </noscript>
   <div id="root">
     <!-- Initial loading skeleton for better perceived performance -->
     <div style="padding: 24px; max-width: 1200px; margin: 0 auto;">

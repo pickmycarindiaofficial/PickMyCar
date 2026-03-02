@@ -12,6 +12,7 @@ import { useUpdateTestDriveBooking } from '@/hooks/useUpdateTestDriveBooking';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase-client';
 import { useEventTracking } from '@/hooks/useEventTracking';
+import { analytics } from '@/lib/analytics';
 
 // 1-hour time slots from 10:00 AM to 5:30 PM
 const TIME_SLOTS = [
@@ -139,6 +140,12 @@ export function TestDriveBookingDialog({
                 date: format(selectedDate, 'yyyy-MM-dd'),
                 slot: timeSlot
               }
+            });
+
+            // Fire Meta Pixel + Google Ads 'Schedule' event
+            analytics.scheduleTestDrive({
+              id: carId,
+              dealerId: dealerId
             });
 
             setTimeout(() => {

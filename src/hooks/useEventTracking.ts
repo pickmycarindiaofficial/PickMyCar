@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
 import { generateUUID, safeLocalStorage } from '@/lib/utils';
+import { analytics } from '@/lib/analytics';
 
 type FunnelStage = 'view' | 'interest' | 'engage' | 'intent' | 'convert';
 
@@ -56,6 +57,60 @@ export function useEventTracking() {
         .insert(eventData);
 
       if (error) throw error;
+
+      // ═══ Forward to Meta Pixel + Google Ads ═══
+      // This bridges internal tracking to ad platforms automatically
+      switch (event) {
+        case 'view':
+          analytics.viewContent({
+            id: car_id || '',
+            name: meta.car_name || '',
+            category: meta.category || 'Used Car',
+            value: meta.price || 0,
+            brand: meta.brand,
+            model: meta.model,
+            year: meta.year,
+          });
+          break;
+        case 'contact_click':
+          analytics.lead({
+            id: car_id,
+            type: 'contact_click',
+            carName: meta.car_name,
+            value: meta.price,
+          });
+          break;
+        case 'test_drive_request':
+          analytics.scheduleTestDrive({
+            id: car_id,
+            carName: meta.car_name,
+            dealerId: dealer_id,
+          });
+          break;
+        case 'loan_attempt':
+          analytics.initiateCheckout({
+            id: car_id,
+            carName: meta.car_name,
+            value: meta.price,
+          });
+          break;
+        case 'favorite':
+        case 'wishlist_add':
+          analytics.addToWishlist({
+            id: car_id || '',
+            name: meta.car_name || '',
+            value: meta.price,
+            category: meta.category,
+          });
+          break;
+        case 'search':
+          analytics.search({
+            query: meta.query,
+            filters: meta.filters,
+            resultsCount: meta.results_count,
+          });
+          break;
+      }
 
       // Update user profile intent score for logged-in users
       if (user?.id && ['test_drive_request', 'loan_attempt', 'contact_click'].includes(event)) {
