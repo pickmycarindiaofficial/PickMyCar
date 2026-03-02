@@ -15,7 +15,7 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { analytics } from '@/lib/analytics';
-import { supabase } from '@/lib/supabase-client';
+import { supabase } from '@/integrations/supabase/client';
 
 /** Persistent session ID — stable for the browser tab lifetime. */
 function getSessionId(): string {

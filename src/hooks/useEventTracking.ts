@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase-client';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { generateUUID, safeLocalStorage } from '@/lib/utils';
 import { analytics } from '@/lib/analytics';
