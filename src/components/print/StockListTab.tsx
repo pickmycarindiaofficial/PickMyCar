@@ -23,10 +23,10 @@ import { ColumnDef } from "@tanstack/react-table";
 export default function StockListTab() {
   const { roles } = useAuth();
   const isPowerDesk = roles?.includes('powerdesk');
-  
+
   const [filters, setFilters] = useState<PrintStockFilters>({});
   const [selectedFields, setSelectedFields] = useState<string[]>([
-    'listing_id', 'brand', 'model', 'variant', 'year', 'km', 'fuel', 'transmission', 'price', 'status'
+    'listing_id', 'registration_number', 'brand', 'model', 'variant', 'year', 'km', 'fuel', 'transmission', 'price', 'status'
   ]);
   const [selectedCars, setSelectedCars] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(true);
@@ -82,6 +82,11 @@ export default function StockListTab() {
     {
       accessorKey: "listing_id",
       header: "Listing ID",
+    },
+    {
+      accessorKey: "registration_number",
+      header: "Reg. Number",
+      cell: ({ row }: any) => row.original.registration_number || '—',
     },
     {
       accessorKey: "brands.name",

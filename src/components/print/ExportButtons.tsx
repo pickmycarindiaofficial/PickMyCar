@@ -13,14 +13,15 @@ interface ExportButtonsProps {
 
 const FIELD_MAPPINGS: Record<string, ExportField> = {
   listing_id: { key: 'listing_id', label: 'Listing ID' },
+  registration_number: { key: 'registration_number', label: 'Reg. Number' },
   brand: { key: 'brands.name', label: 'Brand' },
   model: { key: 'models.name', label: 'Model' },
   variant: { key: 'variant', label: 'Variant' },
   year: { key: 'year_of_make', label: 'Year' },
   color: { key: 'color', label: 'Color' },
   category: { key: 'car_categories.name', label: 'Category' },
-  km: { 
-    key: 'kms_driven', 
+  km: {
+    key: 'kms_driven',
     label: 'KM Driven',
     format: (val) => val?.toLocaleString() || '0'
   },
@@ -30,16 +31,16 @@ const FIELD_MAPPINGS: Record<string, ExportField> = {
   seats: { key: 'seats', label: 'Seats' },
   owner: { key: 'owner_types.name', label: 'Ownership' },
   condition: { key: 'car_condition', label: 'Condition' },
-  price: { 
-    key: 'expected_price', 
+  price: {
+    key: 'expected_price',
     label: 'Price',
     format: (val) => `₹${Number(val).toLocaleString()}`
   },
   price_type: { key: 'price_type', label: 'Price Type' },
   status: { key: 'status', label: 'Status' },
   payment_status: { key: 'payment_status', label: 'Payment Status' },
-  is_featured: { 
-    key: 'is_featured', 
+  is_featured: {
+    key: 'is_featured',
     label: 'Featured',
     format: (val) => val ? 'Yes' : 'No'
   },
@@ -48,13 +49,13 @@ const FIELD_MAPPINGS: Record<string, ExportField> = {
   address: { key: 'full_address', label: 'Address' },
   phone: { key: 'primary_phone', label: 'Phone' },
   alternate_phone: { key: 'alternate_phone', label: 'Alternate Phone' },
-  created_at: { 
-    key: 'created_at', 
+  created_at: {
+    key: 'created_at',
     label: 'Listed Date',
     format: (val) => new Date(val).toLocaleDateString()
   },
-  published_at: { 
-    key: 'published_at', 
+  published_at: {
+    key: 'published_at',
     label: 'Published Date',
     format: (val) => val ? new Date(val).toLocaleDateString() : 'Not Published'
   },
